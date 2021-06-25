@@ -29,10 +29,18 @@ Installation;
 
 9- Install home assistant integration and set eufy security server's host name and port using UI.
 
+10- Raise your issues in Github. 
+
 ![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy1.PNG?raw=true)
 
 ![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy2.PNG?raw=true)
 
 ![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy3.PNG?raw=true)
 
-10- Raise your issues in Github. 
+![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy4.PNG?raw=true)
+
+![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy5.PNG?raw=true)
+
+![Installation](https://github.com/fuatakgun/eufy_security/blob/master/stream.PNG?raw=true)
+
+![Installation](https://github.com/fuatakgun/eufy_security/blob/master/motion detected.PNG?raw=true)
