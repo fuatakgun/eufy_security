@@ -1,0 +1,11 @@
+{
+  "domain": "eufy_security",
+  "name": "Eufy Security",
+  "documentation": "https://github.com/fuatakgun/eufy_security",
+  "issue_tracker": "https://github.com/fuatakgun/eufy_security/issues",
+  "dependencies": ["ffmpeg", "http"],
+  "config_flow": true,
+  "codeowners": ["@fuatakgun"],
+  "requirements": ["websocket-client==1.1.0"],
+  "version": "0.0.1"
+}
