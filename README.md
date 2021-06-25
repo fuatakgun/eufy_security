@@ -23,9 +23,16 @@ Installation;
     npm install typescript ts-node
     npx ts-node .\src\bin\server.ts
     ```
+![Running](https://github.com/fuatakgun/eufy_security/blob/master/eufy0.PNG?raw=true)
     
 8- Your local eufy security server should be up and running in port 3000.
 
 9- Install home assistant integration and set eufy security server's host name and port using UI.
+
+![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy1.PNG?raw=true)
+
+![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy2.PNG?raw=true)
+
+![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy3.PNG?raw=true)
 
 10- Raise your issues in Github. 
