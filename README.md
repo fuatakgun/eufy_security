@@ -43,4 +43,4 @@ Installation;
 
 ![Installation](https://github.com/fuatakgun/eufy_security/blob/master/stream.PNG?raw=true)
 
-![Installation](https://github.com/fuatakgun/eufy_security/blob/master/motion detected.PNG?raw=true)
+![Installation](https://github.com/fuatakgun/eufy_security/blob/master/motion%20detected.PNG?raw=true)
