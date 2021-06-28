@@ -46,7 +46,8 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         EufySecurityEntity.__init__(self, coordinator, entry, entity)
         Camera.__init__(self)
         self.hass = hass
-        self.entity_picture_bytes = None
+        self.camera_picture_bytes = None
+        self.camera_picture_url = None
 
     @property
     def id(self):
@@ -73,11 +74,15 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         self.is_streaming = self.entity["rtspStream"]
         if self.is_streaming:
             return STATE_STREAMING
-        if self.entity["motionDetected"]:
+        elif self.entity["motionDetected"]:
             return "Motion Detected"
-        if self.entity["personDetected"]:
-            return "Motion Detected"
-        return STATE_IDLE
+        elif self.entity["personDetected"]:
+            return "Person Detected"
+        else:
+            if not self.entity.get("battery", None) is None:
+                return f"Idle - {self.entity.get('battery')} %"
+            else:
+                return STATE_IDLE
 
     @property
     def is_on(self):
@@ -110,12 +115,19 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         ).result()
 
     def camera_image(self) -> bytes:
-        response = None
-        # _LOGGER.debug(f"{DOMAIN} - camera_image {self.entity['pictureUrl']}")
-        response = requests.get(self.entity["pictureUrl"])
-        if response.status_code != 200:
-            return None
-        return response.content
+        if (
+            self.camera_picture_bytes is None
+            or self.camera_picture_url is None
+            or self.camera_picture_url != self.entity["pictureUrl"]
+        ):
+            # cachine of image
+            _LOGGER.debug(f"{DOMAIN} - camera_image {self.entity['pictureUrl']}")
+            response = requests.get(self.entity["pictureUrl"])
+            if response.status_code != 200:
+                return None
+            self.camera_picture_url = self.entity["pictureUrl"]
+            self.camera_picture_bytes = response.content
+        return self.camera_picture_bytes
 
     @property
     def state_attributes(self):

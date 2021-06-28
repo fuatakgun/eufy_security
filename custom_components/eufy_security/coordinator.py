@@ -10,59 +10,23 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from .const import DOMAIN, PLATFORMS
+from .const import (
+    DOMAIN,
+    PLATFORMS,
+    MESSAGE_IDS_TO_PROCESS,
+    MESSAGE_TYPES_TO_PROCESS,
+    POLL_REFRESH_MESSAGE,
+    EVENT_TYPE_CONFIGURATION,
+    START_LISTENING_MESSAGE,
+    SET_RTSP_STREAM_MESSAGE,
+    GET_PROPERTIES_MESSAGE,
+    GET_PROPERTIES_METADATA_MESSAGE,
+    SET_RTSP_STREAM_MESSAGE,
+)
 from .generated import DeviceType
 from .websocket import EufySecurityWebSocket
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
-START_LISTENING_MESSAGE = {"messageId": "start_listening", "command": "start_listening"}
-POLL_REFRESH_MESSAGE = {"messageId": "poll_refresh", "command": "driver.poll_refresh"}
-GET_PROPERTIES_METADATA_MESSAGE = {
-    "messageId": "get_properties_metadata",
-    "command": "{0}.get_properties_metadata",
-    "serialNumber": None,
-}
-GET_PROPERTIES_MESSAGE = {
-    "messageId": "get_properties",
-    "command": None,
-    "serialNumber": None,
-}
-SET_RTSP_STREAM = {
-    "messageId": "set_rtsp_stream_on",
-    "command": "device.set_rtsp_stream",
-    "serialNumber": None,
-    "value": None,
-}
-
-MESSAGE_IDS_TO_PROCESS = ["start_listening", "poll_refresh"]
-MESSAGE_TYPES_TO_PROCESS = ["result", "event"]
-PROPERTY_CHANGED_PROPERTY_NAME = "event_property_name"
-EVENT_TYPE_CONFIGURATION: dict = {
-    "property changed": {
-        "name": PROPERTY_CHANGED_PROPERTY_NAME,
-        "value": "value",
-        "is_cached": False,
-        "refresh_poll": False,
-    },
-    "person detected": {
-        "name": "personDetected",
-        "value": "state",
-        "is_cached": False,
-        "refresh_poll": True,
-    },
-    "motion detected": {
-        "name": "motionDetected",
-        "value": "state",
-        "is_cached": False,
-        "refresh_poll": True,
-    },
-    "got rtsp url": {
-        "name": "rtspUrl",
-        "value": "rtspUrl",
-        "is_cached": True,
-        "refresh_poll": False,
-    },
-}
 
 DELAY_FOR_POLLING = 2
 
@@ -90,11 +54,115 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         self.data = {}
         self.data["cache"] = {}
         self.data["data"] = {}
-        self.requires_poll_callback = None
-        self.initialized = False
+        self.start_listening_state = False
+        self.poll_refresing_state = False
 
-    async def on_open(self):
-        _LOGGER.debug(f"{DOMAIN} - on_open - executed")
+    async def initialize_ws(self) -> bool:
+        self.ws: EufySecurityWebSocket = EufySecurityWebSocket(
+            self.host,
+            self.port,
+            self.session,
+            self.on_open,
+            self.on_message,
+            self.on_close,
+            self.on_error,
+        )
+        await self.ws.set_ws()
+        await self.async_start_listening()
+        if await self.check_if_started_listening(True) == False:
+            _LOGGER.debug(f"{DOMAIN} - check_if_started_listening - returned False")
+            raise Exception("Start Listening was not completed in timely manner")
+
+    async def set_start_listening_state(self, value: bool):
+        lock = asyncio.Lock()
+        async with lock:
+            self.start_listening_state = value
+
+    async def check_if_started_listening(self, to_be_value: bool):
+        counter = 0
+        lock = asyncio.Lock()
+        _LOGGER.debug(
+            f"{DOMAIN} - check_if_started_listening - {self.start_listening_state} {to_be_value}"
+        )
+        async with lock:
+            while self.start_listening_state != to_be_value:
+                await asyncio.sleep(1)
+                counter = counter + 1
+                _LOGGER.debug(
+                    f"{DOMAIN} - check_if_started_listening - {self.start_listening_state} {to_be_value} {counter}"
+                )
+                if counter > 5:
+                    return False
+            return True
+
+    async def set_poll_refreshing_state(self, value: bool):
+        lock = asyncio.Lock()
+        async with lock:
+            self.poll_refresing_state = value
+
+    async def check_if_poll_refreshed(self, to_be_value: bool):
+        counter = 0
+        lock = asyncio.Lock()
+        async with lock:
+            while self.poll_refresing_state != to_be_value:
+                await asyncio.sleep(1)
+                counter = counter + 1
+                if counter > 5:
+                    return False
+            return True
+
+    async def on_message(self, message):
+        payload = message.json()
+        message_type: str = payload["type"]
+
+        if not message_type in MESSAGE_TYPES_TO_PROCESS:
+            return
+
+        message = payload[message_type]
+        if message_type == "result":
+            message_id: str = payload["messageId"]
+            if not message_id in MESSAGE_IDS_TO_PROCESS:
+                return
+
+            if message_id == "start_listening":
+                self.data["data"] = message["state"]
+                await self.set_start_listening_state(True)
+
+            if message_id == "poll_refresh":
+                await self.set_poll_refreshing_state(True)
+                return
+
+        if message_type == "event":
+            event_type = message["event"]
+            event_sources = message["source"] + "s"
+            event_serial_number = message["serialNumber"]
+            if not event_type in EVENT_TYPE_CONFIGURATION.keys():
+                return
+
+            event_property_name = message.get(
+                "name", EVENT_TYPE_CONFIGURATION[event_type]["name"]
+            )
+            event_property_value = message[
+                EVENT_TYPE_CONFIGURATION[event_type]["value"]
+            ]
+            event_data_is_cached = EVENT_TYPE_CONFIGURATION[event_type]["is_cached"]
+
+            if event_data_is_cached == True:
+                self.set_cache_value_for_property(
+                    event_sources,
+                    event_serial_number,
+                    event_property_name,
+                    event_property_value,
+                )
+            else:
+                self.set_data_value_for_property(
+                    event_sources,
+                    event_serial_number,
+                    event_property_name,
+                    event_property_value,
+                )
+
+        self.async_set_updated_data(self.data)
 
     def set_data_value_for_property(
         self,
@@ -105,7 +173,6 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     ):
         for entity in self.data["data"][sources]:
             if entity["serialNumber"] == serial_number:
-                # return entity[property_name]
                 entity[property_name] = value
                 _LOGGER.debug(
                     f"{DOMAIN} - set_event_for_entity -{serial_number} {property_name} {value}"
@@ -126,97 +193,23 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             self.data["cache"][serial_number] = {}
         self.data["cache"][serial_number][property_name] = value
 
-    async def on_message(self, message):
-        payload = message.json()
-        message_type: str = payload["type"]
-
-        if not message_type in MESSAGE_TYPES_TO_PROCESS:
-            return
-
-        message = payload[message_type]
-        if message_type == "result":
-            message_id: str = payload["messageId"]
-            if not message_id in MESSAGE_IDS_TO_PROCESS:
-                return
-
-            if message_id == "start_listening":
-                self.data["data"] = message["state"]
-                self.initialized = True
-
-            # if message_id == "poll_refresh":
-            #     await self.async_start_listening()
-
-        if message_type == "event":
-            event_type = message["event"]
-            event_sources = message["source"] + "s"
-            event_serial_number = message["serialNumber"]
-            if not event_type in EVENT_TYPE_CONFIGURATION.keys():
-                return
-
-            event_property_name = message.get(
-                "name", EVENT_TYPE_CONFIGURATION[event_type]["name"]
-            )
-            event_property_value = message[
-                EVENT_TYPE_CONFIGURATION[event_type]["value"]
-            ]
-            event_data_is_cached = EVENT_TYPE_CONFIGURATION[event_type]["is_cached"]
-            event_requires_poll = EVENT_TYPE_CONFIGURATION[event_type]["refresh_poll"]
-
-            if event_data_is_cached == True:
-                self.set_cache_value_for_property(
-                    event_sources,
-                    event_serial_number,
-                    event_property_name,
-                    event_property_value,
-                )
-            else:
-                self.set_data_value_for_property(
-                    event_sources,
-                    event_serial_number,
-                    event_property_name,
-                    event_property_value,
-                )
-            if event_requires_poll == True:
-                lock = asyncio.Lock()
-                _LOGGER.debug(f"{DOMAIN} - lock - {lock}")
-                if lock.locked() == False:
-                    _LOGGER.debug(f"{DOMAIN} - lock to acquire - {lock}")
-                    await lock.acquire()
-                    _LOGGER.debug(f"{DOMAIN} - fired poll refresh - {message}")
-                    if not self.requires_poll_callback is None:
-                        cancel_poll_callback = self.requires_poll_callback
-                        cancel_poll_callback()
-                    self.requires_poll_callback = async_call_later(
-                        hass=self.hass,
-                        delay=DELAY_FOR_POLLING,
-                        action=self.async_poll_refresh,
-                    )
-                    lock.release()
-        # self.async_start_listening()
-        self.async_set_updated_data(self.data)
+    async def on_open(self):
+        _LOGGER.debug(f"{DOMAIN} - on_open - executed")
 
     async def on_close(self):
-        _LOGGER.debug(f"{DOMAIN} - on_message - executed")
+        await self.set_start_listening_state(False)
+        _LOGGER.debug(f"{DOMAIN} - on_close - executed")
 
     async def on_error(self, message):
+        await self.set_start_listening_state(False)
         _LOGGER.debug(f"{DOMAIN} - on_error - executed - {message}")
-
-    async def initialize_ws(self):
-        self.ws: EufySecurityWebSocket = EufySecurityWebSocket(
-            self.host,
-            self.port,
-            self.session,
-            self.on_open,
-            self.on_message,
-            self.on_close,
-            self.on_error,
-        )
-        await self.ws.set_ws()
 
     async def _async_update_data(self):
         try:
-            # await self.async_start_listening()
-            await self.async_poll_refresh(None)
+            await self.async_poll_refresh()
+            if await self.check_if_poll_refreshed(True) == False:
+                _LOGGER.debug(f"{DOMAIN} - check_if_poll_refreshed - returned False")
+                raise Exception("Refresh Poll was not completed in timely manner")
             return self.data
         except Exception as exception:
             raise UpdateFailed() from exception
@@ -225,10 +218,11 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         await self.ws.send_message(message)
 
     async def async_start_listening(self):
+        await self.set_start_listening_state(False)
         await self.async_send_message(json.dumps(START_LISTENING_MESSAGE))
 
-    async def async_poll_refresh(self, executed_at):
-        self.requires_poll_callback = None
+    async def async_poll_refresh(self):
+        await self.set_poll_refreshing_state(False)
         await self.async_send_message(json.dumps(POLL_REFRESH_MESSAGE))
 
     async def async_get_properties_metadata_for_device(
@@ -252,7 +246,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         await self.async_send_message(message)
 
     async def async_set_rtsp(self, serial_no: str, value: bool):
-        message = SET_RTSP_STREAM
+        message = SET_RTSP_STREAM_MESSAGE
         message["serialNumber"] = serial_no
         message["value"] = value
         await self.async_send_message(json.dumps(message))

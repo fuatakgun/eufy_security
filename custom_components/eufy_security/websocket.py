@@ -35,6 +35,8 @@ class EufySecurityWebSocket:
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
 
     async def set_ws(self):
+        if not self.ws is None and not self.ws.closed:
+            self.ws.close()
         self.ws: aiohttp.ClientWebSocketResponse = await self.session.ws_connect(
             self.base, autoclose=False, autoping=True, heartbeat=10
         )

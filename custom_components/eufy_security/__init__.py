@@ -43,21 +43,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     )
 
     await coordinator.initialize_ws()
-    await coordinator.async_start_listening()
     await coordinator.async_refresh()
 
-    async def wait_for_initialized():
-        counter = 0
-        while coordinator.initialized == False:
-            await asyncio.sleep(1)
-            counter = counter + 1
-            if counter > 5:
-                raise ConfigEntryNotReady
-
-    await wait_for_initialized()
-
     hass.data[DOMAIN] = coordinator
-
     for platform in PLATFORMS:
         coordinator.platforms.append(platform)
         hass.async_add_job(
