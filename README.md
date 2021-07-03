@@ -5,7 +5,7 @@ Installation;
 
 In simple steps assuming you have docker support in your environment
 
-1- Follow steps 1/2/3 below and replace this step for 4/5/6/7 and continue from there/
+1- Follow steps 1/2/3 below and replace this step for 4/5/6/7 and continue from 8 (including)
 ```
 docker run -it
 -e USERNAME=email@address.com
