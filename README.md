@@ -3,7 +3,19 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 Installation;
  This integration relies on [eufy-security-ws](https://github.com/bropat/eufy-security-ws) to communicate with cloud and local endpoints which means that you need to setup a local npm server and you need to configure this custom integration to communicate with that npm server.
 
- In simple steps;
+In simple steps assuming you have docker support in your environment
+
+1- Follow steps 1/2/3 below and replace this step for 4/5/6/7 and continue from there/
+```
+docker run -it
+-e USERNAME=email@address.com
+-e PASSWORD=password_goes_here
+-v "$(PWD)"/data:/data
+-p 3000:3000
+bropat/eufy-security-ws:latest
+```
+
+In detailed steps;
  
  1- Download Node over here: https://nodejs.org/en/download/ - If you have Node-Red running already, it means you have this.
  
