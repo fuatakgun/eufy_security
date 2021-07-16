@@ -2,6 +2,8 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 Installation;
  This integration relies on [eufy-security-ws](https://github.com/bropat/eufy-security-ws) to communicate with cloud and local endpoints which means that you need to setup a local npm server and you need to configure this custom integration to communicate with that npm server.
+ 
+ Eufy Security WS is the main library that enables to communicate with eufy devices or servers directly but it is built for general purpose so it doesn't have direct connection with Home Assistant. With this integration, you can get connected your instance of Eufy Securty WS. So it means that you should be running WS in a docker or in a node instance first, then setup this integration to communicate with WS. When you are setting up WS, you will be setting up the desired port to listen on, when setting up the integration, you need to share the IP address of the docker/rasperry pi/machine and port you have used.
 
 In simple steps assuming you have docker support in your environment
 
