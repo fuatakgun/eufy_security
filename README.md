@@ -16,22 +16,28 @@ In detailed steps;
  
  1- Download Node over here: https://nodejs.org/en/download/ - If you have Node-Red running already, it means you have this.
  
- 2- Checkout latest codebase of eufy-security-ws: `git clone https://github.com/bropat/eufy-security-ws` - I have created a Pull Request into original codebase to get instant updates on thumbnails. Until it is merged, you can use my clone codebase.
+ 2- Checkout latest codebase of eufy-security-ws: 
  
- 3- Previous command will create a folder named as eufy-security-ws, now change your directory into it`cd eufy-security-ws`
+ `git clone https://github.com/bropat/eufy-security-ws`
  
- 4- Create a file here named as `config.json` and edit it using this `nano config.json`
+ 3- Previous command will create a folder named as eufy-security-ws, now change your directory into it
  
- 5- Fill this file with these format `{"username": "email@address.com", "password": "password_goes_here"}`
+ ```cd eufy-security-ws```
+ 
+ 4- Create a file here named as `config.json` and edit it using this 
+ ```nano config.json```
+ 
+ 5- Fill this file with these format 
+ ```{"username": "email@address.com", "password": "password_goes_here"}```
  
  6- Save and exit using Ctrl+X and Yes
  
  7- Execute these commands
-    ```
-    npm install
-    npm install typescript ts-node
-    npx ts-node .\src\bin\server.ts
-    ```
+```
+npm install
+npm install typescript ts-node
+npx ts-node .\src\bin\server.ts
+```
 ![Running](https://github.com/fuatakgun/eufy_security/blob/master/eufy0.PNG?raw=true)
     
 8- Your local eufy security server should be up and running in port 3000.
