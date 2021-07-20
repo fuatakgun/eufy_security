@@ -42,7 +42,12 @@ npx ts-node .\src\bin\server.ts
     
 8- Your local eufy security server should be up and running in port 3000.
 
-9- Install home assistant integration and set eufy security server's host name and port using UI.
+9- Install home assistant integration following these steps,
+- add a new repository to HACS as `https://github.com/fuatakgun/eufy_security`
+- install the integration over hacs
+- restart home assistant and visit Integrations page under Configuration of Home Assistant
+- select Eufy Security integration to install
+- set eufy security server's host name and port using UI.
 
 10- Raise your issues in Github. 
 
