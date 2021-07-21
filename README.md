@@ -63,21 +63,4 @@ Please follow screenshots below. In summary;
 
 ![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
 
-
-
-
 Raise your issues in Github. 
-
-![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy1.PNG?raw=true)
-
-![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy2.PNG?raw=true)
-
-![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy3.PNG?raw=true)
-
-![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy4.PNG?raw=true)
-
-![Installation](https://github.com/fuatakgun/eufy_security/blob/master/eufy5.PNG?raw=true)
-
-![Installation](https://github.com/fuatakgun/eufy_security/blob/master/stream.PNG?raw=true)
-
-![Installation](https://github.com/fuatakgun/eufy_security/blob/master/motion%20detected.PNG?raw=true)
