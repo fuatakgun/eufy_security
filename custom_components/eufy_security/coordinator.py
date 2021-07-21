@@ -30,6 +30,7 @@ from .websocket import EufySecurityWebSocket
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 DELAY_FOR_POLLING = 2
+BUFFER_BASED_EVENTS = ["video_data", "audio_data"]
 
 
 class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
@@ -156,19 +157,24 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                     event_property,
                     event_value,
                 )
-                if event_property in ["video_data", "audio_data"]:
-                    self.handle_queue_data(serial_number, event_property, event_value)
+                if event_property in BUFFER_BASED_EVENTS:
+                    self.handle_queue_data(
+                        serial_number, event_property, event_value, message
+                    )
+                else:
+                    self.async_set_updated_data(self.data)
             else:
                 self.set_data_value_for_property(
-                    event_sources,
-                    serial_number,
-                    event_property,
-                    event_value,
+                    event_sources, serial_number, event_property, event_value
                 )
+                self.async_set_updated_data(self.data)
+        else:
+            self.async_set_updated_data(self.data)
 
-        self.async_set_updated_data(self.data)
-
-    def handle_queue_data(self, serial_number, name, value):
+    def handle_queue_data(self, serial_number, name, value, message):
+        self.data["cache"][serial_number]["video_codec"] = message["metadata"][
+            "videoCodec"
+        ].lower()
         self.data["cache"][serial_number]["queue"].append(value)
         self.data["cache"][serial_number][name] = None
 
@@ -203,13 +209,10 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         _LOGGER.debug(f"{DOMAIN} - on_open - executed")
 
     async def on_close(self):
-        await self.set_start_listening_state(False)
         _LOGGER.debug(f"{DOMAIN} - on_close - executed")
-        await self.initialize_ws()
-        await self.async_refresh()
+        await self.set_start_listening_state(False)
 
     async def on_error(self, message):
-        await self.set_start_listening_state(False)
         _LOGGER.debug(f"{DOMAIN} - on_error - executed - {message}")
 
     async def _async_update_data(self):
@@ -223,6 +226,9 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             raise UpdateFailed() from exception
 
     async def async_send_message(self, message):
+        if self.ws.ws is None or self.ws.ws.closed == True:
+            await self.set_start_listening_state(False)
+            await self.initialize_ws()
         await self.ws.send_message(message)
 
     async def async_start_listening(self):

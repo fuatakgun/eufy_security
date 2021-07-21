@@ -35,12 +35,23 @@ class EufySecurityWebSocket:
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
 
     async def set_ws(self):
-        self.ws: aiohttp.ClientWebSocketResponse = await self.session.ws_connect(
-            self.base, autoclose=False, autoping=True, heartbeat=60
-        )
-        task = self.loop.create_task(self.process_messages())
-        task.add_done_callback(self.on_close)
-        await self.async_on_open()
+        while True:
+            if self.ws is None or self.ws.closed == True:
+                _LOGGER.debug(f"{DOMAIN} - set_ws - connect")
+                try:
+                    self.ws: aiohttp.ClientWebSocketResponse = (
+                        await self.session.ws_connect(
+                            self.base, autoclose=False, autoping=True, heartbeat=60
+                        )
+                    )
+                    task = self.loop.create_task(self.process_messages())
+                    task.add_done_callback(self.on_close)
+                    await self.async_on_open()
+                except:
+                    pass
+            else:
+                break
+            await asyncio.sleep(5)
 
     async def async_on_open(self) -> None:
         if not self.ws.closed:
@@ -78,12 +89,13 @@ class EufySecurityWebSocket:
 
     def on_close(self, future="") -> None:
         _LOGGER.debug(f"{DOMAIN} - WebSocket Connection Closed. %s", future)
-        self.ws = None
+        _LOGGER.debug(
+            f"{DOMAIN} - WebSocket Connection Closed. %s", self.close_callback
+        )
         if self.close_callback is not None:
-            asyncio.run_coroutine_threadsafe(self.close_callback(), self.loop).result()
+            self.ws = None
+            asyncio.run_coroutine_threadsafe(self.close_callback(), self.loop)
 
     async def send_message(self, message):
-        if self.ws is None or self.ws.closed == True:
-            await self.set_ws()
         _LOGGER.debug(f"{DOMAIN} - WebSocket message sent. %s", message)
         await self.ws.send_str(message)
