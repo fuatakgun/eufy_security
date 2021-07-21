@@ -1,0 +1,20 @@
+send_message:
+  name: Send Message
+  description: Send a JSON message to Web Socket
+  fields:
+    message:
+      name: Message
+      description: Raw message in JSON format
+      required: true
+start_livestream:
+  name: Start Live Stream
+  description: Send start live stream command to camera
+  target:
+    entity:
+      domain: camera
+stop_livestream:
+  name: Stop Live Stream
+  description: Send stop live stream command to camera
+  target:
+    entity:
+      domain: camera

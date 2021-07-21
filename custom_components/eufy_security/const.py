@@ -3,7 +3,7 @@ from enum import Enum
 # Base component constants
 NAME = "Eufy Security"
 DOMAIN = "eufy_security"
-VERSION = "0.0.0"
+VERSION = "0.0.1"
 
 # Platforms
 BINARY_SENSOR = "binary_sensor"
@@ -16,7 +16,7 @@ CONF_HOST = "host"
 CONF_PORT = "port"
 
 # Update all in every hour
-DEFAULT_SYNC_INTERVAL = 60  # seconds
+DEFAULT_SYNC_INTERVAL = 600  # seconds
 
 START_LISTENING_MESSAGE = {"messageId": "start_listening", "command": "start_listening"}
 POLL_REFRESH_MESSAGE = {"messageId": "poll_refresh", "command": "driver.poll_refresh"}

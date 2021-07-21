@@ -27,27 +27,7 @@ async def async_setup(hass: HomeAssistant, config: Config):
         _LOGGER.debug(f"{DOMAIN} - end_message - message: {message}")
         await coordinator.async_send_message(message)
 
-    async def async_handle_start_livestream(call):
-        coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
-        _LOGGER.debug(f"{DOMAIN} - start_livestream - call.data: {call.data}")
-        serial_number = call.data["serialNumber"]
-        _LOGGER.debug(f"{DOMAIN} - start_livestream - serial_number: {serial_number}")
-        await coordinator.async_set_livestream(serial_number, "start")
-
-    async def async_handle_stop_livestream(call):
-        coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
-        _LOGGER.debug(f"{DOMAIN} - stop_livestream - call.data: {call.data}")
-        serial_number = call.data["serialNumber"]
-        _LOGGER.debug(f"{DOMAIN} - stop_livestream - serial_number: {serial_number}")
-        await coordinator.async_set_livestream(serial_number, "stop")
-
     hass.services.async_register(DOMAIN, "send_message", async_handle_send_message)
-    hass.services.async_register(
-        DOMAIN, "start_livestream", async_handle_start_livestream
-    )
-    hass.services.async_register(
-        DOMAIN, "stop_livestream", async_handle_stop_livestream
-    )
     return True
 
 
