@@ -74,7 +74,7 @@ class EufySecurityBinarySensor(EufySecurityEntity):
 
     @property
     def state(self):
-        return self.entity.get(self.key, None)
+        return self.entity.get(self.key, "missing_state_identifier")
 
     @property
     def icon(self):
@@ -95,3 +95,7 @@ class EufySecurityBinarySensor(EufySecurityEntity):
     @property
     def unique_id(self):
         return self.id
+
+    @property
+    def state_attributes(self):
+        return self.entity

@@ -83,7 +83,7 @@ class EufySecuritySensor(EufySecurityEntity):
 
     @property
     def state(self):
-        return self.entity[self.key]
+        return self.entity.get(self.key, "missing_state_identifier")
 
     @property
     def unit_of_measurement(self):
@@ -103,8 +103,12 @@ class EufySecuritySensor(EufySecurityEntity):
 
     @property
     def id(self):
-        return f"{DOMAIN}_{self.entity['serialNumber']}_{self._id}_sensor"
+        return f"{DOMAIN}_{self.entity.get('serialNumber','missing_serial_number')}_{self._id}_sensor"
 
     @property
     def unique_id(self):
         return self.id
+
+    @property
+    def state_attributes(self):
+        return self.entity

@@ -272,14 +272,15 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
             await asyncio.sleep(1)
 
     def camera_image(self) -> bytes:
-        if self.camera_picture_url != self.entity["pictureUrl"]:
-            _LOGGER.debug(f"{DOMAIN} - camera_image {self.entity['pictureUrl']}")
-            response = requests.get(self.entity["pictureUrl"])
+        current_picture_url = self.entity.get("pictureUrl", "")
+        if self.camera_picture_url != current_picture_url:
+            _LOGGER.debug(f"{DOMAIN} - camera_image {current_picture_url}")
+            response = requests.get(current_picture_url)
             _LOGGER.debug(
                 f"{DOMAIN} - camera_image -{response.status_code} - {len(response.content)}"
             )
             if response.status_code == 200:
-                self.camera_picture_url = self.entity["pictureUrl"]
+                self.camera_picture_url = current_picture_url
                 self.camera_picture_bytes = response.content
 
         return self.camera_picture_bytes
