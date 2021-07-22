@@ -209,9 +209,10 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
     async def get_ffmpeg(self):
         ffmpeg_command_instance = FFMPEG_COMMAND.copy()
         input_file_index = ffmpeg_command_instance.index("-i")
-        ffmpeg_command_instance[input_file_index - 1] = self.cached_entity[
-            "video_codec"
-        ]
+        video_codec = self.cached_entity["video_codec"]
+        if video_codec == "h265":
+            video_codec = "hevc"
+        ffmpeg_command_instance[input_file_index - 1] = video_codec
 
         if self.ffmpeg.is_running == False:
             _LOGGER.debug(f"{DOMAIN} - starting ffmpeg")
