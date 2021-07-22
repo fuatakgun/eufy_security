@@ -3,7 +3,11 @@ import logging
 from decimal import Decimal
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.components.binary_sensor import DEVICE_CLASS_MOTION
+from homeassistant.components.binary_sensor import (
+    DEVICE_CLASS_MOTION,
+    DEVICE_CLASS_SOUND,
+    DEVICE_CLASS_DOOR,
+)
 
 from .const import DOMAIN
 from .entity import EufySecurityEntity
@@ -29,6 +33,34 @@ async def async_setup_entry(hass, entry, async_add_devices):
             "personDetected",
             None,
             DEVICE_CLASS_MOTION,
+        ),
+        (
+            "pet_detector_sensor",
+            "Pet Detector Sensor",
+            "petDetected",
+            None,
+            DEVICE_CLASS_MOTION,
+        ),
+        (
+            "sound_detector_sensor",
+            "Sound Detector Sensor",
+            "soundDetected",
+            None,
+            DEVICE_CLASS_SOUND,
+        ),
+        (
+            "crying_detector_sensor",
+            "Crying Detector Sensor",
+            "cryingDetected",
+            None,
+            DEVICE_CLASS_SOUND,
+        ),
+        (
+            "sensor_open",
+            "Sensor Open",
+            "sensorOpen",
+            None,
+            DEVICE_CLASS_DOOR,
         ),
         (
             "ringing_sensor",
