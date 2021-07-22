@@ -67,7 +67,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
 
     entities = []
-    for entity in coordinator.data["data"]["devices"]:
+    for entity in coordinator.state["devices"]:
         camera: EufySecurityCamera = EufySecurityCamera(
             hass, coordinator, entry, entity
         )
@@ -82,6 +82,8 @@ async def async_setup_entry(hass, entry, async_add_devices):
     platform.async_register_entity_service(
         "stop_livestream", {}, "async_stop_livestream"
     )
+    platform.async_register_entity_service("start_rtsp", {}, "async_start_rtsp")
+    platform.async_register_entity_service("stop_rtsp", {}, "async_stop_rtsp")
 
 
 class EufySecurityCamera(EufySecurityEntity, Camera):
@@ -103,14 +105,23 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         self.image_frame = ImageFrame(self.ffmpeg_binary)
         self.serial_number = self.entity["serialNumber"]
         self.ffmpeg_output = f"{DOMAIN}-{self.serial_number}.m3u8"
-        self.coordinator.data["cache"][self.serial_number] = {}
-        self.cached_entity = self.coordinator.data["cache"][self.serial_number]
+
+        self.coordinator.cache[self.serial_number] = {}
+        self.cached_entity = self.coordinator.cache[self.serial_number]
+        self.properties = self.coordinator.properties[self.serial_number]
+
         self.cached_entity["queue"] = []
         self.cached_entity["video_codec"] = None
         self.cached_entity["rtspUrl"] = None
         self.cached_entity["liveStreamingStatus"] = None
         self.live_streaming_status = None
         self.is_streaming = False
+
+        self.start_stream_function = self.async_start_livestream
+        self.stop_stream_function = self.async_stop_livestream
+        if not self.entity.get("rtspStream", None) is None:
+            self.start_stream_function = self.async_start_rtsp
+            self.stop_stream_function = self.async_stop_rtsp
 
     def on_close(self, future="") -> None:
         self.ffmpeg.process.communicate()
@@ -121,7 +132,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         prev_is_streaming = self.is_streaming
         self.live_streaming_status = self.cached_entity["liveStreamingStatus"]
         if (
-            self.entity["rtspStream"] == True
+            self.entity.get("rtspStream", False) == True
             or self.live_streaming_status == STATE_LIVE_STREAMING
         ):
             self.is_streaming = True
@@ -273,34 +284,28 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         return self.camera_picture_bytes
 
     def turn_on(self) -> None:
-        if self.entity.get("rtspStream", None) is None:
-            asyncio.run_coroutine_threadsafe(
-                self.coordinator.async_set_livestream(self.serial_number, "start"),
-                self.loop,
-            ).result()
-        else:
-            asyncio.run_coroutine_threadsafe(
-                self.coordinator.async_set_rtsp(self.serial_number, True),
-                self.loop,
-            ).result()
+        asyncio.run_coroutine_threadsafe(
+            self.start_stream_function(),
+            self.loop,
+        ).result()
 
     def turn_off(self) -> None:
-        if self.entity.get("rtspStream", None) is None:
-            asyncio.run_coroutine_threadsafe(
-                self.coordinator.async_set_livestream(self.serial_number, "stop"),
-                self.loop,
-            ).result()
-        else:
-            asyncio.run_coroutine_threadsafe(
-                self.coordinator.async_set_rtsp(self.serial_number, False),
-                self.loop,
-            ).result()
+        asyncio.run_coroutine_threadsafe(
+            self.stop_stream_function(),
+            self.loop,
+        ).result()
 
     async def async_start_livestream(self) -> None:
         await self.coordinator.async_set_livestream(self.serial_number, "start")
 
     async def async_stop_livestream(self) -> None:
         await self.coordinator.async_set_livestream(self.serial_number, "stop")
+
+    async def async_start_rtsp(self) -> None:
+        await self.coordinator.async_set_rtsp(self.serial_number, True)
+
+    async def async_stop_rtsp(self) -> None:
+        await self.coordinator.async_set_rtsp(self.serial_number, False)
 
     @property
     def id(self):
@@ -336,8 +341,8 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         attrs["data"] = self.entity
         attrs["live_streaming_status"] = self.cached_entity["liveStreamingStatus"]
         attrs["queue_size"] = len(self.cached_entity["queue"])
-
         attrs["rtsp_url"] = self.cached_entity["rtspUrl"]
+        attrs["properties"] = self.properties
 
         if self.model:
             attrs["model_name"] = self.model

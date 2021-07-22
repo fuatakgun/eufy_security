@@ -27,7 +27,7 @@ GET_PROPERTIES_METADATA_MESSAGE = {
 }
 GET_PROPERTIES_MESSAGE = {
     "messageId": "get_properties",
-    "command": None,
+    "command": "{0}.get_properties",
     "serialNumber": None,
 }
 SET_RTSP_STREAM_MESSAGE = {
@@ -42,7 +42,10 @@ SET_LIVESTREAM_MESSAGE = {
     "serialNumber": None,
 }
 
-MESSAGE_IDS_TO_PROCESS = ["start_listening", "poll_refresh"]
+MESSAGE_IDS_TO_PROCESS = [
+    START_LISTENING_MESSAGE["messageId"],
+    GET_PROPERTIES_MESSAGE["messageId"],
+]
 MESSAGE_TYPES_TO_PROCESS = ["result", "event"]
 PROPERTY_CHANGED_PROPERTY_NAME = "event_property_name"
 EVENT_CONFIGURATION: dict = {

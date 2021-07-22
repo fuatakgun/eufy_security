@@ -65,9 +65,10 @@ class EufySecurityWebSocket:
                 await self.on_message(msg)
             except Exception as ex:  # pylint: disable=broad-except
                 _LOGGER.error(
-                    f"{DOMAIN} - Exception - process_messages : %s - traceback: %s",
+                    f"{DOMAIN} - Exception - process_messages: %s - traceback: %s - message: %s",
                     ex,
                     traceback.format_exc(),
+                    msg,
                 )
             if counter % 100 == 0:
                 counter = 1
@@ -76,7 +77,7 @@ class EufySecurityWebSocket:
                 counter = counter + 1
 
     async def on_message(self, message):
-        # _LOGGER.debug(f"{DOMAIN} - WebSocket message received {message[0:150]}")
+        _LOGGER.debug(f"{DOMAIN} - WebSocket message received {message}")
         if self.message_callback is not None:
             await self.message_callback(message)
 

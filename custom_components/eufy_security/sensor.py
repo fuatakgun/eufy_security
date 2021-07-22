@@ -39,7 +39,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     ]
 
     entities = []
-    for entity in coordinator.data["data"]["devices"]:
+    for entity in coordinator.state["devices"]:
         sensors = [
             EufySecuritySensor(
                 coordinator,

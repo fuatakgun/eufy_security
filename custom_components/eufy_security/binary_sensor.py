@@ -33,7 +33,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     ]
 
     entities = []
-    for entity in coordinator.data["data"]["devices"]:
+    for entity in coordinator.state["devices"]:
         sensors = [
             EufySecurityBinarySensor(
                 coordinator,
@@ -74,7 +74,7 @@ class EufySecurityBinarySensor(EufySecurityEntity):
 
     @property
     def state(self):
-        return self.entity[self.key]
+        return self.entity.get(self.key, None)
 
     @property
     def icon(self):
@@ -90,7 +90,7 @@ class EufySecurityBinarySensor(EufySecurityEntity):
 
     @property
     def id(self):
-        return f"{DOMAIN}_{self.entity['serialNumber']}_{self._id}_binary_sensor"
+        return f"{DOMAIN}_{self.entity.get('serialNumber','missing_serial_number')}_{self._id}_binary_sensor"
 
     @property
     def unique_id(self):

@@ -55,9 +55,11 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         self.platforms = []
         self.data = {}
         self.data["cache"] = {}
-        self.data["data"] = {}
-        self.start_listening_state = False
-        self.poll_refresing_state = False
+        self.cache = self.data["cache"]
+        self.data["state"] = {}
+        self.state = self.data["state"]
+        self.data["properties"] = {}
+        self.properties = self.data["properties"]
 
     async def initialize_ws(self) -> bool:
         self.ws: EufySecurityWebSocket = EufySecurityWebSocket(
@@ -75,48 +77,37 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug(f"{DOMAIN} - check_if_started_listening - returned False")
             raise Exception("Start Listening was not completed in timely manner")
 
-    async def set_start_listening_state(self, value: bool):
-        lock = asyncio.Lock()
-        async with lock:
-            self.start_listening_state = value
-
     async def check_if_started_listening(self):
-        counter = 0
-        lock = asyncio.Lock()
-        _LOGGER.debug(
-            f"{DOMAIN} - check_if_started_listening - {self.start_listening_state}"
-        )
-        async with lock:
-            while self.start_listening_state != True:
+        _LOGGER.debug(f"{DOMAIN} - check_if_started_listening")
+        for counter in range(0, 5):
+            if self.state.get("devices", None) is None:
+                _LOGGER.debug(f"{DOMAIN} - check_if_started_listening - {counter}")
                 await asyncio.sleep(1)
-                counter = counter + 1
-                _LOGGER.debug(
-                    f"{DOMAIN} - check_if_started_listening - {self.start_listening_state} {counter}"
-                )
-                if counter > 5:
-                    return False
-            return True
+            else:
+                return await self.get_device_properties()
+        return False
 
-    async def set_poll_refreshing_state(self, value: bool):
-        lock = asyncio.Lock()
-        async with lock:
-            self.poll_refresing_state = value
-
-    async def check_if_poll_refreshed(self, to_be_value: bool):
-        counter = 0
-        lock = asyncio.Lock()
-        async with lock:
-            while self.poll_refresing_state != to_be_value:
+    async def get_device_properties(self):
+        _LOGGER.debug(f"{DOMAIN} - get_device_properties")
+        for counter in range(0, 5):
+            missing_exist = False
+            for device in self.state["devices"]:
+                serial_number = device["serialNumber"]
+                if self.properties.get(serial_number, None) is None:
+                    _LOGGER.debug(
+                        f"{DOMAIN} - device missing - {serial_number} - {counter}"
+                    )
+                    missing_exist = True
+            if missing_exist == True:
                 await asyncio.sleep(1)
-                counter = counter + 1
-                if counter > 5:
-                    return False
-            return True
+            else:
+                return True
+        return False
 
     async def on_message(self, message):
         payload = message.json()
         message_type: str = payload["type"]
-
+        _LOGGER.debug(f"{DOMAIN} - on_message message_type - {message_type}")
         if not message_type in MESSAGE_TYPES_TO_PROCESS:
             return
         try:
@@ -126,16 +117,20 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
         if message_type == "result":
             message_id: str = payload["messageId"]
+            _LOGGER.debug(f"{DOMAIN} - on_message result message_id - {message_id}")
             if not message_id in MESSAGE_IDS_TO_PROCESS:
                 return
 
-            if message_id == "start_listening":
-                self.data["data"] = message["state"]
-                await self.set_start_listening_state(True)
+            if message_id == START_LISTENING_MESSAGE["messageId"]:
+                _LOGGER.debug(f"{DOMAIN} - on_message start_listening")
+                self.state = message["state"]
+                for device in self.state["devices"]:
+                    await self.async_get_properties_for_device(device["serialNumber"])
 
-            if message_id == "poll_refresh":
-                await self.set_poll_refreshing_state(True)
-                return
+            if message_id == GET_PROPERTIES_MESSAGE["messageId"]:
+                result = message["properties"]
+                serial_number = result["serialNumber"]["value"]
+                self.properties[serial_number] = result
 
         if message_type == "event":
             event_type = message["event"]
@@ -185,7 +180,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         property_name: str,
         value: str,
     ):
-        for entity in self.data["data"][sources]:
+        for entity in self.state[sources]:
             if entity["serialNumber"] == serial_number:
                 entity[property_name] = value
                 _LOGGER.debug(
@@ -210,54 +205,38 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def on_close(self):
         _LOGGER.debug(f"{DOMAIN} - on_close - executed")
-        await self.set_start_listening_state(False)
 
     async def on_error(self, message):
         _LOGGER.debug(f"{DOMAIN} - on_error - executed - {message}")
 
     async def _async_update_data(self):
         try:
-            await self.async_poll_refresh()
-            if await self.check_if_poll_refreshed(True) == False:
-                _LOGGER.debug(f"{DOMAIN} - check_if_poll_refreshed - returned False")
-                raise Exception("Refresh Poll was not completed in timely manner")
+            await self.async_send_message(json.dumps(POLL_REFRESH_MESSAGE))
             return self.data
         except Exception as exception:
             raise UpdateFailed() from exception
 
     async def async_send_message(self, message):
         if self.ws.ws is None or self.ws.ws.closed == True:
-            await self.set_start_listening_state(False)
             await self.initialize_ws()
         await self.ws.send_message(message)
 
     async def async_start_listening(self):
-        await self.set_start_listening_state(False)
         await self.async_send_message(json.dumps(START_LISTENING_MESSAGE))
-
-    async def async_poll_refresh(self):
-        await self.set_poll_refreshing_state(False)
-        await self.async_send_message(json.dumps(POLL_REFRESH_MESSAGE))
 
     async def async_get_properties_metadata_for_device(
         self, device_type: DeviceType, serial_no: str
     ):
         message = GET_PROPERTIES_METADATA_MESSAGE.copy()
-        message["command"] = message["command"].format(
-            self.get_device_type_name(device_type)
-        )
+        message["command"] = message["command"].format("device")
         message["serialNumber"] = serial_no
-        await self.async_send_message(message)
+        await self.async_send_message(json.dumps(message))
 
-    async def async_get_properties_for_device(
-        self, device_type: DeviceType, serial_no: str
-    ):
+    async def async_get_properties_for_device(self, serial_no: str):
         message = GET_PROPERTIES_MESSAGE.copy()
-        message["command"] = message["command"].format(
-            self.get_device_type_name(device_type)
-        )
+        message["command"] = message["command"].format("device")
         message["serialNumber"] = serial_no
-        await self.async_send_message(message)
+        await self.async_send_message(json.dumps(message))
 
     async def async_set_rtsp(self, serial_no: str, value: bool):
         message = SET_RTSP_STREAM_MESSAGE.copy()
@@ -270,10 +249,3 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         message["serialNumber"] = serial_no
         message["command"] = message["command"].replace("{state}", value)
         await self.async_send_message(json.dumps(message))
-
-    def get_device_type_name(
-        self, device_type: DeviceType
-    ):  # pylint: disable=no-member
-        if device_type == DeviceType.STATION:
-            return "station"
-        return "device"
