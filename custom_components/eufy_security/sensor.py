@@ -40,21 +40,21 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
     entities = []
     for entity in coordinator.state["devices"]:
-        sensors = [
-            EufySecuritySensor(
-                coordinator,
-                entry,
-                entity,
-                id,
-                description,
-                key,
-                unit,
-                icon,
-                device_class,
-            )
-            for id, description, key, unit, icon, device_class in INSTRUMENTS
-        ]
-        entities.extend(sensors)
+        for id, description, key, unit, icon, device_class in INSTRUMENTS:
+            if not entity.get(key, None) is None:
+                entities.append(
+                    EufySecuritySensor(
+                        coordinator,
+                        entry,
+                        entity,
+                        id,
+                        description,
+                        key,
+                        unit,
+                        icon,
+                        device_class,
+                    )
+                )
 
     async_add_devices(entities, True)
 
@@ -83,7 +83,7 @@ class EufySecuritySensor(EufySecurityEntity):
 
     @property
     def state(self):
-        return self.entity.get(self.key, "missing_state_identifier")
+        return self.entity.get(self.key)
 
     @property
     def unit_of_measurement(self):

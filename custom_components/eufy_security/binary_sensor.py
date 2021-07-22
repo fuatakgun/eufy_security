@@ -30,24 +30,31 @@ async def async_setup_entry(hass, entry, async_add_devices):
             None,
             DEVICE_CLASS_MOTION,
         ),
+        (
+            "ringing_sensor",
+            "Ringing Sensor",
+            "ringing",
+            "mdi:bell-ring",
+            None,
+        ),
     ]
 
     entities = []
     for entity in coordinator.state["devices"]:
-        sensors = [
-            EufySecurityBinarySensor(
-                coordinator,
-                entry,
-                entity,
-                id,
-                description,
-                key,
-                icon,
-                device_class,
-            )
-            for id, description, key, icon, device_class in INSTRUMENTS
-        ]
-        entities.extend(sensors)
+        for id, description, key, icon, device_class in INSTRUMENTS:
+            if not entity.get(key, None) is None:
+                entities.append(
+                    EufySecurityBinarySensor(
+                        coordinator,
+                        entry,
+                        entity,
+                        id,
+                        description,
+                        key,
+                        icon,
+                        device_class,
+                    )
+                )
 
     async_add_devices(entities, True)
 
@@ -74,7 +81,7 @@ class EufySecurityBinarySensor(EufySecurityEntity):
 
     @property
     def state(self):
-        return self.entity.get(self.key, "missing_state_identifier")
+        return self.entity.get(self.key)
 
     @property
     def icon(self):

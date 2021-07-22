@@ -20,6 +20,7 @@ from homeassistant.helpers import config_validation as cv, entity_platform, serv
 from .const import DOMAIN, NAME
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
+from .generated import DeviceType
 
 STATE_RECORDING = "recording"
 STATE_STREAMING = "streaming"
@@ -152,13 +153,13 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
         if self.is_streaming:
             return STATE_STREAMING
-        elif self.entity["motionDetected"]:
+        elif self.entity.get("motionDetected", False):
             return STATE_MOTION_DETECTED
-        elif self.entity["personDetected"]:
+        elif self.entity.get("personDetected", False):
             return STATE_PERSON_DETECTED
         else:
             if not self.entity.get("battery", None) is None:
-                return f"{STATE_IDLE} - {self.entity.get('battery')} %"
+                return f"{STATE_IDLE} - {self.entity['battery']} %"
             else:
                 return STATE_IDLE
 
@@ -335,7 +336,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
     @property
     def motion_detection_enabled(self):
-        return self.entity["motionDetection"]
+        return self.entity.get("motionDetection", False)
 
     @property
     def state_attributes(self):

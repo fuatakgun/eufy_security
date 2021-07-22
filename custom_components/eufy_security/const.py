@@ -1,5 +1,15 @@
 from enum import Enum
 
+from homeassistant.const import (
+    PERCENTAGE,
+    DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_SIGNAL_STRENGTH,
+)
+from homeassistant.components.binary_sensor import DEVICE_CLASS_MOTION
+
+from .generated import DeviceType
+
+
 # Base component constants
 NAME = "Eufy Security"
 DOMAIN = "eufy_security"
@@ -89,4 +99,100 @@ EVENT_CONFIGURATION: dict = {
         "value": "buffer",
         "is_cached": True,
     },
+}
+
+CAMERA_PRESET1_SENSORS = [
+    "battery",
+    "wifiRSSI",
+    "motion_sensor",
+    "person_detector_sensor",
+]
+CAMERA_PRESET1_PROPERTIES = [
+    "rtspStream",
+    "pictureUrl",
+]
+
+CAMERA_PRESET2_SENSORS = ["motion_sensor"]
+CAMERA_PRESET2_PROPERTIES = ["pictureUrl"]
+
+DOORBELL_PRESET1_SENSORS = ["motion_sensor", "person_detector_sensor", "ringing_sensor"]
+DOORBELL_PRESET1_PROPERTIES = ["pictureUrl"]
+
+DOORBELL_BATTERY_PRESET1_SENSORS = [
+    "battery",
+    "wifiRSSI",
+    "motion_sensor",
+    "person_detector_sensor",
+    "ringing_sensor",
+]
+
+DOORBELL_BATTERY_PRESET1_PROPERTIES = ["pictureUrl"]
+
+# TYPES_TO_SENSORS = {
+#     DeviceType.CAMERA_2: CAMERA_PRESET1_SENSORS,
+#     DeviceType.CAMERA_2PRO: CAMERA_PRESET1_SENSORS,
+#     DeviceType.CAMERA_2C: CAMERA_PRESET1_SENSORS,
+#     DeviceType.CAMERA_2CPRO: CAMERA_PRESET1_SENSORS,
+#     DeviceType.CAMERA: CAMERA_PRESET2_SENSORS,
+#     DeviceType.CAMERA_E: CAMERA_PRESET2_SENSORS,
+#     DeviceType.DOORBELL: DOORBELL_PRESET1_SENSORS,
+#     DeviceType.BATTERY_DOORBELL: DOORBELL_BATTERY_PRESET1_SENSORS,
+#     DeviceType.BATTERY_DOORBELL_2: DOORBELL_BATTERY_PRESET1_SENSORS,
+# }
+# TYPES_TO_PROPERTIES = {
+#     DeviceType.CAMERA_2: CAMERA_PRESET1_PROPERTIES,
+#     DeviceType.CAMERA_2PRO: CAMERA_PRESET1_PROPERTIES,
+#     DeviceType.CAMERA_2C: CAMERA_PRESET1_PROPERTIES,
+#     DeviceType.CAMERA_2CPRO: CAMERA_PRESET1_PROPERTIES,
+#     DeviceType.CAMERA: CAMERA_PRESET2_PROPERTIES,
+#     DeviceType.CAMERA_E: CAMERA_PRESET2_PROPERTIES,
+#     DeviceType.DOORBELL: DOORBELL_PRESET1_PROPERTIES,
+#     DeviceType.BATTERY_DOORBELL: DOORBELL_BATTERY_PRESET1_PROPERTIES,
+#     DeviceType.BATTERY_DOORBELL_2: DOORBELL_BATTERY_PRESET1_PROPERTIES,
+# }
+
+
+SENSORS = {
+    "battery": [
+        SENSOR,
+        "battery",
+        "Battery",
+        "battery",
+        PERCENTAGE,
+        None,
+        DEVICE_CLASS_BATTERY,
+    ],
+    "wifiRSSI": [
+        SENSOR,
+        "wifiRSSI",
+        "Wifi RSSI",
+        "wifiRSSI",
+        None,
+        None,
+        DEVICE_CLASS_SIGNAL_STRENGTH,
+    ],
+    "motion_sensor": [
+        BINARY_SENSOR,
+        "motion_sensor",
+        "Motion Sensor",
+        "motionDetected",
+        None,
+        DEVICE_CLASS_MOTION,
+    ],
+    "person_detector_sensor": [
+        BINARY_SENSOR,
+        "person_detector_sensor",
+        "Person Detector Sensor",
+        "personDetected",
+        None,
+        DEVICE_CLASS_MOTION,
+    ],
+    "ringing_sensor": [
+        BINARY_SENSOR,
+        "ringing_sensor",
+        "Ringing Sensor",
+        "ringing",
+        "mdi:bell-ring",
+        None,
+    ],
 }
