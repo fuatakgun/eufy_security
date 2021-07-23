@@ -332,7 +332,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
     @property
     def is_on(self):
-        return self.entity["enabled"]
+        return True
 
     @property
     def motion_detection_enabled(self):
