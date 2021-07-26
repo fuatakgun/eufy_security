@@ -2,11 +2,12 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 **Big thanks to @bropat who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat**
 
-Installation;
+# Installation
 Please follow screenshots below. In summary;
 - You will first install HASS Add On assuming you are running on Hassos or Supervised. If not, please execute this command to run docker instance manually ```docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -p 3000:3000 bropat/eufy-security-ws:latest```
 - When you are done with HASS Add On, you will install integration via adding integration address to HACS, downloading files over UI, restarting home assistant and setting up integration.
 
+## Custom Add-On
 1- Go to Add-On Store page and select `Repositories`
 
 ![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
@@ -27,6 +28,8 @@ Please follow screenshots below. In summary;
 5-Validate that you are connected checking logs page.
 
 ![5-add-on-log](https://user-images.githubusercontent.com/11085566/126563928-3ee2d48d-06e2-4681-9076-3992f4546b16.PNG)
+
+## Custom Integration
 
 6- Go to HACS and click on `Custom repositories`
 
@@ -68,7 +71,7 @@ Please follow screenshots below. In summary;
 Raise your issues in Github. 
 
 
-**Troubleshooting**
+# Troubleshooting
 
 1- Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications for them. This integration depends on push notifications to catch events.
 
