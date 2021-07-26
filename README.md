@@ -2,11 +2,12 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 **Big thanks to @bropat who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat**
 
-Installation;
+# Installation
 Please follow screenshots below. In summary;
 - You will first install HASS Add On assuming you are running on Hassos or Supervised. If not, please execute this command to run docker instance manually ```docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -p 3000:3000 bropat/eufy-security-ws:latest```
 - When you are done with HASS Add On, you will install integration via adding integration address to HACS, downloading files over UI, restarting home assistant and setting up integration.
 
+## Custom Add-On
 1- Go to Add-On Store page and select `Repositories`
 
 ![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
@@ -20,13 +21,15 @@ Please follow screenshots below. In summary;
 
 ![3-add-on-visible](https://user-images.githubusercontent.com/11085566/126563911-ec5e0e52-312b-4e65-a25b-54a02a348752.PNG)
 
-4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and country. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
+4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and **country code (2 letter)**. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
 
 ![4-add-on-configure](https://user-images.githubusercontent.com/11085566/126563919-273e413b-f2ac-49c4-8342-dfd5c5887ccf.PNG)
 
 5-Validate that you are connected checking logs page.
 
 ![5-add-on-log](https://user-images.githubusercontent.com/11085566/126563928-3ee2d48d-06e2-4681-9076-3992f4546b16.PNG)
+
+## Custom Integration
 
 6- Go to HACS and click on `Custom repositories`
 
@@ -66,3 +69,12 @@ Please follow screenshots below. In summary;
 ![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
 
 Raise your issues in Github. 
+
+
+# Troubleshooting
+
+1- Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications for them. This integration depends on push notifications to catch events.
+
+2- If your HA instant crashes and your camera supports 2k video streaming, try to reduce quality, 2k video encoding might be hard for your hardware. With latest codebase, I have tried to reduce the load on HA instance for this.
+
+3- I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with my eufy account `fuatakgun@gmail.com` so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
