@@ -20,7 +20,7 @@ Please follow screenshots below. In summary;
 
 ![3-add-on-visible](https://user-images.githubusercontent.com/11085566/126563911-ec5e0e52-312b-4e65-a25b-54a02a348752.PNG)
 
-4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and country. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
+4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and **country code (2 letter)**. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
 
 ![4-add-on-configure](https://user-images.githubusercontent.com/11085566/126563919-273e413b-f2ac-49c4-8342-dfd5c5887ccf.PNG)
 
