@@ -66,3 +66,9 @@ Please follow screenshots below. In summary;
 ![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
 
 Raise your issues in Github. 
+
+
+**Troubleshooting**
+1- Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications for them. This integration depends on push notifications to catch events.
+2- If your HA instant crashes and your camera supports 2k video streaming, try to reduce quality, 2k video encoding might be hard for your hardware. With latest codebase, I have tried to reduce the load on HA instance for this.
+3- I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with my eufy account `fuatakgun@gmail.com` so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
