@@ -112,6 +112,8 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         self.image_frame = ImageFrame(self.ffmpeg_binary)
         self.serial_number = self.entity["serialNumber"]
         self.ffmpeg_output = f"{DOMAIN}-{self.serial_number}.m3u8"
+        self.ffmpeg_video_thread = None
+        self.ffmpeg_image_thread = None
 
         self.coordinator.cache[self.serial_number] = {}
         self.cached_entity = self.coordinator.cache[self.serial_number]
@@ -163,8 +165,10 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
             async_call_later(self.hass, 0, self.create_stream)
         elif prev_is_streaming == True and self.is_streaming == False:
             self.stream = None
-            self.ffmpeg_video_thread.stop()
-            self.ffmpeg_image_thread.stop()
+            if not self.ffmpeg_video_thread is None:
+                self.ffmpeg_video_thread.stop()
+            if not self.ffmpeg_image_thread is None:
+                self.ffmpeg_image_thread.stop()
 
         if self.is_streaming:
             return STATE_STREAMING
@@ -268,7 +272,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
     @property
     def name(self):
-        return self.entity["name"]
+        return self.entity.get("name", "Missing Name")
 
     @property
     def brand(self):
@@ -276,11 +280,11 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
     @property
     def model(self):
-        return self.entity["model"]
+        return self.entity.get("model", "Missing Model")
 
     @property
     def is_on(self):
-        return True
+        return self.entity.get("enabled", True)
 
     @property
     def motion_detection_enabled(self):
