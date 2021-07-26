@@ -7,13 +7,25 @@ send_message:
       description: Raw message in JSON format
       required: true
 start_livestream:
-  name: Start Live Stream
+  name: Start Live Stream over P2P
   description: Send start live stream command to camera
   target:
     entity:
       domain: camera
 stop_livestream:
-  name: Stop Live Stream
+  name: Stop Live Stream over P2P
+  description: Send stop live stream command to camera
+  target:
+    entity:
+      domain: camera
+start_rtsp:
+  name: Start Live Stream over RTSP
+  description: Send start live stream command to camera
+  target:
+    entity:
+      domain: camera
+stop_rtsp:
+  name: Stop Live Stream over RTSP
   description: Send stop live stream command to camera
   target:
     entity:

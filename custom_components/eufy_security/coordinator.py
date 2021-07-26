@@ -31,6 +31,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 DELAY_FOR_POLLING = 2
 BUFFER_BASED_EVENTS = ["video_data", "audio_data"]
+RETRY_COUNT = 10
 
 
 class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
@@ -48,6 +49,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
             update_interval=timedelta(seconds=update_interval),
         )
+        self.hass = hass
         self.ws = None
         self.host = host
         self.port = port
@@ -63,6 +65,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def initialize_ws(self) -> bool:
         self.ws: EufySecurityWebSocket = EufySecurityWebSocket(
+            self.hass,
             self.host,
             self.port,
             self.session,
@@ -79,7 +82,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def check_if_started_listening(self):
         _LOGGER.debug(f"{DOMAIN} - check_if_started_listening")
-        for counter in range(0, 5):
+        for counter in range(0, RETRY_COUNT):
             if self.state.get("devices", None) is None:
                 _LOGGER.debug(f"{DOMAIN} - check_if_started_listening - {counter}")
                 await asyncio.sleep(1)
@@ -89,7 +92,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def get_device_properties(self):
         _LOGGER.debug(f"{DOMAIN} - get_device_properties")
-        for counter in range(0, 5):
+        for counter in range(0, RETRY_COUNT):
             missing_exist = False
             for device in self.state["devices"]:
                 serial_number = device["serialNumber"]
@@ -107,7 +110,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def on_message(self, message):
         payload = message.json()
         message_type: str = payload["type"]
-        _LOGGER.debug(f"{DOMAIN} - on_message message_type - {message_type}")
+        # _LOGGER.debug(f"{DOMAIN} - on_message message_type - {message_type}")
         if not message_type in MESSAGE_TYPES_TO_PROCESS:
             return
         try:
@@ -134,11 +137,11 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
         if message_type == "event":
             event_type = message["event"]
-            event_sources = message["source"] + "s"
-            serial_number = message["serialNumber"]
             if not event_type in EVENT_CONFIGURATION.keys():
                 return
 
+            event_sources = message["source"] + "s"
+            serial_number = message["serialNumber"]
             event_property = message.get(
                 "name", EVENT_CONFIGURATION[event_type]["name"]
             )
@@ -170,7 +173,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         self.data["cache"][serial_number]["video_codec"] = message["metadata"][
             "videoCodec"
         ].lower()
-        self.data["cache"][serial_number]["queue"].append(value)
+        self.data["cache"][serial_number]["queue"].put(value)
         self.data["cache"][serial_number][name] = None
 
     def set_data_value_for_property(

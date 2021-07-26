@@ -59,7 +59,7 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         session = aiohttp_client.async_get_clientsession(self.hass)
         try:
             eufy_ws: EufySecurityWebSocket = EufySecurityWebSocket(
-                host, port, session, None, None, None, None
+                None, host, port, session, None, None, None, None
             )
             await eufy_ws.set_ws()
             if not eufy_ws.ws.closed:

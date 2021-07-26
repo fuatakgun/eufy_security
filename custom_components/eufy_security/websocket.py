@@ -14,6 +14,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 class EufySecurityWebSocket:
     def __init__(
         self,
+        hass,
         host: str,
         port: int,
         session: aiohttp.ClientSession,
@@ -22,6 +23,7 @@ class EufySecurityWebSocket:
         close_callback: Callable[[], Coroutine[Any, Any, None]],
         error_callback: Callable[[Text], Coroutine[Any, Any, None]],
     ):
+        self.hass = hass
         self.host = host
         self.port = port
         self.session = session
@@ -44,7 +46,7 @@ class EufySecurityWebSocket:
                             self.base, autoclose=False, autoping=True, heartbeat=60
                         )
                     )
-                    task = self.loop.create_task(self.process_messages())
+                    task = self.hass.async_create_task(self.process_messages())
                     task.add_done_callback(self.on_close)
                     await self.async_on_open()
                 except:
@@ -59,6 +61,7 @@ class EufySecurityWebSocket:
                 await self.open_callback()
 
     async def process_messages(self):
+        _LOGGER.debug(f"{DOMAIN} - process_messages started")
         counter = 1
         async for msg in self.ws:
             try:
@@ -70,14 +73,13 @@ class EufySecurityWebSocket:
                     traceback.format_exc(),
                     msg,
                 )
-            if counter % 100 == 0:
+            if counter % 50 == 0:
                 counter = 1
                 await asyncio.sleep(1)
             else:
                 counter = counter + 1
 
     async def on_message(self, message):
-        _LOGGER.debug(f"{DOMAIN} - WebSocket message received {message}")
         if self.message_callback is not None:
             await self.message_callback(message)
 
