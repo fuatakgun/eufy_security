@@ -29,7 +29,11 @@ CONF_PORT = "port"
 DEFAULT_SYNC_INTERVAL = 600  # seconds
 
 START_LIVESTREAM_AT_INITIALIZE = "start livestream at initialize"
-
+SET_API_SCHEMA = {
+    "messageId": "set_api_schema",
+    "command": "set_api_schema",
+    "schemaVersion": 3,
+}
 START_LISTENING_MESSAGE = {"messageId": "start_listening", "command": "start_listening"}
 POLL_REFRESH_MESSAGE = {"messageId": "poll_refresh", "command": "driver.poll_refresh"}
 GET_LIVESTREAM_STATUS_PLACEHOLDER = "get_livestream_status"

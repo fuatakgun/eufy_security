@@ -18,6 +18,7 @@ from .const import (
     POLL_REFRESH_MESSAGE,
     EVENT_CONFIGURATION,
     START_LISTENING_MESSAGE,
+    SET_API_SCHEMA,
     SET_RTSP_STREAM_MESSAGE,
     GET_PROPERTIES_MESSAGE,
     GET_PROPERTIES_METADATA_MESSAGE,
@@ -243,6 +244,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         await self.ws.send_message(message)
 
     async def async_start_listening(self):
+        await self.async_send_message(json.dumps(SET_API_SCHEMA))
         await self.async_send_message(json.dumps(START_LISTENING_MESSAGE))
 
     async def async_get_properties_metadata_for_device(
