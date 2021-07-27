@@ -2,6 +2,12 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 **Big thanks to @bropat who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat**
 
+# Known Bugs/Issues #
+1- Having multiple p2p streaming at parallel causes issues - https://github.com/fuatakgun/eufy_security/issues/25
+2- Lock is not supported yet - https://github.com/fuatakgun/eufy_security/issues/23
+3- Motion sensor is not supported yet - https://github.com/fuatakgun/eufy_security/issues/22
+4- Some hosts are freezing when p2p stream is enabled, downgrade video quality as workaround or get latest codebase to test changes. - https://github.com/fuatakgun/eufy_security/issues/20
+
 # Installation
 
 ***Warning, there is an existing integration (https://github.com/nonsleepr/ha-eufy-security) and I have used the same internal name with this integration, unintentinally. You can not keep both integrations and trying to install might cause issues. You can backup old one if you want to test this, just rename `custom_components/eufy_security` into something else (eg `eufy_security_nonsleepr`)***
