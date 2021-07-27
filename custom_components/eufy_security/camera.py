@@ -19,7 +19,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers import config_validation as cv, entity_platform, service
 
-from .const import DOMAIN, NAME
+from .const import DOMAIN, NAME, START_LIVESTREAM_AT_INITIALIZE
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .generated import DeviceType
@@ -104,20 +104,24 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         EufySecurityEntity.__init__(self, coordinator, entry, entity)
         Camera.__init__(self)
         self.hass = hass
-        self.loop = self.hass.loop
-        self.camera_picture_bytes = None
-        self.camera_picture_url = None
-        self.ffmpeg_binary = self.hass.data[DATA_FFMPEG].binary
-        self.ffmpeg = CameraMjpeg(self.ffmpeg_binary)
-        self.image_frame = ImageFrame(self.ffmpeg_binary)
-        self.serial_number = self.entity["serialNumber"]
-        self.ffmpeg_output = f"{DOMAIN}-{self.serial_number}.m3u8"
-        self.ffmpeg_video_thread = None
-        self.ffmpeg_image_thread = None
 
+        # setup initial values
+        self.serial_number = self.entity["serialNumber"]
         self.coordinator.cache[self.serial_number] = {}
         self.cached_entity = self.coordinator.cache[self.serial_number]
         self.properties = self.coordinator.properties[self.serial_number]
+
+        # camera image
+        self.camera_picture_bytes = None
+        self.camera_picture_url = None
+
+        # ffmpeg, video generation and image capturing
+        self.ffmpeg_binary = self.hass.data[DATA_FFMPEG].binary
+        self.ffmpeg = CameraMjpeg(self.ffmpeg_binary)
+        self.image_frame = ImageFrame(self.ffmpeg_binary)
+        self.ffmpeg_output = f"{DOMAIN}-{self.serial_number}.m3u8"
+        self.ffmpeg_video_thread = None
+        self.ffmpeg_image_thread = None
 
         # for p2p streaming
         self.start_stream_function = self.async_start_livestream
@@ -125,50 +129,37 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         self.cached_entity["liveStreamingStatus"] = None
         self.cached_entity["queue"] = Queue()
         self.cached_entity["video_codec"] = None
+        _LOGGER.debug(
+            f"{DOMAIN} {self.name} - START_LIVESTREAM_AT_INITIALIZE - {self.entity.get(START_LIVESTREAM_AT_INITIALIZE, False) }"
+        )
+        if self.entity.get(START_LIVESTREAM_AT_INITIALIZE, False) == True:
+            async_call_later(self.hass, 0, self.async_start_livestream)
 
         # for rtsp streaming
         self.cached_entity["rtspUrl"] = None
         if not self.entity.get("rtspStream", None) is None:
             self.start_stream_function = self.async_start_rtsp
             self.stop_stream_function = self.async_stop_rtsp
+        if self.entity.get("rtspStream", False) == True:
+            _LOGGER.debug(f"{DOMAIN} {self.name} - init 1")
+            if self.cached_entity["rtspUrl"] is None:
+                _LOGGER.debug(f"{DOMAIN} {self.name} - init 2")
+                async_call_later(self.hass, 0, self.async_start_rtsp)
 
         self.streaming_source = None
         self.is_streaming = False
 
     def on_close(self, future="") -> None:
-        self.ffmpeg.process.communicate()
-        self.ffmpeg.kill()
+        try:
+            self.ffmpeg.process.communicate()
+            self.ffmpeg.kill()
+        except:
+            pass
 
     @property
     def state(self) -> str:
-        prev_is_streaming = self.is_streaming
-        if (
-            self.entity.get("rtspStream", False) == True
-            or self.cached_entity["liveStreamingStatus"] == STATE_LIVE_STREAMING
-        ):
-            if self.entity.get("rtspStream", False) == True:
-                self.streaming_source = STREAMING_SOURCE_RTSP
-                self.is_streaming = True
-            if self.cached_entity["liveStreamingStatus"] == STATE_LIVE_STREAMING:
-                self.streaming_source = STREAMING_SOURCE_P2P
-                self.is_streaming = True
-        else:
-            self.streaming_source = None
-            self.is_streaming = False
 
-        if prev_is_streaming != self.is_streaming:
-            _LOGGER.debug(
-                f"{DOMAIN} - state change - {prev_is_streaming} {self.is_streaming}"
-            )
-
-        if prev_is_streaming == False and self.is_streaming == True:
-            async_call_later(self.hass, 0, self.create_stream)
-        elif prev_is_streaming == True and self.is_streaming == False:
-            self.stream = None
-            if not self.ffmpeg_video_thread is None:
-                self.ffmpeg_video_thread.stop()
-            if not self.ffmpeg_image_thread is None:
-                self.ffmpeg_image_thread.stop()
+        self.set_is_streaming()
 
         if self.is_streaming:
             return STATE_STREAMING
@@ -182,12 +173,39 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
             else:
                 return STATE_IDLE
 
+    def set_is_streaming(self):
+        prev_is_streaming = self.is_streaming
+        if (
+            self.entity.get("rtspStream", False) == True
+            or self.cached_entity["liveStreamingStatus"] == STATE_LIVE_STREAMING
+        ):
+            if self.entity.get("rtspStream", False) == True:
+                if not self.cached_entity["rtspUrl"] is None:
+                    self.streaming_source = STREAMING_SOURCE_RTSP
+                    self.is_streaming = True
+            if self.cached_entity["liveStreamingStatus"] == STATE_LIVE_STREAMING:
+                self.streaming_source = STREAMING_SOURCE_P2P
+                self.is_streaming = True
+        else:
+            self.streaming_source = None
+            self.is_streaming = False
+
+        if prev_is_streaming != self.is_streaming:
+            _LOGGER.debug(
+                f"{DOMAIN} {self.name} - state change - {prev_is_streaming} {self.is_streaming}"
+            )
+
+        if prev_is_streaming == False and self.is_streaming == True:
+            async_call_later(self.hass, 0, self.create_stream)
+        elif prev_is_streaming == True and self.is_streaming == False:
+            self.stream = None
+
     async def initiate_turn_on(self):
-        _LOGGER.debug(f"{DOMAIN} - create_stream - is_streaming - false")
+        _LOGGER.debug(f"{DOMAIN} {self.name} - create_stream - is_streaming - false")
         await self.hass.async_add_executor_job(self.turn_on)
         for counter in range(10):
             _LOGGER.debug(
-                f"{DOMAIN} - create_stream - wait for stream start - {counter} - {self.is_streaming}"
+                f"{DOMAIN} {self.name} - create_stream - wait for stream start - {counter} - {self.is_streaming}"
             )
             if self.is_streaming == False:
                 await asyncio.sleep(1)
@@ -197,23 +215,27 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         return False
 
     async def create_stream(self, executed_at=None) -> Stream:
-        _LOGGER.debug(f"{DOMAIN} - create_stream - start")
+        _LOGGER.debug(f"{DOMAIN} {self.name} - create_stream - start")
         if self.is_streaming == False:
             await self.initiate_turn_on()
 
-        _LOGGER.debug(f"{DOMAIN} - create_stream - is_streaming - {self.is_streaming}")
+        _LOGGER.debug(
+            f"{DOMAIN} {self.name} - create_stream - is_streaming - {self.is_streaming}"
+        )
         if self.stream is not None:
             return self.stream
 
         if self.streaming_source == STREAMING_SOURCE_P2P:
             self.ffmpeg_video_thread = FFMpegVideoHandlerThread(self.hass, self)
-            self.ffmpeg_video_thread.start()
+            async_call_later(self.hass, 1, self.ffmpeg_video_thread.start)
             stream_source = self.ffmpeg_output
-            _LOGGER.debug(f"{DOMAIN} - create_stream p2p - {stream_source}")
+            _LOGGER.debug(f"{DOMAIN} {self.name} - create_stream p2p - {stream_source}")
 
         if self.streaming_source == STREAMING_SOURCE_RTSP:
             stream_source = self.cached_entity["rtspUrl"]
-            _LOGGER.debug(f"{DOMAIN} - create_stream rtsp - {stream_source}")
+            _LOGGER.debug(
+                f"{DOMAIN} {self.name} - create_stream rtsp - {stream_source}"
+            )
 
         self.stream = create_stream(
             self.hass, stream_source, options=self.stream_options
@@ -221,42 +243,45 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
         _LOGGER.debug(f"{DOMAIN} - create_stream start process_image - {stream_source}")
         self.ffmpeg_image_thread = FFMpegImageHandlerThread(self.hass, self)
-        self.ffmpeg_image_thread.start()
+        async_call_later(self.hass, 1, self.ffmpeg_image_thread.start)
         return self.stream
 
     def camera_image(self) -> bytes:
-        current_picture_url = self.entity.get("pictureUrl", "")
-        if self.camera_picture_url != current_picture_url:
-            _LOGGER.debug(f"{DOMAIN} - camera_image {current_picture_url}")
-            response = requests.get(current_picture_url)
-            _LOGGER.debug(
-                f"{DOMAIN} - camera_image -{response.status_code} - {len(response.content)}"
-            )
-            if response.status_code == 200:
-                self.camera_picture_url = current_picture_url
-                self.camera_picture_bytes = response.content
+        if self.is_streaming == False:
+            current_picture_url = self.entity.get("pictureUrl", "")
+            if self.camera_picture_url != current_picture_url:
+                _LOGGER.debug(
+                    f"{DOMAIN} {self.name} - camera_image {current_picture_url}"
+                )
+                response = requests.get(current_picture_url)
+                _LOGGER.debug(
+                    f"{DOMAIN} {self.name} - camera_image -{response.status_code} - {len(response.content)}"
+                )
+                if response.status_code == 200:
+                    self.camera_picture_url = current_picture_url
+                    self.camera_picture_bytes = response.content
 
         return self.camera_picture_bytes
 
     def turn_on(self) -> None:
         asyncio.run_coroutine_threadsafe(
             self.start_stream_function(),
-            self.loop,
+            self.hass.loop,
         ).result()
 
     def turn_off(self) -> None:
         asyncio.run_coroutine_threadsafe(
             self.stop_stream_function(),
-            self.loop,
+            self.hass.loop,
         ).result()
 
-    async def async_start_livestream(self) -> None:
+    async def async_start_livestream(self, executed_at=None) -> None:
         await self.coordinator.async_set_livestream(self.serial_number, "start")
 
     async def async_stop_livestream(self) -> None:
         await self.coordinator.async_set_livestream(self.serial_number, "stop")
 
-    async def async_start_rtsp(self) -> None:
+    async def async_start_rtsp(self, executed_at=None) -> None:
         await self.coordinator.async_set_rtsp(self.serial_number, True)
 
     async def async_stop_rtsp(self) -> None:
@@ -295,6 +320,8 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         attrs = {}
         attrs["data"] = self.entity
         attrs["live_streaming_status"] = self.cached_entity["liveStreamingStatus"]
+        attrs["streaming_source"] = self.streaming_source
+        attrs["is_streaming"] = self.is_streaming
         attrs["queue_size"] = self.cached_entity["queue"].qsize()
         attrs["rtsp_url"] = self.cached_entity["rtspUrl"]
         attrs["properties"] = self.properties
@@ -317,20 +344,20 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
 class FFMpegVideoHandlerThread(threading.Thread):
     def __init__(self, hass, camera: EufySecurityCamera):
-        super().__init__()
+        super().__init__(daemon=True)
         self.hass = hass
         self.camera = camera
 
     def wait_for_video_codec(self):
         for counter in range(10):
             _LOGGER.debug(
-                f"{DOMAIN} - thread run - wait for video_codec to arrive - {counter} - {self.camera.cached_entity['video_codec']}"
+                f"{DOMAIN} {self.camera.name} - thread run - wait for video_codec to arrive - {counter} - {self.camera.cached_entity['video_codec']}"
             )
             if self.camera.cached_entity["video_codec"] is None:
                 sleep(0.1)
             else:
-                # video codec did not show up in timely manner
                 return True
+        # video codec did not show up in timely manner
         return False
 
     def open_ffmpeg(self):
@@ -342,7 +369,7 @@ class FFMpegVideoHandlerThread(threading.Thread):
         ffmpeg_command_instance[input_file_index - 1] = video_codec
 
         if self.camera.ffmpeg.is_running == False:
-            _LOGGER.debug(f"{DOMAIN} - starting ffmpeg")
+            _LOGGER.debug(f"{DOMAIN} {self.camera.name} - starting ffmpeg")
             asyncio.run_coroutine_threadsafe(
                 self.camera.ffmpeg.open(
                     cmd=ffmpeg_command_instance,
@@ -356,39 +383,52 @@ class FFMpegVideoHandlerThread(threading.Thread):
             ).result()
 
     def run(self):
-        _LOGGER.debug("FFMpegVideoHandlerThread start")
+        _LOGGER.debug(f"{DOMAIN} {self.camera.name} FFMpegVideoHandlerThread start")
         if self.wait_for_video_codec() == False:
             return
 
-        _LOGGER.debug("FFMpegVideoHandlerThread video codec arrived")
+        _LOGGER.debug(
+            f"{DOMAIN} {self.camera.name} FFMpegVideoHandlerThread video codec arrived"
+        )
         self.open_ffmpeg()
 
-        _LOGGER.debug("FFMpegVideoHandlerThread ffmpeg is open")
+        _LOGGER.debug(
+            f"{DOMAIN} {self.camera.name} FFMpegVideoHandlerThread ffmpeg is open"
+        )
         queue = self.camera.cached_entity["queue"]
-        _LOGGER.debug(f"{DOMAIN} - process_frames")
+        _LOGGER.debug(f"{DOMAIN} {self.camera.name} - FFMpegVideoHandlerThread")
         while True:
-            _LOGGER.debug(f"{DOMAIN} - FFMpegVideoHandlerThread size - {queue.qsize()}")
+            _LOGGER.debug(
+                f"{DOMAIN} {self.camera.name} - FFMpegVideoHandlerThread size - {queue.qsize()}"
+            )
             while not queue.empty():
                 try:
                     frame_bytes = bytearray(queue.get().get("data", None))
                     self.camera.ffmpeg.process.stdin.write(frame_bytes)
                 except Exception as ex:  # pylint: disable=broad-except
                     _LOGGER.error(
-                        f"{DOMAIN} FFMpegVideoHandlerThread exception: {ex}- traceback: {traceback.format_exc()}"
+                        f"{DOMAIN} {self.camera.name} FFMpegVideoHandlerThread exception: {ex}- traceback: {traceback.format_exc()}"
                     )
                     _, ffmpeg_error = self.camera.ffmpeg.process.communicate()
                     if ffmpeg_error is not None:
                         ffmpeg_error = ffmpeg_error.decode()
-                        _LOGGER.debug(f"{DOMAIN} - video ffmpeg error - {ffmpeg_error}")
+                        _LOGGER.debug(
+                            f"{DOMAIN} {self.camera.name} - video ffmpeg error - {ffmpeg_error}"
+                        )
 
             if self.camera.is_streaming == False:
                 return
 
-            _LOGGER.debug(f"{DOMAIN} - process_frames - sleeping")
+            _LOGGER.debug(
+                f"{DOMAIN} {self.camera.name} - FFMpegVideoHandlerThread - sleeping"
+            )
             sleep(1)
 
+    def start(self, executed_at=None):
+        self.run()
+
     def stop(self):
-        _LOGGER.info("Stopping FFMpegVideoHandlerThread")
+        _LOGGER.info(f"{DOMAIN} {self.camera.name}Stopping FFMpegVideoHandlerThread")
         self.camera.cached_entity["queue"].queue.clear()
         self.camera.ffmpeg.process.communicate()
         self.camera.ffmpeg.kill()
@@ -397,18 +437,18 @@ class FFMpegVideoHandlerThread(threading.Thread):
 
 class FFMpegImageHandlerThread(threading.Thread):
     def __init__(self, hass, camera: EufySecurityCamera):
-        super().__init__()
+        super().__init__(daemon=True)
         self.hass = hass
         self.camera = camera
 
     def run(self):
         _LOGGER.debug(
-            f"{DOMAIN} - FFMpegImageHandlerThread start - {self.camera.stream} {self.camera.is_streaming}"
+            f"{DOMAIN} {self.camera.name} - FFMpegImageHandlerThread start - {self.camera.stream} {self.camera.is_streaming}"
         )
         while True:
             if self.camera.stream is None or self.camera.is_streaming == False:
                 _LOGGER.debug(
-                    f"{DOMAIN} - FFMpegImageHandlerThread return - {self.camera.stream} {self.camera.is_streaming}"
+                    f"{DOMAIN} {self.camera.name} - FFMpegImageHandlerThread return - {self.camera.stream} {self.camera.is_streaming}"
                 )
                 return
             image_frame_bytes = asyncio.run_coroutine_threadsafe(
@@ -418,7 +458,7 @@ class FFMpegImageHandlerThread(threading.Thread):
 
             if image_frame_bytes is not None:
                 _LOGGER.debug(
-                    f"{DOMAIN} - FFMpegImageHandlerThread len - {len(image_frame_bytes)}"
+                    f"{DOMAIN} {self.camera.name} - FFMpegImageHandlerThread len - {len(image_frame_bytes)}"
                 )
 
             if image_frame_bytes is not None and len(image_frame_bytes) > 0:
@@ -427,8 +467,9 @@ class FFMpegImageHandlerThread(threading.Thread):
 
             sleep(1)
 
+    def start(self, executed_at=None):
+        self.run()
+
     def stop(self):
-        _LOGGER.info("Stopping FFMpegImageHandlerThread")
-        self.camera.ffmpeg.process.communicate()
-        self.camera.ffmpeg.kill()
+        _LOGGER.info(f"{DOMAIN} {self.camera.name} Stopping FFMpegImageHandlerThread")
         self.join()

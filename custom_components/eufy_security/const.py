@@ -28,8 +28,11 @@ CONF_PORT = "port"
 # Update all in every hour
 DEFAULT_SYNC_INTERVAL = 600  # seconds
 
+START_LIVESTREAM_AT_INITIALIZE = "start livestream at initialize"
+
 START_LISTENING_MESSAGE = {"messageId": "start_listening", "command": "start_listening"}
 POLL_REFRESH_MESSAGE = {"messageId": "poll_refresh", "command": "driver.poll_refresh"}
+GET_LIVESTREAM_STATUS_PLACEHOLDER = "get_livestream_status"
 GET_PROPERTIES_METADATA_MESSAGE = {
     "messageId": "get_properties_metadata",
     "command": "{0}.get_properties_metadata",
@@ -38,6 +41,11 @@ GET_PROPERTIES_METADATA_MESSAGE = {
 GET_PROPERTIES_MESSAGE = {
     "messageId": "get_properties",
     "command": "{0}.get_properties",
+    "serialNumber": None,
+}
+GET_LIVESTREAM_STATUS_MESSAGE = {
+    "messageId": GET_LIVESTREAM_STATUS_PLACEHOLDER + ".{serial_no}",
+    "command": "device.is_livestreaming",
     "serialNumber": None,
 }
 SET_RTSP_STREAM_MESSAGE = {
@@ -55,6 +63,7 @@ SET_LIVESTREAM_MESSAGE = {
 MESSAGE_IDS_TO_PROCESS = [
     START_LISTENING_MESSAGE["messageId"],
     GET_PROPERTIES_MESSAGE["messageId"],
+    GET_LIVESTREAM_STATUS_MESSAGE["messageId"],
 ]
 MESSAGE_TYPES_TO_PROCESS = ["result", "event"]
 PROPERTY_CHANGED_PROPERTY_NAME = "event_property_name"
@@ -93,6 +102,7 @@ EVENT_CONFIGURATION: dict = {
         "name": "video_data",
         "value": "buffer",
         "is_cached": True,
+        "print_log": False,
     },
     "livestream audio dataX": {
         "name": "audio_data",

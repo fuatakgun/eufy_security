@@ -48,7 +48,7 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_HOST, default="192.168.178.119"): str,
+                    vol.Required(CONF_HOST, default="0.0.0.0"): str,
                     vol.Required(CONF_PORT, default=3000): int,
                 }
             ),

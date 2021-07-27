@@ -21,8 +21,11 @@ from .const import (
     SET_RTSP_STREAM_MESSAGE,
     GET_PROPERTIES_MESSAGE,
     GET_PROPERTIES_METADATA_MESSAGE,
+    GET_LIVESTREAM_STATUS_MESSAGE,
+    GET_LIVESTREAM_STATUS_PLACEHOLDER,
     SET_RTSP_STREAM_MESSAGE,
     SET_LIVESTREAM_MESSAGE,
+    START_LIVESTREAM_AT_INITIALIZE,
 )
 from .generated import DeviceType
 from .websocket import EufySecurityWebSocket
@@ -110,7 +113,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def on_message(self, message):
         payload = message.json()
         message_type: str = payload["type"]
-        # _LOGGER.debug(f"{DOMAIN} - on_message message_type - {message_type}")
+        # _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
         if not message_type in MESSAGE_TYPES_TO_PROCESS:
             return
         try:
@@ -120,20 +123,35 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
         if message_type == "result":
             message_id: str = payload["messageId"]
-            _LOGGER.debug(f"{DOMAIN} - on_message result message_id - {message_id}")
+            _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
             if not message_id in MESSAGE_IDS_TO_PROCESS:
-                return
+                if not GET_LIVESTREAM_STATUS_PLACEHOLDER in message_id:
+                    return
 
             if message_id == START_LISTENING_MESSAGE["messageId"]:
                 _LOGGER.debug(f"{DOMAIN} - on_message start_listening")
                 self.state = message["state"]
                 for device in self.state["devices"]:
                     await self.async_get_properties_for_device(device["serialNumber"])
+                    await self.async_get_livestream_status(device["serialNumber"])
 
             if message_id == GET_PROPERTIES_MESSAGE["messageId"]:
                 result = message["properties"]
                 serial_number = result["serialNumber"]["value"]
                 self.properties[serial_number] = result
+
+            if GET_LIVESTREAM_STATUS_PLACEHOLDER in message_id:
+                _LOGGER.debug(f"{DOMAIN} - GET_LIVESTREAM_STATUS_MESSAGE - {payload}")
+                result = message["livestreaming"]
+                serial_number = (
+                    payload["messageId"]
+                    .replace(GET_LIVESTREAM_STATUS_PLACEHOLDER, "")
+                    .replace(".", "")
+                )
+                if result == True:
+                    for device in self.state["devices"]:
+                        if device["serialNumber"] == serial_number:
+                            device[START_LIVESTREAM_AT_INITIALIZE] = True
 
         if message_type == "event":
             event_type = message["event"]
@@ -239,6 +257,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         message = GET_PROPERTIES_MESSAGE.copy()
         message["command"] = message["command"].format("device")
         message["serialNumber"] = serial_no
+        await self.async_send_message(json.dumps(message))
+
+    async def async_get_livestream_status(self, serial_no: str):
+        message = GET_LIVESTREAM_STATUS_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        message["messageId"] = message["messageId"].replace("{serial_no}", serial_no)
         await self.async_send_message(json.dumps(message))
 
     async def async_set_rtsp(self, serial_no: str, value: bool):
