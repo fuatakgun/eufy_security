@@ -4,9 +4,13 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 # Known Bugs/Issues #
 1- Having multiple p2p streaming at parallel causes issues - https://github.com/fuatakgun/eufy_security/issues/25
+
 2- Lock is not supported yet - https://github.com/fuatakgun/eufy_security/issues/23
+
 3- Motion sensor is not supported yet - https://github.com/fuatakgun/eufy_security/issues/22
+
 4- Some hosts are freezing when p2p stream is enabled, downgrade video quality as workaround or get latest codebase to test changes. - https://github.com/fuatakgun/eufy_security/issues/20
+
 
 # Installation
 
