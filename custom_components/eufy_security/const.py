@@ -7,9 +7,6 @@ from homeassistant.const import (
 )
 from homeassistant.components.binary_sensor import DEVICE_CLASS_MOTION
 
-from .generated import DeviceType
-
-
 # Base component constants
 NAME = "Eufy Security"
 DOMAIN = "eufy_security"
@@ -115,98 +112,75 @@ EVENT_CONFIGURATION: dict = {
     },
 }
 
-CAMERA_PRESET1_SENSORS = [
-    "battery",
-    "wifiRSSI",
-    "motion_sensor",
-    "person_detector_sensor",
-]
-CAMERA_PRESET1_PROPERTIES = [
-    "rtspStream",
-    "pictureUrl",
-]
 
-CAMERA_PRESET2_SENSORS = ["motion_sensor"]
-CAMERA_PRESET2_PROPERTIES = ["pictureUrl"]
-
-DOORBELL_PRESET1_SENSORS = ["motion_sensor", "person_detector_sensor", "ringing_sensor"]
-DOORBELL_PRESET1_PROPERTIES = ["pictureUrl"]
-
-DOORBELL_BATTERY_PRESET1_SENSORS = [
-    "battery",
-    "wifiRSSI",
-    "motion_sensor",
-    "person_detector_sensor",
-    "ringing_sensor",
-]
-
-DOORBELL_BATTERY_PRESET1_PROPERTIES = ["pictureUrl"]
-
-# TYPES_TO_SENSORS = {
-#     DeviceType.CAMERA_2: CAMERA_PRESET1_SENSORS,
-#     DeviceType.CAMERA_2PRO: CAMERA_PRESET1_SENSORS,
-#     DeviceType.CAMERA_2C: CAMERA_PRESET1_SENSORS,
-#     DeviceType.CAMERA_2CPRO: CAMERA_PRESET1_SENSORS,
-#     DeviceType.CAMERA: CAMERA_PRESET2_SENSORS,
-#     DeviceType.CAMERA_E: CAMERA_PRESET2_SENSORS,
-#     DeviceType.DOORBELL: DOORBELL_PRESET1_SENSORS,
-#     DeviceType.BATTERY_DOORBELL: DOORBELL_BATTERY_PRESET1_SENSORS,
-#     DeviceType.BATTERY_DOORBELL_2: DOORBELL_BATTERY_PRESET1_SENSORS,
-# }
-# TYPES_TO_PROPERTIES = {
-#     DeviceType.CAMERA_2: CAMERA_PRESET1_PROPERTIES,
-#     DeviceType.CAMERA_2PRO: CAMERA_PRESET1_PROPERTIES,
-#     DeviceType.CAMERA_2C: CAMERA_PRESET1_PROPERTIES,
-#     DeviceType.CAMERA_2CPRO: CAMERA_PRESET1_PROPERTIES,
-#     DeviceType.CAMERA: CAMERA_PRESET2_PROPERTIES,
-#     DeviceType.CAMERA_E: CAMERA_PRESET2_PROPERTIES,
-#     DeviceType.DOORBELL: DOORBELL_PRESET1_PROPERTIES,
-#     DeviceType.BATTERY_DOORBELL: DOORBELL_BATTERY_PRESET1_PROPERTIES,
-#     DeviceType.BATTERY_DOORBELL_2: DOORBELL_BATTERY_PRESET1_PROPERTIES,
-# }
+class DEVICE_TYPE(Enum):
+    STATION = 0
+    CAMERA = 1
+    SENSOR = 2
+    FLOODLIGHT = 3
+    CAMERA_E = 4
+    DOORBELL = 5
+    BATTERY_DOORBELL = 7
+    CAMERA2C = 8
+    CAMERA2 = 9
+    MOTION_SENSOR = 10
+    KEYPAD = 11
+    CAMERA2_PRO = 14
+    CAMERA2C_PRO = 15
+    BATTERY_DOORBELL_2 = 16
+    INDOOR_CAMERA = 30
+    INDOOR_PT_CAMERA = 31
+    SOLO_CAMERA = 32
+    SOLO_CAMERA_PRO = 33
+    INDOOR_CAMERA_1080 = 34
+    INDOOR_PT_CAMERA_1080 = 35
+    FLOODLIGHT_CAMERA_8422 = 37
+    FLOODLIGHT_CAMERA_8423 = 38
+    FLOODLIGHT_CAMERA_8424 = 39
+    INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT = 44
+    INDOOR_OUTDOOR_CAMERA_2K = 45
+    INDOOR_OUTDOOR_CAMERA_1080P = 46
+    LOCK_BASIC = 50
+    LOCK_ADVANCED = 51
+    LOCK_BASIC_NO_FINGER = 52
+    LOCK_ADVANCED_NO_FINGER = 53
+    SOLO_CAMERA_SPOTLIGHT_1080 = 60
+    SOLO_CAMERA_SPOTLIGHT_2K = 61
+    SOLO_CAMERA_SPOTLIGHT_SOLAR = 62
 
 
-SENSORS = {
-    "battery": [
-        SENSOR,
-        "battery",
-        "Battery",
-        "battery",
-        PERCENTAGE,
-        None,
-        DEVICE_CLASS_BATTERY,
-    ],
-    "wifiRSSI": [
-        SENSOR,
-        "wifiRSSI",
-        "Wifi RSSI",
-        "wifiRSSI",
-        None,
-        None,
-        DEVICE_CLASS_SIGNAL_STRENGTH,
-    ],
-    "motion_sensor": [
-        BINARY_SENSOR,
-        "motion_sensor",
-        "Motion Sensor",
-        "motionDetected",
-        None,
-        DEVICE_CLASS_MOTION,
-    ],
-    "person_detector_sensor": [
-        BINARY_SENSOR,
-        "person_detector_sensor",
-        "Person Detector Sensor",
-        "personDetected",
-        None,
-        DEVICE_CLASS_MOTION,
-    ],
-    "ringing_sensor": [
-        BINARY_SENSOR,
-        "ringing_sensor",
-        "Ringing Sensor",
-        "ringing",
-        "mdi:bell-ring",
-        None,
-    ],
+DEVICE_CATEGORY = {
+    DEVICE_TYPE.STATION: "STATION",
+    DEVICE_TYPE.CAMERA: "CAMERA",
+    DEVICE_TYPE.SENSOR: "SENSOR",
+    DEVICE_TYPE.FLOODLIGHT: "CAMERA",
+    DEVICE_TYPE.CAMERA_E: "CAMERA",
+    DEVICE_TYPE.DOORBELL: "DOORBELL",
+    DEVICE_TYPE.BATTERY_DOORBELL: "DOORBELL",
+    DEVICE_TYPE.CAMERA2C: "CAMERA",
+    DEVICE_TYPE.CAMERA2: "CAMERA",
+    DEVICE_TYPE.MOTION_SENSOR: "MOTION_SENSOR",
+    DEVICE_TYPE.KEYPAD: "KEYPAD",
+    DEVICE_TYPE.CAMERA2_PRO: "CAMERA",
+    DEVICE_TYPE.CAMERA2C_PRO: "CAMERA",
+    DEVICE_TYPE.BATTERY_DOORBELL_2: "DOORBELL",
+    DEVICE_TYPE.INDOOR_CAMERA: "CAMERA",
+    DEVICE_TYPE.INDOOR_PT_CAMERA: "CAMERA",
+    DEVICE_TYPE.SOLO_CAMERA: "CAMERA",
+    DEVICE_TYPE.SOLO_CAMERA_PRO: "CAMERA",
+    DEVICE_TYPE.INDOOR_CAMERA_1080: "CAMERA",
+    DEVICE_TYPE.INDOOR_PT_CAMERA_1080: "CAMERA",
+    DEVICE_TYPE.FLOODLIGHT_CAMERA_8422: "CAMERA",
+    DEVICE_TYPE.FLOODLIGHT_CAMERA_8423: "CAMERA",
+    DEVICE_TYPE.FLOODLIGHT_CAMERA_8424: "CAMERA",
+    DEVICE_TYPE.INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT: "CAMERA",
+    DEVICE_TYPE.INDOOR_OUTDOOR_CAMERA_2K: "CAMERA",
+    DEVICE_TYPE.INDOOR_OUTDOOR_CAMERA_1080P: "CAMERA",
+    DEVICE_TYPE.LOCK_BASIC: "LOCK",
+    DEVICE_TYPE.LOCK_ADVANCED: "LOCK",
+    DEVICE_TYPE.LOCK_BASIC_NO_FINGER: "LOCK",
+    DEVICE_TYPE.LOCK_ADVANCED_NO_FINGER: "LOCK",
+    DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_1080: "CAMERA",
+    DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_2K: "CAMERA",
+    DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_SOLAR: "CAMERA",
 }

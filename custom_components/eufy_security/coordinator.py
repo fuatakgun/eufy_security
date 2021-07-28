@@ -9,8 +9,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from .const import DEVICE_TYPE
 
 from .const import (
+    DEVICE_CATEGORY,
     DOMAIN,
     PLATFORMS,
     MESSAGE_IDS_TO_PROCESS,
@@ -28,7 +30,6 @@ from .const import (
     SET_LIVESTREAM_MESSAGE,
     START_LIVESTREAM_AT_INITIALIZE,
 )
-from .generated import DeviceType
 from .websocket import EufySecurityWebSocket
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -140,6 +141,14 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                 result = message["properties"]
                 serial_number = result["serialNumber"]["value"]
                 self.properties[serial_number] = result
+                device_type_raw = result["type"]["value"]
+                for device in self.state["devices"]:
+                    if device["serialNumber"] == serial_number:
+                        device["type_raw"] = device_type_raw
+                        device_type = DEVICE_TYPE(device_type_raw)
+                        device["type"] = str(device_type)
+                        device["category"] = DEVICE_CATEGORY.get(device_type, "UNKNOWN")
+                        break
 
             if GET_LIVESTREAM_STATUS_PLACEHOLDER in message_id:
                 _LOGGER.debug(f"{DOMAIN} - GET_LIVESTREAM_STATUS_MESSAGE - {payload}")
@@ -153,6 +162,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                     for device in self.state["devices"]:
                         if device["serialNumber"] == serial_number:
                             device[START_LIVESTREAM_AT_INITIALIZE] = True
+                            break
 
         if message_type == "event":
             event_type = message["event"]
@@ -247,9 +257,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         await self.async_send_message(json.dumps(SET_API_SCHEMA))
         await self.async_send_message(json.dumps(START_LISTENING_MESSAGE))
 
-    async def async_get_properties_metadata_for_device(
-        self, device_type: DeviceType, serial_no: str
-    ):
+    async def async_get_properties_metadata_for_device(self, serial_no: str):
         message = GET_PROPERTIES_METADATA_MESSAGE.copy()
         message["command"] = message["command"].format("device")
         message["serialNumber"] = serial_no

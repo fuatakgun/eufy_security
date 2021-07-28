@@ -25,14 +25,14 @@ from .coordinator import EufySecurityDataUpdateCoordinator
 from .generated import DeviceType
 from time import sleep
 
-STATE_RECORDING = "recording"
-STATE_STREAMING = "streaming"
+STATE_RECORDING = "Recording"
+STATE_STREAMING = "Streaming"
 STATE_LIVE_STREAMING = "livestream started"
 STREAMING_SOURCE_RTSP = "rtsp"
 STREAMING_SOURCE_P2P = "p2p"
 STATE_MOTION_DETECTED = "Motion Detected"
 STATE_PERSON_DETECTED = "Person Detected"
-STATE_IDLE = "idle"
+STATE_IDLE = "Idle"
 FFMPEG_COMMAND = [
     "-protocol_whitelist",
     "pipe,file,tcp",
@@ -74,7 +74,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
     entities = []
     for entity in coordinator.state["devices"]:
-        if not entity.get("pictureUrl", None) is None:
+        if entity["category"] == "CAMERA":
             camera: EufySecurityCamera = EufySecurityCamera(
                 hass, coordinator, entry, entity
             )
@@ -162,6 +162,8 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         self.set_is_streaming()
 
         if self.is_streaming:
+            if not self.streaming_source is None:
+                return f"{STATE_STREAMING} - {self.streaming_source}"
             return STATE_STREAMING
         elif self.entity.get("motionDetected", False):
             return STATE_MOTION_DETECTED
@@ -170,8 +172,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         else:
             if not self.entity.get("battery", None) is None:
                 return f"{STATE_IDLE} - {self.entity['battery']} %"
-            else:
-                return STATE_IDLE
+            return STATE_IDLE
 
     def set_is_streaming(self):
         prev_is_streaming = self.is_streaming
