@@ -199,6 +199,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             self.async_set_updated_data(self.data)
 
     def handle_queue_data(self, serial_number, name, value, message):
+        # _LOGGER.debug(f"{DOMAIN} - handle_queue_data - {message}")
         self.data["cache"][serial_number]["video_codec"] = message["metadata"][
             "videoCodec"
         ].lower()

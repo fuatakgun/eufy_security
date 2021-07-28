@@ -74,7 +74,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
     entities = []
     for entity in coordinator.state["devices"]:
-        if entity["category"] in ["CAMERA","DOORBELL"]:
+        if entity["category"] in ["CAMERA", "DOORBELL"]:
             camera: EufySecurityCamera = EufySecurityCamera(
                 hass, coordinator, entry, entity
             )
@@ -367,6 +367,8 @@ class FFMpegVideoHandlerThread(threading.Thread):
         video_codec = self.camera.cached_entity["video_codec"]
         if video_codec == "h265":
             video_codec = "hevc"
+        if video_codec == "unknown":
+            video_codec = "h264"
         ffmpeg_command_instance[input_file_index - 1] = video_codec
 
         if self.camera.ffmpeg.is_running == False:
