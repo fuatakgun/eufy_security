@@ -2,7 +2,12 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 **Big thanks to @bropat who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat**
 
-# Known Bugs/Issues #
+# Services #
+- start_rtsp / stop_rtsp (RTSP): **if your camera can stream over RTSP, please enable it over eufy app, this is more more reliable and less power consuming and you can use these services to start and stop stream.**
+- start_livesteam / stop_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming and there is at least 10 seconds delay.
+- turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
+
+# Known Bugs / Issues #
 1- Having multiple p2p streaming at parallel causes issues - https://github.com/fuatakgun/eufy_security/issues/25
 
 2- Lock is not supported yet - https://github.com/fuatakgun/eufy_security/issues/23
@@ -11,14 +16,7 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 4- Some hosts are freezing when p2p stream is enabled, downgrade video quality as workaround or get latest codebase to test changes. - https://github.com/fuatakgun/eufy_security/issues/20
 
-# Services #
-
-- start_rtsp / stop_rtsp (RTSP): **if your camera can stream over RTSP, please enable it over eufy app, this is more more reliable and less power consuming and you can use these services to start and stop stream.**
-- start_livesteam / stop_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming and there is at least 10 seconds delay.
-- turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
-
 # Troubleshooting
-
 1- Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications for them. This integration depends on push notifications to catch events.
 
 2- If your HA instant crashes and your camera supports 2k video streaming, try to reduce quality, 2k video encoding might be hard for your hardware. With latest codebase, I have tried to reduce the load on HA instance for this. https://github.com/fuatakgun/eufy_security/issues/20#issuecomment-886757165
@@ -27,8 +25,9 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 4- I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with my eufy account `fuatakgun@gmail.com` so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
 
-# Installation
+5- If you have any other issue, please create it on github repository, give information about your home assistant hardware, camera model, streaming type (rtsp or p2p), steps required to generate the issue.
 
+# Installation
 ***Warning, there is an existing integration (https://github.com/nonsleepr/ha-eufy-security) and I have used the same internal name with this integration, unintentinally. You can not keep both integrations and trying to install might cause issues. You can backup old one if you want to test this, just rename `custom_components/eufy_security` into something else (eg `eufy_security_nonsleepr`)***
 
 Please follow screenshots below. In summary;
