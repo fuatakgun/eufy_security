@@ -7,6 +7,14 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 - start_livesteam / stop_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming and there is at least 10 seconds delay.
 - turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
 
+# Working Devices and Features #
+| Camera  | RTSP Stream | P2P Stream |
+| -------------                 | ------------- | ------------- |
+| Battery Doorbell - 2K         | No            | Yes           |
+| Battery Camera - 2C           | Yes           | Yes           |
+
+Please share your findings over here so we can keep this up to date.
+
 # Known Bugs / Issues #
 1- Having multiple p2p streaming at parallel causes issues - https://github.com/fuatakgun/eufy_security/issues/25
 
