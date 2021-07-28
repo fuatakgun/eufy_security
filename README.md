@@ -31,7 +31,10 @@ Please share your findings over here so we can keep this up to date.
 
 3- As of now, live stream is limited to 3 minutes and this is hard limit implemented by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but your home assistant will not be notified on this. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442
 
-4- I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with my eufy account `fuatakgun@gmail.com` so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
+4- I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
+
+- If you are located in EU, use my account: `fuatakgun@gmail.com`
+- If you are located in US, use shared test account: `eufydeveloper@gmail.com`
 
 5- If you have any other issue, please create it on github repository, give information about your home assistant hardware, camera model, streaming type (rtsp or p2p), steps required to generate the issue.
 
