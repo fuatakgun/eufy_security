@@ -74,7 +74,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
     entities = []
     for entity in coordinator.state["devices"]:
-        if entity["category"] == "CAMERA":
+        if entity["category"] in ["CAMERA","DOORBELL"]:
             camera: EufySecurityCamera = EufySecurityCamera(
                 hass, coordinator, entry, entity
             )
