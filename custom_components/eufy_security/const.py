@@ -1,3 +1,6 @@
+import logging
+
+import asyncio
 from enum import Enum
 
 from homeassistant.const import (
@@ -6,6 +9,8 @@ from homeassistant.const import (
     DEVICE_CLASS_SIGNAL_STRENGTH,
 )
 from homeassistant.components.binary_sensor import DEVICE_CLASS_MOTION
+
+_LOGGER: logging.Logger = logging.getLogger(__package__)
 
 # Base component constants
 NAME = "Eufy Security"
@@ -184,3 +189,18 @@ DEVICE_CATEGORY = {
     DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_2K: "CAMERA",
     DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_SOLAR: "CAMERA",
 }
+
+
+async def wait_for_value(
+    ref_dict: dict, ref_key: str, value, max_counter: int = 50, interval=0.25
+):
+    _LOGGER.debug(f"{DOMAIN} - wait start - {ref_key}")
+    for counter in range(max_counter):
+        _LOGGER.debug(
+            f"{DOMAIN} - wait - {counter} - {ref_key} {ref_dict.get(ref_key)}"
+        )
+        if ref_dict.get(ref_key, value) == value:
+            await asyncio.sleep(interval)
+        else:
+            return True
+    return False

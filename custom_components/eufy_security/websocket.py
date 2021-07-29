@@ -50,10 +50,9 @@ class EufySecurityWebSocket:
                     task.add_done_callback(self.on_close)
                     await self.async_on_open()
                 except:
-                    pass
+                    await asyncio.sleep(5)
             else:
                 break
-            await asyncio.sleep(5)
 
     async def async_on_open(self) -> None:
         if not self.ws.closed:

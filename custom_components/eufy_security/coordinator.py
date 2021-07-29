@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
-from .const import DEVICE_TYPE
+from .const import DEVICE_TYPE, wait_for_value
 
 from .const import (
     DEVICE_CATEGORY,
@@ -87,30 +87,24 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def check_if_started_listening(self):
         _LOGGER.debug(f"{DOMAIN} - check_if_started_listening")
-        for counter in range(0, RETRY_COUNT):
-            if self.state.get("devices", None) is None:
-                _LOGGER.debug(f"{DOMAIN} - check_if_started_listening - {counter}")
-                await asyncio.sleep(1)
-            else:
-                return await self.get_device_properties()
+
+        if await wait_for_value(self.__dict__, "state", {}) == True:
+            return await self.get_device_properties()
         return False
 
     async def get_device_properties(self):
         _LOGGER.debug(f"{DOMAIN} - get_device_properties")
-        for counter in range(0, RETRY_COUNT):
-            missing_exist = False
-            for device in self.state["devices"]:
-                serial_number = device["serialNumber"]
-                if self.properties.get(serial_number, None) is None:
-                    _LOGGER.debug(
-                        f"{DOMAIN} - device missing - {serial_number} - {counter}"
-                    )
-                    missing_exist = True
-            if missing_exist == True:
-                await asyncio.sleep(1)
-            else:
-                return True
-        return False
+
+        if await wait_for_value(self.__dict__, "properties", {}) == False:
+            return False
+
+        for device in self.state["devices"]:
+            if (
+                await wait_for_value(self.properties, device["serialNumber"], {})
+                == False
+            ):
+                return False
+        return True
 
     async def on_message(self, message):
         payload = message.json()
