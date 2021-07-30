@@ -109,6 +109,9 @@ Please follow screenshots below. In summary;
 Raise your issues in Github. 
 
 ## RTSP Simple Server Add On
+These steps is specific for this topic: https://github.com/fuatakgun/eufy_security/discussions/31
+Please do not follow this if you do not want to participate in beta testing.
+
 1- Please follow similar steps like `Customer Add-On`, but this time, use this as reposiroty URL.
 ```
 https://github.com/fuatakgun/rtsp_simple_server
