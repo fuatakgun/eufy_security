@@ -61,7 +61,7 @@ class EufySecurityWebSocket:
 
     async def process_messages(self):
         _LOGGER.debug(f"{DOMAIN} - process_messages started")
-        counter = 1
+        #counter = 1
         async for msg in self.ws:
             try:
                 await self.on_message(msg)
@@ -72,11 +72,11 @@ class EufySecurityWebSocket:
                     traceback.format_exc(),
                     msg,
                 )
-            if counter % 50 == 0:
-                counter = 1
-                await asyncio.sleep(1)
-            else:
-                counter = counter + 1
+            # if counter % 50 == 0:
+            #     counter = 1
+            #     await asyncio.sleep(1)
+            # else:
+            #     counter = counter + 1
 
     async def on_message(self, message):
         if self.message_callback is not None:

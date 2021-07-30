@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.helpers.translation import component_translation_path
 from .const import DEVICE_TYPE, wait_for_value
 
 from .const import (
@@ -56,6 +57,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         )
         self.hass = hass
         self.ws = None
+        self.rtsp = None
         self.host = host
         self.port = port
         self.session = session
@@ -183,11 +185,13 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                         serial_number, event_property, event_value, message
                     )
                 else:
+                    _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
                     self.async_set_updated_data(self.data)
             else:
                 self.set_data_value_for_property(
                     event_sources, serial_number, event_property, event_value
                 )
+                _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
                 self.async_set_updated_data(self.data)
         else:
             self.async_set_updated_data(self.data)
