@@ -107,3 +107,23 @@ Please follow screenshots below. In summary;
 ![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
 
 Raise your issues in Github. 
+
+## RTSP Simple Server Add On
+1- Please follow similar steps like `Customer Add-On`, but this time, use this as reposiroty URL.
+```
+https://github.com/fuatakgun/rtsp_simple_server
+```
+2- Keep configuration of Add-on as it is.
+
+![image](https://user-images.githubusercontent.com/11085566/127701014-b120fa61-bb29-4575-8adb-1cd0bffccb81.png)
+
+3- Start Add-on and validate Add-on logs.
+```
+2021/07/30 19:12:43 I [0/0] rtsp-simple-server v0.16.4
+2021/07/30 19:12:43 I [0/0] [RTSP] TCP listener opened on :8554
+2021/07/30 19:12:43 I [0/0] [RTMP] listener opened on :1935
+2021/07/30 19:12:43 I [0/0] [HLS] listener opened on :8888
+```
+4- Download add-on based integration over here: https://github.com/fuatakgun/eufy_security/archive/refs/heads/p2p-via-addon.zip
+5- Manually unzip and copy files into your home assistant `custom_components/eufy_security` folder. This is temporary, you will not need this when initial testing is done.
+6- Restart your HA and test and keep us posted.
