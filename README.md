@@ -110,7 +110,10 @@ Raise your issues in Github.
 
 ## RTSP Simple Server Add On
 These steps is specific for this topic: https://github.com/fuatakgun/eufy_security/discussions/31
-Please do not follow this if you do not want to participate in beta testing.
+Please do not follow this if you do not want to participate in beta testing. If your environment does not support add-on, you can use this docker command;
+```
+docker run --rm -it -e RTSP_PROTOCOLS=tcp -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server
+```
 
 1- Please follow similar steps like `Customer Add-On`, but this time, use this as reposiroty URL.
 ```
