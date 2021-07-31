@@ -167,50 +167,27 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
             event_sources = message["source"] + "s"
             serial_number = message["serialNumber"]
-            event_property = message.get(
-                "name", EVENT_CONFIGURATION[event_type]["name"]
-            )
+            event_property = message.get("name", EVENT_CONFIGURATION[event_type]["name"])
             event_value = message[EVENT_CONFIGURATION[event_type]["value"]]
-            event_data_is_cached = EVENT_CONFIGURATION[event_type]["is_cached"]
+            event_data_type = EVENT_CONFIGURATION[event_type]["type"]
 
-            if event_data_is_cached == True:
-                self.set_cache_value_for_property(
-                    event_sources,
-                    serial_number,
-                    event_property,
-                    event_value,
-                )
-                if event_property in BUFFER_BASED_EVENTS:
-                    self.handle_queue_data(
-                        serial_number, event_property, event_value, message
-                    )
-                else:
-                    _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
-                    self.async_set_updated_data(self.data)
-            else:
-                self.set_data_value_for_property(
-                    event_sources, serial_number, event_property, event_value
-                )
+            if event_data_type == "cache":
+                self.set_cache_value_for_property(event_sources, serial_number, event_property, event_value)
                 _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
                 self.async_set_updated_data(self.data)
+
+            if event_data_type == "state":
+                self.set_data_value_for_property(event_sources, serial_number, event_property, event_value)
+                _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
+                self.async_set_updated_data(self.data)
+
+            if event_data_type == "event":
+                self.hass.bus.fire(f"{DOMAIN}_{serial_number}_event_received", message)
+
         else:
             self.async_set_updated_data(self.data)
 
-    def handle_queue_data(self, serial_number, name, value, message):
-        # _LOGGER.debug(f"{DOMAIN} - handle_queue_data - {message}")
-        self.data["cache"][serial_number]["video_codec"] = message["metadata"][
-            "videoCodec"
-        ].lower()
-        self.data["cache"][serial_number]["queue"].put(value)
-        self.data["cache"][serial_number][name] = None
-
-    def set_data_value_for_property(
-        self,
-        sources: str,
-        serial_number: str,
-        property_name: str,
-        value: str,
-    ):
+    def set_data_value_for_property(self, sources: str, serial_number: str, property_name: str, value: str):
         for entity in self.state[sources]:
             if entity["serialNumber"] == serial_number:
                 entity[property_name] = value
@@ -219,13 +196,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                 )
                 break
 
-    def set_cache_value_for_property(
-        self,
-        sources: str,
-        serial_number: str,
-        property_name: str,
-        value,
-    ):
+    def set_cache_value_for_property(self, sources: str, serial_number: str, property_name: str, value):
         if isinstance(value, str):
             value = value.replace("\x00", "")
 
