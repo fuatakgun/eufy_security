@@ -36,7 +36,14 @@ Please share your findings over here so we can keep this up to date.
 - If you are located in EU, use my account: `fuatakgun@gmail.com`
 - If you are located in US, use shared test account: `eufydeveloper@gmail.com`
 
-5- If you have any other issue, please create it on github repository, give information about your home assistant hardware, camera model, streaming type (rtsp or p2p), steps required to generate the issue.
+5- If you have any other issue, please create it on github repository, give information about your home assistant hardware, camera model, streaming type (rtsp or p2p), steps required to generate the issue. Enable excessive logging and share your logs from integration and related add ons.
+
+```
+logger:
+  default: info
+  logs:
+    custom_components.eufy_security: debug
+```
 
 # Installation
 ***Warning, there is an existing integration (https://github.com/nonsleepr/ha-eufy-security) and I have used the same internal name with this integration, unintentinally. You can not keep both integrations and trying to install might cause issues. You can backup old one if you want to test this, just rename `custom_components/eufy_security` into something else (eg `eufy_security_nonsleepr`)***
