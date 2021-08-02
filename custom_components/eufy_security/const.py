@@ -67,6 +67,12 @@ SET_LIVESTREAM_MESSAGE = {
     "command": "device.{state}_livestream",
     "serialNumber": None,
 }
+SET_DEVICE_STATE_MESSAGE = {
+    "messageId": "enable_device",
+    "command": "device.enable_device",
+    "serialNumber": None,
+    "value": None
+}
 
 SET_GUARD_MODE_MESSAGE = {
     "messageId": "set_guard_mode",
@@ -80,6 +86,12 @@ STATION_TRIGGER_ALARM = {
     "command": "station.trigger_alarm",
     "serialNumber": None,
     "seconds": 10
+}
+
+STATION_RESET_ALARM = {
+    "messageId": "reset_alarm",
+    "command": "station.reset_alarm",
+    "serialNumber": None
 }
 
 MESSAGE_IDS_TO_PROCESS = [

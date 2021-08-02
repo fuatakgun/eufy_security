@@ -30,6 +30,18 @@ stop_rtsp:
   target:
     entity:
       domain: camera
+enable:
+  name: Enable
+  description: Enable
+  target:
+    entity:
+      domain: camera
+disable:
+  name: Disable
+  description: Disable
+  target:
+    entity:
+      domain: camera
 alarm_guard_schedule:
   name: Change Mode to Schedule
   description: Change Mode to Schedule
@@ -60,3 +72,16 @@ alarm_arm_custom3:
   target:
     entity:
       domain: alarm_control_panel
+alarm_trigger_with_duration:
+  name: Trigger Alarm for a given duration (seconds)
+  description: Trigger Alarm for a given duration (seconds
+  target:
+    entity:
+      domain: alarm_control_panel
+  fields:
+    duration:
+      name: Duration
+      description: Duration (in seconds)
+      required: true
+      example: 10
+      default: 10

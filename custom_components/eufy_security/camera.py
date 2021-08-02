@@ -82,6 +82,8 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
     platform.async_register_entity_service("stop_livestream", {}, "async_stop_livestream")
     platform.async_register_entity_service("start_rtsp", {}, "async_start_rtsp")
     platform.async_register_entity_service("stop_rtsp", {}, "async_stop_rtsp")
+    platform.async_register_entity_service("enable", {}, "async_enable")
+    platform.async_register_entity_service("disable", {}, "async_disable")
 
 
 class EufySecurityCamera(EufySecurityEntity, Camera):
@@ -223,6 +225,9 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         # based on streaming options, set `is_streaming` value
         prev_is_streaming = self.is_streaming
         if (self.entity.get("rtspStream", False) == True or self.cached_entity["liveStreamingStatus"] == STATE_LIVE_STREAMING):
+            _LOGGER.debug(f"{DOMAIN} {self.name} - set_is_streaming - something streaming")
+            _LOGGER.debug(f"{DOMAIN} {self.name} - set_is_streaming - rtspStream - {self.entity.get('rtspStream', False)}")
+            _LOGGER.debug(f"{DOMAIN} {self.name} - set_is_streaming - rtspStream - {self.cached_entity['rtspUrl']}")
             if self.entity.get("rtspStream", False) == True:
                 if self.cached_entity["rtspUrl"]:
                     self.stream_source_type = STREAMING_SOURCE_RTSP
@@ -312,6 +317,12 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
     async def async_stop_rtsp(self) -> None:
         await self.coordinator.async_set_rtsp(self.serial_number, False)
+
+    async def async_enable(self) -> None:
+        await self.coordinator.async_set_device_state(self.serial_number, True)
+
+    async def async_disable(self) -> None:
+        await self.coordinator.async_set_device_state(self.serial_number, False)
 
     @property
     def id(self):

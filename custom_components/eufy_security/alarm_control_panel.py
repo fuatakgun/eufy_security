@@ -1,6 +1,6 @@
 import asyncio
 import logging
-
+import voluptuous as vol
 from decimal import Decimal
 
 from homeassistant.config_entries import ConfigEntry
@@ -12,9 +12,11 @@ from homeassistant.const import (
     STATE_ALARM_DISARMED,
 )
 from homeassistant.helpers import entity_platform, service
+import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.config_validation import make_entity_service_schema
+from homeassistant.components.alarm_control_panel.const import SUPPORT_ALARM_ARM_AWAY, SUPPORT_ALARM_ARM_HOME, SUPPORT_ALARM_TRIGGER
 
 from .const import DOMAIN, STATE_ALARM_CUSTOM1, STATE_ALARM_CUSTOM2, STATE_ALARM_CUSTOM3, STATE_GUARD_GEO, STATE_GUARD_SCHEDULE
-from homeassistant.components.alarm_control_panel.const import SUPPORT_ALARM_ARM_AWAY, SUPPORT_ALARM_ARM_HOME, SUPPORT_ALARM_TRIGGER
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
 
@@ -30,6 +32,10 @@ CODES_TO_STATES = {
     47: STATE_GUARD_GEO,
     63: STATE_ALARM_DISARMED
 }
+
+ALARM_TRIGGER_SCHEMA = make_entity_service_schema(
+    {vol.Required('duration'): cv.Number}
+)
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
@@ -48,6 +54,9 @@ async def async_setup_entry(hass, entry, async_add_devices):
     platform.async_register_entity_service("alarm_arm_custom2", {}, "alarm_arm_custom2")
     platform.async_register_entity_service("alarm_arm_custom3", {}, "alarm_arm_custom3")
     platform.async_register_entity_service("alarm_guard_geo", {}, "alarm_guard_geo")
+    platform.async_register_entity_service("alarm_trigger_with_duration", ALARM_TRIGGER_SCHEMA, "alarm_trigger_with_duration")
+    platform.async_register_entity_service("reset_alarm", {}, "reset_alarm")
+
 
 
 class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity):
@@ -95,6 +104,12 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
     def alarm_trigger(self, code) -> None:
         asyncio.run_coroutine_threadsafe(self.coordinator.async_trigger_alarm(self.serial_number), self.hass.loop).result()
 
+    def alarm_trigger_with_duration(self, duration: int = 10) -> None:
+        asyncio.run_coroutine_threadsafe(self.coordinator.async_trigger_alarm(self.serial_number, duration), self.hass.loop).result()
+
+    def reset_alarm(self) -> None:
+        asyncio.run_coroutine_threadsafe(self.coordinator.async_reset_alarm(self.serial_number), self.hass.loop).result()
+
     @property
     def id(self):
         return f"{DOMAIN}_{self.serial_number}_station"
@@ -116,4 +131,5 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
     def state_attributes(self):
         attrs = {}
         attrs["data"] = self.entity
+        attrs["guard_state"] = CODES_TO_STATES[self.entity.get("guardMode", -1)]
         return attrs

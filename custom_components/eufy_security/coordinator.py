@@ -29,8 +29,10 @@ from .const import (
     GET_LIVESTREAM_STATUS_PLACEHOLDER,
     SET_RTSP_STREAM_MESSAGE,
     SET_LIVESTREAM_MESSAGE,
+    SET_DEVICE_STATE_MESSAGE,
     SET_GUARD_MODE_MESSAGE,
     STATION_TRIGGER_ALARM,
+    STATION_RESET_ALARM,
     START_LIVESTREAM_AT_INITIALIZE,
 )
 from .websocket import EufySecurityWebSocket
@@ -259,6 +261,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         message["command"] = message["command"].replace("{state}", value)
         await self.async_send_message(json.dumps(message))
 
+    async def async_set_device_state(self, serial_no: str, value: bool):
+        message = SET_DEVICE_STATE_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        message["value"] = value
+        await self.async_send_message(json.dumps(message))
+
     async def async_set_guard_mode(self, serial_no: str, value: int):
         message = SET_GUARD_MODE_MESSAGE.copy()
         message["serialNumber"] = serial_no
@@ -269,4 +277,9 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         message = STATION_TRIGGER_ALARM.copy()
         message["serialNumber"] = serial_no
         message["seconds"] = duration
+        await self.async_send_message(json.dumps(message))
+
+    async def async_reset_alarm(self, serial_no: str):
+        message = STATION_RESET_ALARM.copy()
+        message["serialNumber"] = serial_no
         await self.async_send_message(json.dumps(message))
