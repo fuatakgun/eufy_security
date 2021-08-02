@@ -7,11 +7,13 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 - start_rtsp / stop_rtsp (RTSP): **if your camera can stream over RTSP, please enable it over eufy app, this is more more reliable and less power consuming and you can use these services to start and stop stream.**
 - start_livesteam / stop_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming and there is at least 10 seconds delay.
 - turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
+- enable / disable: enable and disable respective device
 
 ## Station ##
 - alarm_arm_home / alarm_arm_away / alarm_disarm / alarm_guard_schedule (requires configuration on eufy app) / alarm_guard_geo (requires configuration on eufy app)
-- alarm_arm_custom1 & alarm_arm_custom2 & alarm_arm_custom3 - you need to create custom configurations for these to work
+- alarm_arm_custom1 / alarm_arm_custom2 / alarm_arm_custom3 - you need to create custom configurations for these to work
 ![image](https://user-images.githubusercontent.com/11085566/127906780-ba18d5a0-03c3-407a-922a-dc519e59dfe8.png)
+- alarm_trigger / alarm_trigger_with_duration - trigger alarm on home station
 
 
 # Known Bugs / Issues #
