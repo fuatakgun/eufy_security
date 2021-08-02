@@ -1,19 +1,18 @@
-I have baked a custom integration to control Eufy Security Cameras and access RSTP (real time streaming protocol) stream if possible. You can turn on and turn off cameras and if your camera is on, you can view live stream. Morevoer, there are some additional sensors for motion detection, person detection, battery level and wifi signal.
+I have baked a custom integration to control Eufy Security Cameras and access RSTP (real time streaming protocol) stream if possible. You can turn on and turn off cameras and if your camera is on, you can view live stream. Morevoer, there are some additional sensors for motion detection, person detection, battery level and wifi signal. 
 
 **Big thanks to @bropat who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat**
 
 # Services #
+## Camera ##
 - start_rtsp / stop_rtsp (RTSP): **if your camera can stream over RTSP, please enable it over eufy app, this is more more reliable and less power consuming and you can use these services to start and stop stream.**
 - start_livesteam / stop_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming and there is at least 10 seconds delay.
 - turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
 
-# Working Devices and Features #
-| Camera  | RTSP Stream | P2P Stream |
-| -------------                 | ------------- | ------------- |
-| Battery Doorbell - 2K         | No            | Yes           |
-| Battery Camera - 2C           | Yes           | Yes           |
+## Station ##
+- alarm_arm_home / alarm_arm_away / alarm_disarm / alarm_guard_schedule (requires configuration on eufy app) / alarm_guard_geo (requires configuration on eufy app)
+- alarm_arm_custom1 & alarm_arm_custom2 & alarm_arm_custom3 - you need to create custom configurations for these to work
+![image](https://user-images.githubusercontent.com/11085566/127906780-ba18d5a0-03c3-407a-922a-dc519e59dfe8.png)
 
-Please share your findings over here so we can keep this up to date.
 
 # Known Bugs / Issues #
 1- Having multiple p2p streaming at parallel causes issues - https://github.com/fuatakgun/eufy_security/issues/25
@@ -21,8 +20,6 @@ Please share your findings over here so we can keep this up to date.
 2- Lock is not supported yet - https://github.com/fuatakgun/eufy_security/issues/23
 
 3- Motion sensor is not supported yet - https://github.com/fuatakgun/eufy_security/issues/22
-
-4- Some hosts are freezing when p2p stream is enabled, downgrade video quality as workaround or get latest codebase to test changes. - https://github.com/fuatakgun/eufy_security/issues/20
 
 # Troubleshooting
 1- Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications for them. This integration depends on push notifications to catch events.
@@ -50,6 +47,7 @@ logger:
 
 Please follow screenshots below. In summary;
 - You will first install HASS Add On assuming you are running on Hassos or Supervised. If not, please execute this command to run docker instance manually ```docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -p 3000:3000 bropat/eufy-security-ws:latest```
+- As an optional step, you can install RTSP Server Add On to have faster/more reliable p2p streaming. I will deprecate/not support file based streaming soon, so, please migrate in timely manner.
 - When you are done with HASS Add On, you will install integration via adding integration address to HACS, downloading files over UI, restarting home assistant and setting up integration.
 
 ## Custom Add-On - 1
