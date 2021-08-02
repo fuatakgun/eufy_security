@@ -30,3 +30,33 @@ stop_rtsp:
   target:
     entity:
       domain: camera
+alarm_guard_schedule:
+  name: Change Mode to Schedule
+  description: Change Mode to Schedule
+  target:
+    entity:
+      domain: alarm_control_panel
+alarm_guard_geo:
+  name: Change Mode to Geo-Fencing
+  description: Change Mode to Geo-Fencing
+  target:
+    entity:
+      domain: alarm_control_panel
+alarm_arm_custom1:
+  name: Change Mode to Custom 1
+  description: Change Mode to Custom 1
+  target:
+    entity:
+      domain: alarm_control_panel
+alarm_arm_custom2:
+  name: Change Mode to Custom 2
+  description: Change Mode to Custom 2
+  target:
+    entity:
+      domain: alarm_control_panel
+alarm_arm_custom3:
+  name: Change Mode to Custom 3
+  description: Change Mode to Custom 3
+  target:
+    entity:
+      domain: alarm_control_panel

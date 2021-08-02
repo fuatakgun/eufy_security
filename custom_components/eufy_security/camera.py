@@ -85,13 +85,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_devices):
 
 
 class EufySecurityCamera(EufySecurityEntity, Camera):
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        coordinator: EufySecurityDataUpdateCoordinator,
-        entry: ConfigEntry,
-        entity: dict,
-    ):
+    def __init__(self, hass: HomeAssistant, coordinator: EufySecurityDataUpdateCoordinator, entry: ConfigEntry, entity: dict):
         EufySecurityEntity.__init__(self, coordinator, entry, entity)
         Camera.__init__(self)
         self.hass: HomeAssistant = hass

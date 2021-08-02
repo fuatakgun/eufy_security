@@ -18,10 +18,11 @@ DOMAIN = "eufy_security"
 VERSION = "0.0.1"
 
 # Platforms
+ALARM_CONTROL_PANEL = "alarm_control_panel"
 BINARY_SENSOR = "binary_sensor"
 CAMERA = "camera"
 SENSOR = "sensor"
-PLATFORMS = [BINARY_SENSOR, CAMERA, SENSOR]
+PLATFORMS = [BINARY_SENSOR, CAMERA, SENSOR, ALARM_CONTROL_PANEL]
 
 # Configuration and options
 CONF_HOST = "host"
@@ -65,6 +66,20 @@ SET_LIVESTREAM_MESSAGE = {
     "messageId": "start_livesteam",
     "command": "device.{state}_livestream",
     "serialNumber": None,
+}
+
+SET_GUARD_MODE_MESSAGE = {
+    "messageId": "set_guard_mode",
+    "command": "station.set_guard_mode",
+    "serialNumber": None,
+    "mode": None
+}
+
+STATION_TRIGGER_ALARM = {
+    "messageId": "trigger_alarm",
+    "command": "station.trigger_alarm",
+    "serialNumber": None,
+    "seconds": 10
 }
 
 MESSAGE_IDS_TO_PROCESS = [
@@ -111,6 +126,12 @@ EVENT_CONFIGURATION: dict = {
         "type": "event",
     },
 }
+
+STATE_ALARM_CUSTOM1 = "custom1"
+STATE_ALARM_CUSTOM2 = "custom2"
+STATE_ALARM_CUSTOM3 = "custom3"
+STATE_GUARD_SCHEDULE = "schedule"
+STATE_GUARD_GEO = "geo"
 
 
 class DEVICE_TYPE(Enum):
