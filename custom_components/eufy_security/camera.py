@@ -1,7 +1,6 @@
 import logging
 
 import asyncio
-import async_timeout
 import datetime
 from datetime import timedelta
 import requests
@@ -314,9 +313,14 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
     async def async_start_rtsp(self, executed_at=None) -> None:
         await self.coordinator.async_set_rtsp(self.serial_number, True)
+        await asyncio.sleep(1)
+        dummy = self.state
+
 
     async def async_stop_rtsp(self) -> None:
         await self.coordinator.async_set_rtsp(self.serial_number, False)
+        await asyncio.sleep(1)
+        dummy = self.state
 
     async def async_enable(self) -> None:
         await self.coordinator.async_set_device_state(self.serial_number, True)
