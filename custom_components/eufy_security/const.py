@@ -26,6 +26,7 @@ PLATFORMS = [BINARY_SENSOR, CAMERA, SENSOR]
 # Configuration and options
 CONF_HOST = "host"
 CONF_PORT = "port"
+CONF_USE_RTSP_SERVER_ADDON = "use_rtsp_server_addon"
 
 # Update all in every hour
 DEFAULT_SYNC_INTERVAL = 600  # seconds
