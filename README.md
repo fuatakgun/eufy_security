@@ -52,7 +52,7 @@ Please follow screenshots below. In summary;
 - You will first install HASS Add On assuming you are running on Hassos or Supervised. If not, please execute this command to run docker instance manually ```docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -p 3000:3000 bropat/eufy-security-ws:latest```
 - When you are done with HASS Add On, you will install integration via adding integration address to HACS, downloading files over UI, restarting home assistant and setting up integration.
 
-## Custom Add-On
+## Custom Add-On - 1
 1- Go to Add-On Store page and select `Repositories`
 
 ![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
@@ -74,69 +74,63 @@ Please follow screenshots below. In summary;
 
 ![5-add-on-log](https://user-images.githubusercontent.com/11085566/126563928-3ee2d48d-06e2-4681-9076-3992f4546b16.PNG)
 
+## Custom Add-On - 2 - Optional but Highly Recommended for Faster P2P Streaming
+1- Go to Add-On Store page and select `Repositories`
+![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
+
+2- Add custom repository URL 
+```https://github.com/fuatakgun/rtsp_simple_server```
+
+3- Confirm that you can see `RTSP Simple Server Addon` - probably at the end of the page
+![image](https://user-images.githubusercontent.com/11085566/127865866-5c47cfd1-0130-4a6a-a00c-8a763acd2100.png)
+
+4- Click on `RTSP Simple Server Addon`, install add-on, please do not change any configuration.
+![image](https://user-images.githubusercontent.com/11085566/127866038-44d2db72-2e20-46bd-a3d7-328213bf6713.png)
+
+5- Start the Add-On and validate if it is running well checking the logs.
+![image](https://user-images.githubusercontent.com/11085566/127866173-af817b84-034e-449e-8143-a94a78564052.png)
+
+
 ## Custom Integration
 
-6- Go to HACS and click on `Custom repositories`
+1- Go to HACS and click on `Custom repositories`
 
 ![6-hacs-custom-repositories](https://user-images.githubusercontent.com/11085566/126563932-e9fc2783-02a1-42d3-8f4a-bc0fa2edf386.PNG)
 
-7- Add custom integration repository URL 
+2- Add custom integration repository URL 
 ```https://github.com/fuatakgun/eufy_security/```
 
 ![7-hacs-add](https://user-images.githubusercontent.com/11085566/126563937-4ad08d92-b9c1-45e3-a205-be9b244bc3a7.PNG)
 
-8- Install the `Eufy Secucirty` repository
+3- Install the `Eufy Secucirty` repository
 
 ![8-hacs-install](https://user-images.githubusercontent.com/11085566/126563950-1c89c1e8-f77d-46ac-8910-77048500a07f.PNG)
 
-9- You need to restart your HA instance to pick up new repository.
+4- You need to restart your HA instance to pick up new repository.
 
 ![9-hacs-restart](https://user-images.githubusercontent.com/11085566/126563954-b801e4ea-b93e-4695-928d-a82221fe01f4.PNG)
 
-10- After restart, go to `Configuration` - `Integrations` page and click on `Add Integration`
+5- After restart, go to `Configuration` - `Integrations` page and click on `Add Integration`
 
 ![10-integrations](https://user-images.githubusercontent.com/11085566/126563961-a05c5e50-b006-4759-b55a-548f691a13d8.PNG)
 
-11- Search for ```Eufy Security``` and click on it
+6- Search for ```Eufy Security``` and click on it
 
 ![11-integration-search](https://user-images.githubusercontent.com/11085566/126563968-920a74de-ab93-456b-b4b2-dcf651a07f9f.PNG)
 
-12- In next page, use ```localhost``` if you have used Add-on installation, otherwise put your Docker instance ip address and keep `3000` as port
+7- In next page, use ```localhost``` if you have used Add-on installation, otherwise put your Docker instance ip address and keep `3000` as port
 
 ![12-integration-configure](https://user-images.githubusercontent.com/11085566/126563976-234005e7-2920-4ef0-a301-187d4d929f10.png)
 
-13- You will be shown devices connected to your account.
+8- You will be shown devices connected to your account.
 
 ![13-integration-done](https://user-images.githubusercontent.com/11085566/126563982-38b3a00a-ff6a-45aa-8dcc-b04e864a37f8.PNG)
 
-14- If your camera does not support live stream, you can use `Start Live Stream` and `Stop Live Stream` services. They require camera entities as input, you can use UI for this.
+9- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this.
 
 ![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
 
+10- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
+![image](https://user-images.githubusercontent.com/11085566/127866543-1345d56f-b4f3-4154-96c7-a278d747cf8d.png)
+
 Raise your issues in Github. 
-
-## RTSP Simple Server Add On
-These steps is specific for this topic: https://github.com/fuatakgun/eufy_security/discussions/31
-Please do not follow this if you do not want to participate in beta testing. If your environment does not support add-on, you can use this docker command;
-```
-docker run --rm -it -e RTSP_PROTOCOLS=tcp -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server
-```
-
-1- Please follow similar steps like `Customer Add-On`, but this time, use this as reposiroty URL.
-```
-https://github.com/fuatakgun/rtsp_simple_server
-```
-2- Keep configuration of Add-on as it is.
-
-![image](https://user-images.githubusercontent.com/11085566/127701014-b120fa61-bb29-4575-8adb-1cd0bffccb81.png)
-
-3- Start Add-on and validate Add-on logs.
-```
-2021/07/30 19:12:43 I [0/0] rtsp-simple-server v0.16.4
-2021/07/30 19:12:43 I [0/0] [RTSP] TCP listener opened on :8554
-2021/07/30 19:12:43 I [0/0] [RTMP] listener opened on :1935
-2021/07/30 19:12:43 I [0/0] [HLS] listener opened on :8888
-```
-4- Download add-on based integration over here: https://github.com/fuatakgun/eufy_security/archive/refs/heads/p2p-via-addon.zip
-5- Manually unzip and copy files into your home assistant `custom_components/eufy_security` folder. This is temporary, you will not need this when initial testing is done.
-6- Restart your HA and test and keep us posted.
