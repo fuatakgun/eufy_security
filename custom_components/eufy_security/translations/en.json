@@ -16,5 +16,15 @@
     "abort": {
       "single_instance_allowed": "Only a single instance is allowed."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Eufy Security: Configuration",
+        "data": {
+          "use_rtsp_server_addon": "ALPHA - Use RTSP Server Add-On instead of File Based Streaming - Requires additional Add-On setup, highly advised - ALPHA"
+        }
+      }
+    }
   }
 }

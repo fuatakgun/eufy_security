@@ -26,6 +26,7 @@ PLATFORMS = [BINARY_SENSOR, CAMERA, SENSOR]
 # Configuration and options
 CONF_HOST = "host"
 CONF_PORT = "port"
+CONF_USE_RTSP_SERVER_ADDON = "use_rtsp_server_addon"
 
 # Update all in every hour
 DEFAULT_SYNC_INTERVAL = 600  # seconds
@@ -77,43 +78,37 @@ EVENT_CONFIGURATION: dict = {
     "property changed": {
         "name": PROPERTY_CHANGED_PROPERTY_NAME,
         "value": "value",
-        "is_cached": False,
+        "type": "state",
     },
     "person detected": {
         "name": "personDetected",
         "value": "state",
-        "is_cached": False,
+        "type": "state",
     },
     "motion detected": {
         "name": "motionDetected",
         "value": "state",
-        "is_cached": False,
+        "type": "state",
     },
     "got rtsp url": {
         "name": "rtspUrl",
         "value": "rtspUrl",
-        "is_cached": True,
+        "type": "cache",
     },
     "livestream started": {
         "name": "liveStreamingStatus",
         "value": "event",
-        "is_cached": True,
+        "type": "cache",
     },
     "livestream stopped": {
         "name": "liveStreamingStatus",
         "value": "event",
-        "is_cached": True,
+        "type": "cache",
     },
     "livestream video data": {
         "name": "video_data",
         "value": "buffer",
-        "is_cached": True,
-        "print_log": False,
-    },
-    "livestream audio dataX": {
-        "name": "audio_data",
-        "value": "buffer",
-        "is_cached": True,
+        "type": "event",
     },
 }
 
