@@ -7,6 +7,7 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_MOTION,
     DEVICE_CLASS_SOUND,
     DEVICE_CLASS_DOOR,
+    DEVICE_CLASS_POWER,
 )
 
 from .const import DOMAIN
@@ -69,6 +70,13 @@ async def async_setup_entry(hass, entry, async_add_devices):
             "mdi:bell-ring",
             None,
         ),
+        (
+            "enabled",
+            "Enabled",
+            "enabled",
+            None,
+            DEVICE_CLASS_POWER,
+        ),
     ]
 
     entities = []
@@ -110,6 +118,10 @@ class EufySecurityBinarySensor(EufySecurityEntity):
         self.key = key
         self._icon = icon
         self._device_class = device_class
+
+    @property
+    def is_on(self):
+        return self.entity.get(self.key)
 
     @property
     def state(self):
