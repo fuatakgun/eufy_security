@@ -21,62 +21,14 @@ async def async_setup_entry(hass, entry, async_add_devices):
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
 
     INSTRUMENTS = [
-        (
-            "motion_sensor",
-            "Motion Sensor",
-            "motionDetected",
-            None,
-            DEVICE_CLASS_MOTION,
-        ),
-        (
-            "person_detector_sensor",
-            "Person Detector Sensor",
-            "personDetected",
-            None,
-            DEVICE_CLASS_MOTION,
-        ),
-        (
-            "pet_detector_sensor",
-            "Pet Detector Sensor",
-            "petDetected",
-            None,
-            DEVICE_CLASS_MOTION,
-        ),
-        (
-            "sound_detector_sensor",
-            "Sound Detector Sensor",
-            "soundDetected",
-            None,
-            DEVICE_CLASS_SOUND,
-        ),
-        (
-            "crying_detector_sensor",
-            "Crying Detector Sensor",
-            "cryingDetected",
-            None,
-            DEVICE_CLASS_SOUND,
-        ),
-        (
-            "sensor_open",
-            "Sensor Open",
-            "sensorOpen",
-            None,
-            DEVICE_CLASS_DOOR,
-        ),
-        (
-            "ringing_sensor",
-            "Ringing Sensor",
-            "ringing",
-            "mdi:bell-ring",
-            None,
-        ),
-        (
-            "enabled",
-            "Enabled",
-            "enabled",
-            None,
-            DEVICE_CLASS_POWER,
-        ),
+        ("motion_sensor", "Motion Sensor", None, None, DEVICE_CLASS_MOTION),
+        ("person_detector_sensor", "Person Detector Sensor", "personDetected", None, DEVICE_CLASS_MOTION),
+        ("pet_detector_sensor", "Pet Detector Sensor", "petDetected", None, DEVICE_CLASS_MOTION),
+        ("sound_detector_sensor", "Sound Detector Sensor", "soundDetected", None, DEVICE_CLASS_SOUND),
+        ("crying_detector_sensor", "Crying Detector Sensor", "cryingDetected", None, DEVICE_CLASS_SOUND),
+        ("sensor_open", "Sensor Open", "sensorOpen", None, DEVICE_CLASS_DOOR),
+        ("ringing_sensor", "Ringing Sensor", "ringing", "mdi:bell-ring", None),
+        ("enabled", "Enabled", "enabled", None, DEVICE_CLASS_POWER),
     ]
 
     entities = []
@@ -118,6 +70,11 @@ class EufySecurityBinarySensor(EufySecurityEntity):
         self.key = key
         self._icon = icon
         self._device_class = device_class
+
+        if entity["category"] in ["MOTION_SENSOR"]:
+            self.key = "motionDetection"
+        else:
+            self.key = "motionDetected"
 
     @property
     def is_on(self):
