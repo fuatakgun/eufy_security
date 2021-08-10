@@ -185,6 +185,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
             if event_data_type == "event":
                 self.hass.bus.fire(f"{DOMAIN}_{serial_number}_event_received", event_value)
+                video_codec = message["metadata"]["videoCodec"].lower()
+                if video_codec == "unknown":
+                    video_codec = "h264"
+                if video_codec == "h265":
+                    video_codec = "hevc"
+                self.cache[serial_number]["latest_codec"] = video_codec
 
         else:
             self.async_set_updated_data(self.data)

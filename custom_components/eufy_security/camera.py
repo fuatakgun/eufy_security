@@ -36,10 +36,10 @@ STREAMING_SOURCE_RTSP = "rtsp"
 STREAMING_SOURCE_P2P = "p2p"
 FFMPEG_COMMAND = [
     "-y",
-    "-probesize", "128",
-    "-analyzeduration", "0",
+    # "-probesize", "128",
+    # "-analyzeduration", "0",
     "-protocol_whitelist", "pipe,file,tcp",
-    "-f", "h264",
+    "-f", "{video_codec}",
     "-i", "-",
     "-vcodec", "copy",
     "-protocol_whitelist", "pipe,file,tcp,udp,rtsp,rtp",
@@ -108,6 +108,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         self.stop_stream_function = self.async_stop_livestream
         self.cached_entity["liveStreamingStatus"] = None
         self.cached_entity["queue"] = Queue()
+        self.cached_entity["latest_codec"] = None
         self.queue: Queue = self.cached_entity["queue"]
         self.p2p_thread = None
         self.empty_queue_counter = 0
@@ -115,6 +116,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         # video generation using ffmpeg for p2p
         self.ffmpeg_binary = self.hass.data[DATA_FFMPEG].binary
         self.ffmpeg = CameraMjpeg(self.ffmpeg_binary)
+        self.default_codec = "h264"
 
         self.ffmpeg_output = f"{DOMAIN}-{self.serial_number}"
         if self.coordinator.use_rtsp_server_addon == True:
@@ -148,9 +150,15 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         self.hass.bus.async_listen(f"{DOMAIN}_{self.serial_number}_event_received", self.handle_incoming_video_data)
 
     async def handle_incoming_video_data(self, event):
+        lock = asyncio.Lock()
+        async with lock:
+            if self.cached_entity['latest_codec'] != self.default_codec:
+                _LOGGER.debug(f"{DOMAIN} {self.name} - set codec - default {self.default_codec} - incoming {self.cached_entity['latest_codec']}")
+                self.default_codec = self.cached_entity['latest_codec']
+                await self.hass.async_add_executor_job(self.stop_ffmpeg)
+                await self.open_ffmpeg()
         data = event.data
         self.queue.put(data)
-        #_LOGGER.debug(f"{DOMAIN} {self.name} - handle_incoming_video_data")
 
     def stop_ffmpeg(self):
         try:
@@ -245,6 +253,18 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
             _LOGGER.debug(f"{DOMAIN} {self.name} - state change - {prev_is_streaming} {self.is_streaming}")
             async_call_later(self.hass, 0, self.state_changed)
 
+    async def open_ffmpeg(self):
+        _LOGGER.debug(f"{DOMAIN} {self.name} - open_ffmpeg 1 - codec {self.default_codec}")
+        ffmpeg_command_instance = FFMPEG_COMMAND.copy()
+        _LOGGER.debug(f"{DOMAIN} {self.name} - open_ffmpeg 2 - ffmpeg_command_instance {ffmpeg_command_instance}")
+        input_index = ffmpeg_command_instance.index("-i")
+        _LOGGER.debug(f"{DOMAIN} {self.name} - open_ffmpeg 3 - ffmpeg_command_instance {ffmpeg_command_instance}")
+        ffmpeg_command_instance[input_index - 1] = self.default_codec
+        _LOGGER.debug(f"{DOMAIN} {self.name} - open_ffmpeg 4 - ffmpeg_command_instance {ffmpeg_command_instance}")
+        result = await self.ffmpeg.open(cmd=ffmpeg_command_instance, input_source=None, extra_cmd=FFMPEG_OPTIONS, output=self.ffmpeg_output, stderr_pipe=False, stdout_pipe=False)
+        _LOGGER.debug(f"{DOMAIN} {self.name} - open_ffmpeg 5 - ffmpeg_command_instance {ffmpeg_command_instance}")
+        return result
+
     async def state_changed(self, executed_at=None):
         prev_is_streaming = not self.is_streaming
         if prev_is_streaming == False and self.is_streaming == True:
@@ -253,8 +273,8 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
                 if self.ffmpeg.is_running == True:
                     _LOGGER.error(f"{DOMAIN} {self.name} - state_changed - ffmeg - running")
                     await self.hass.async_add_executor_job(self.stop_ffmpeg)
-                await self.ffmpeg.open(cmd=FFMPEG_COMMAND, input_source=None, extra_cmd=FFMPEG_OPTIONS, output=self.ffmpeg_output, stderr_pipe=False, stdout_pipe=False)
-                _LOGGER.debug(f"{DOMAIN} {self.name} - state change - ffmpeg - done - {self.ffmpeg_output}")
+                await self.open_ffmpeg()
+                _LOGGER.debug(f"{DOMAIN} {self.name} - state_changed - ffmpeg - done - {self.ffmpeg_output}")
                 self.empty_queue_counter = 0
                 self.p2p_thread = threading.Thread(target=self.handle_queue_threaded, daemon=True)
                 self.p2p_thread.start()
