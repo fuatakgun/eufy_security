@@ -2,28 +2,28 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 **Big thanks to @bropat who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat**
 
-# Services #
-## Camera ##
+# 1. Services #
+## 1.1 Camera Services ##
 - start_rtsp / stop_rtsp (RTSP): **if your camera can stream over RTSP, please enable it over eufy app, this is more more reliable and less power consuming and you can use these services to start and stop stream.**. Attention: users had reported that using `stop_rtsp` is disabling RTSP functionality at all for the camera. https://github.com/fuatakgun/eufy_security/issues/53 
 - start_livesteam / stop_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming and there is at least 10 seconds delay.
 - turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
 - enable / disable: enable and disable respective device
 
-## Station ##
+## 1.2 Station Services ##
 - alarm_arm_home / alarm_arm_away / alarm_disarm / alarm_guard_schedule (requires configuration on eufy app) / alarm_guard_geo (requires configuration on eufy app)
 - alarm_arm_custom1 / alarm_arm_custom2 / alarm_arm_custom3 - you need to create custom configurations for these to work
 ![image](https://user-images.githubusercontent.com/11085566/127906780-ba18d5a0-03c3-407a-922a-dc519e59dfe8.png)
 - alarm_trigger / alarm_trigger_with_duration - trigger alarm on home station
 
 
-# Known Bugs / Issues #
+# 2. Known Bugs / Issues #
 1- Having multiple p2p streaming at parallel causes issues - https://github.com/fuatakgun/eufy_security/issues/25
 
 2- Lock is not supported yet - https://github.com/fuatakgun/eufy_security/issues/23
 
 3- Motion sensor is not supported yet - https://github.com/fuatakgun/eufy_security/issues/22
 
-# Troubleshooting
+# 3. Troubleshooting
 1- Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications for them. This integration depends on push notifications to catch events.
 
 2- If your HA instant crashes and your camera supports 2k video streaming, try to reduce quality, 2k video encoding might be hard for your hardware. With latest codebase, I have tried to reduce the load on HA instance for this. https://github.com/fuatakgun/eufy_security/issues/20#issuecomment-886757165
@@ -32,7 +32,6 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 4- Please do not enable `Preload Stream` functionality in Camera View window for two reasons; it is not adding functionality in our use case and it sends a signal to enable live stream to your cameras which might end up excessive battery consumption.
 ![image](https://user-images.githubusercontent.com/11085566/128697823-f83b5ce5-1f31-48c9-ac6d-712bd56b504b.png)
-
 
 5- I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
 
@@ -48,7 +47,7 @@ logger:
     custom_components.eufy_security: debug
 ```
 
-# Installation
+# 6. Installation
 ***Warning, there is an existing integration (https://github.com/nonsleepr/ha-eufy-security) and I have used the same internal name with this integration, unintentinally. You can not keep both integrations and trying to install might cause issues. You can backup old one if you want to test this, just rename `custom_components/eufy_security` into something else (eg `eufy_security_nonsleepr`)***
 
 Please follow screenshots below. In summary;
@@ -57,7 +56,7 @@ Please follow screenshots below. In summary;
 - When you are done with HASS Add On, you will install integration via adding integration address to HACS, downloading files over UI, restarting home assistant and setting up integration.
 - Double check if your `configuration.yaml` includes `ffmpeg` integration. If not, please do like this; https://www.home-assistant.io/integrations/ffmpeg/#configuration . This integration relies on `ffmpeg` to be setup.
 
-## Custom Add-On - 1
+## 6.1 Installing Eufy Security Add On
 1- Go to Add-On Store page and select `Repositories`
 
 ![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
@@ -79,7 +78,7 @@ Please follow screenshots below. In summary;
 
 ![5-add-on-log](https://user-images.githubusercontent.com/11085566/126563928-3ee2d48d-06e2-4681-9076-3992f4546b16.PNG)
 
-## Custom Add-On - 2 - Optional but Highly Recommended for Faster P2P Streaming
+## 6.2 Installing RTSP Simple Server Add On (for faster P2P streaming)
 1- Go to Add-On Store page and select `Repositories`
 ![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
 
@@ -96,7 +95,7 @@ Please follow screenshots below. In summary;
 ![image](https://user-images.githubusercontent.com/11085566/127866173-af817b84-034e-449e-8143-a94a78564052.png)
 
 
-## Custom Integration
+## 6.3 Installing Integration
 
 1- Go to HACS and click on `Custom repositories`
 
@@ -137,5 +136,11 @@ Please follow screenshots below. In summary;
 
 10- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
 ![image](https://user-images.githubusercontent.com/11085566/127866543-1345d56f-b4f3-4154-96c7-a278d747cf8d.png)
+
+## 6.3 Optional - WebRTC
+
+For faster streaming, please try out WebRTC, thanks @conorlap for this. - https://github.com/fuatakgun/eufy_security/issues/43
+I personally could not make it work but there are some users out there who are happy with the results.
+
 
 Raise your issues in Github. 
