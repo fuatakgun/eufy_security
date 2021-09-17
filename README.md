@@ -33,7 +33,9 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 4- Please do not enable `Preload Stream` functionality in Camera View window for two reasons; it is not adding functionality in our use case and it sends a signal to enable live stream to your cameras which might end up excessive battery consumption.
 ![image](https://user-images.githubusercontent.com/11085566/128697823-f83b5ce5-1f31-48c9-ac6d-712bd56b504b.png)
 
-5- I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
+5- One user reported that there is an issue regarding to 2k Battery Doorbell in terms of receiving motion and person detection sensor. If you are having a similar issue, please apply this solution: https://github.com/fuatakgun/eufy_security/issues/22#issuecomment-908157691
+
+6- I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
 
 - If you are located in EU, use my account: `fuatakgun@gmail.com`
 - If you are located in US, use shared test account: `eufydeveloper@gmail.com`
