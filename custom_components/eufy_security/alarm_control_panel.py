@@ -29,8 +29,20 @@ CODES_TO_STATES = {
     3: STATE_ALARM_CUSTOM1,
     4: STATE_ALARM_CUSTOM2,
     5: STATE_ALARM_CUSTOM3,
+    6: STATE_ALARM_DISARMED,
     47: STATE_GUARD_GEO,
     63: STATE_ALARM_DISARMED
+}
+
+STATES_TO_CODES = {
+    STATE_ALARM_ARMED_AWAY: 0,
+    STATE_ALARM_ARMED_HOME: 1,
+    STATE_GUARD_SCHEDULE: 2,
+    STATE_ALARM_CUSTOM1: 3,
+    STATE_ALARM_CUSTOM2: 4,
+    STATE_ALARM_CUSTOM3: 5,
+    STATE_GUARD_GEO: 47,
+    STATE_ALARM_DISARMED: 63,
 }
 
 ALARM_TRIGGER_SCHEMA = make_entity_service_schema(
@@ -69,13 +81,12 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
         self.hass: HomeAssistant = hass
         self.coordinator: EufySecurityDataUpdateCoordinator = coordinator
         self.entity = entity
-        self.states_to_codes = {v: k for k, v in CODES_TO_STATES.items()}
 
         # initialize values
         self.serial_number = self.entity["serialNumber"]
 
     async def set_guard_mode(self, target_mode: str):
-        await self.coordinator.async_set_guard_mode(self.serial_number, self.states_to_codes[target_mode])
+        await self.coordinator.async_set_guard_mode(self.serial_number, STATES_TO_CODES[target_mode])
 
     def alarm_disarm(self, code) -> None:
         asyncio.run_coroutine_threadsafe(self.set_guard_mode(STATE_ALARM_DISARMED), self.hass.loop).result()

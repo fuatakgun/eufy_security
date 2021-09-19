@@ -145,7 +145,6 @@ STATE_ALARM_CUSTOM3 = "custom3"
 STATE_GUARD_SCHEDULE = "schedule"
 STATE_GUARD_GEO = "geo"
 
-
 class DEVICE_TYPE(Enum):
     STATION = 0
     CAMERA = 1
@@ -180,7 +179,6 @@ class DEVICE_TYPE(Enum):
     SOLO_CAMERA_SPOTLIGHT_1080 = 60
     SOLO_CAMERA_SPOTLIGHT_2K = 61
     SOLO_CAMERA_SPOTLIGHT_SOLAR = 62
-
 
 DEVICE_CATEGORY = {
     DEVICE_TYPE.STATION: "STATION",
@@ -217,7 +215,6 @@ DEVICE_CATEGORY = {
     DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_2K: "CAMERA",
     DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_SOLAR: "CAMERA",
 }
-
 
 async def wait_for_value(
     ref_dict: dict, ref_key: str, value, max_counter: int = 50, interval=0.25
