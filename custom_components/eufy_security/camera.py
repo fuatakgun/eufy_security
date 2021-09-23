@@ -234,12 +234,10 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
                 if self.cached_entity["rtspUrl"]:
                     self.stream_source_type = STREAMING_SOURCE_RTSP
                     self.stream_source_address = self.cached_entity["rtspUrl"]
-                    sleep(2)
                     self.is_streaming = True
             if self.cached_entity["liveStreamingStatus"] == STATE_LIVE_STREAMING:
                 self.stream_source_type = STREAMING_SOURCE_P2P
                 self.stream_source_address = self.p2p_url
-                sleep(2)
                 self.is_streaming = True
         else:
             self.stream_source_type = None
