@@ -96,6 +96,10 @@ Please follow screenshots below. In summary;
 5- Start the Add-On and validate if it is running well checking the logs.
 ![image](https://user-images.githubusercontent.com/11085566/127866173-af817b84-034e-449e-8143-a94a78564052.png)
 
+Note: If you do not have the Add-On Store, please use this to run the container outside of HASS.
+
+```docker run --rm -it -e RTSP_PROTOCOLS=tcp -d -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server```
+
 
 ## 6.3 Installing Integration
 
