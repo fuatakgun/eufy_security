@@ -46,7 +46,7 @@ class EufySecurityWebSocket:
                             self.base, autoclose=False, autoping=True, heartbeat=60
                         )
                     )
-                    task = self.hass.async_create_task(self.process_messages())
+                    task = self.loop.create_task(self.process_messages())
                     task.add_done_callback(self.on_close)
                     await self.async_on_open()
                 except:
