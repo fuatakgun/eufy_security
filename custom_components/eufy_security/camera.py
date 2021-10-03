@@ -309,6 +309,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
             if image_frame_bytes is not None and len(image_frame_bytes) > 0:
                 _LOGGER.debug(f"{DOMAIN} {self.name} - camera_image len - {len(image_frame_bytes)}")
                 self.picture_bytes = image_frame_bytes
+                self.picture_url = None
         else:
             current_picture_url = self.entity.get("pictureUrl", "")
             if self.picture_url != current_picture_url:
