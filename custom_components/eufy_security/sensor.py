@@ -4,76 +4,44 @@ from decimal import Decimal
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    ENERGY_KILO_WATT_HOUR,
     PERCENTAGE,
     DEVICE_CLASS_BATTERY,
     DEVICE_CLASS_SIGNAL_STRENGTH,
 )
+from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
+from .const import DOMAIN, Device
+from. const import get_child_value
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(hass, entry, async_add_devices):
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
 
     INSTRUMENTS = [
-        (
-            "battery",
-            "Battery",
-            "battery",
-            PERCENTAGE,
-            None,
-            DEVICE_CLASS_BATTERY,
-        ),
-        (
-            "wifiRSSI",
-            "Wifi RSSI",
-            "wifiRSSI",
-            None,
-            None,
-            DEVICE_CLASS_SIGNAL_STRENGTH,
-        ),
+        ("battery", "Battery", "state.battery", PERCENTAGE, None, DEVICE_CLASS_BATTERY),
+        ("wifiRSSI", "Wifi RSSI", "state.wifiRSSI", None, None, DEVICE_CLASS_SIGNAL_STRENGTH),
+        ("stream_source_type", "Streaming Source Type", "stream_source_type", None, None, None),
+        ("stream_source_address", "Streaming Source Address", "stream_source_address", None, None, None),
+        ("codec", "Codec", "codec", None, None, None),
     ]
 
     entities = []
-    for entity in coordinator.state["devices"]:
+    for device in coordinator.devices.values():
         for id, description, key, unit, icon, device_class in INSTRUMENTS:
-            if not entity.get(key, None) is None:
-                entities.append(
-                    EufySecuritySensor(
-                        coordinator,
-                        entry,
-                        entity,
-                        id,
-                        description,
-                        key,
-                        unit,
-                        icon,
-                        device_class,
-                    )
-                )
+            if not get_child_value(device.__dict__, key) is None:
+                entities.append(EufySecuritySensor(coordinator, config_entry, device, id, description, key, unit, icon, device_class))
 
     async_add_devices(entities, True)
 
 
 class EufySecuritySensor(EufySecurityEntity):
-    def __init__(
-        self,
-        coordinator: EufySecurityDataUpdateCoordinator,
-        entry: ConfigEntry,
-        entity: dict,
-        id: str,
-        description: str,
-        key: str,
-        unit: str,
-        icon: str,
-        device_class: str,
-    ):
-
-        super().__init__(coordinator, entry, entity)
+    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, config_entry: ConfigEntry, device: Device, id: str, description: str, key: str, unit: str, icon: str, device_class: str):
+        super().__init__(coordinator, config_entry, device)
         self._id = id
         self.description = description
         self.key = key
@@ -83,7 +51,7 @@ class EufySecuritySensor(EufySecurityEntity):
 
     @property
     def state(self):
-        return self.entity.get(self.key)
+        return get_child_value(self.device.__dict__, self.key)
 
     @property
     def unit_of_measurement(self):
@@ -99,11 +67,11 @@ class EufySecuritySensor(EufySecurityEntity):
 
     @property
     def name(self):
-        return f"{self.entity['name']} {self.description}"
+        return f"{self.device.name} {self.description}"
 
     @property
     def id(self):
-        return f"{DOMAIN}_{self.entity.get('serialNumber','missing_serial_number')}_{self._id}_sensor"
+        return f"{DOMAIN}_{self.device.serial_number}_{self._id}_sensor"
 
     @property
     def unique_id(self):
@@ -111,4 +79,4 @@ class EufySecuritySensor(EufySecurityEntity):
 
     @property
     def state_attributes(self):
-        return self.entity
+        return {"state": self.device.state, "properties": self.device.properties}

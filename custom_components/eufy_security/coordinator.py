@@ -3,19 +3,20 @@ import logging
 import aiohttp
 import asyncio
 from datetime import timedelta
+from queue import Queue
 import json
+from homeassistant.config_entries import ConfigEntry
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.helpers.translation import component_translation_path
-from .const import DEVICE_TYPE, wait_for_value
+from .const import CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL, DEVICE_TYPE, LATEST_CODEC, SET_LOCK_MESSAGE, EufyConfig, get_child_value, wait_for_value, Device
 
 from .const import (
-    DEVICE_CATEGORY,
     DOMAIN,
-    PLATFORMS,
     MESSAGE_IDS_TO_PROCESS,
     MESSAGE_TYPES_TO_PROCESS,
     POLL_REFRESH_MESSAGE,
@@ -27,7 +28,6 @@ from .const import (
     GET_PROPERTIES_METADATA_MESSAGE,
     GET_LIVESTREAM_STATUS_MESSAGE,
     GET_LIVESTREAM_STATUS_PLACEHOLDER,
-    SET_RTSP_STREAM_MESSAGE,
     SET_LIVESTREAM_MESSAGE,
     SET_DEVICE_STATE_MESSAGE,
     SET_GUARD_MODE_MESSAGE,
@@ -39,54 +39,20 @@ from .websocket import EufySecurityWebSocket
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-DELAY_FOR_POLLING = 2
-BUFFER_BASED_EVENTS = ["video_data", "audio_data"]
-RETRY_COUNT = 10
-
 
 class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        update_interval: int,
-        host: str,
-        port: int,
-        session: aiohttp.ClientSession,
-        use_rtsp_server_addon: bool = False
-    ) -> None:
-        super().__init__(
-            hass,
-            _LOGGER,
-            name=DOMAIN,
-            update_interval=timedelta(seconds=update_interval),
-        )
-        self.hass = hass
+    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+        self.config: EufyConfig = EufyConfig(config_entry)
+        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=timedelta(seconds=self.config.sync_interval))
         self.ws = None
-        self.rtsp = None
-        self.host = host
-        self.port = port
-        self.session = session
-        self.use_rtsp_server_addon = use_rtsp_server_addon
+        self.session: aiohttp.ClientSession = aiohttp_client.async_get_clientsession(hass)
         self.platforms = []
         self.data = {}
-        self.data["cache"] = {}
-        self.cache = self.data["cache"]
-        self.data["state"] = {}
-        self.state = self.data["state"]
-        self.data["properties"] = {}
-        self.properties = self.data["properties"]
+        self.devices: dict = None
+        self.stations: dict = None
 
     async def initialize_ws(self) -> bool:
-        self.ws: EufySecurityWebSocket = EufySecurityWebSocket(
-            self.hass,
-            self.host,
-            self.port,
-            self.session,
-            self.on_open,
-            self.on_message,
-            self.on_close,
-            self.on_error,
-        )
+        self.ws: EufySecurityWebSocket = EufySecurityWebSocket(self.hass, self.config.host, self.config.port, self.session, self.on_open, self.on_message, self.on_close, self.on_error)
         await self.ws.set_ws()
         await self.async_start_listening()
         if await self.check_if_started_listening() == False:
@@ -96,20 +62,42 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def check_if_started_listening(self):
         _LOGGER.debug(f"{DOMAIN} - check_if_started_listening")
 
-        if await wait_for_value(self.__dict__, "state", {}) == True:
-            return await self.get_device_properties()
+        if await wait_for_value(self.__dict__, "devices", None) == True:
+            return await self.check_if_device_properties_fetched()
         return False
 
-    async def get_device_properties(self):
+    async def check_if_device_properties_fetched(self):
         _LOGGER.debug(f"{DOMAIN} - get_device_properties")
 
-        if await wait_for_value(self.__dict__, "properties", {}) == False:
-            return False
-
-        for device in self.state["devices"]:
-            if (await wait_for_value(self.properties, device["serialNumber"], {}) == False):
+        for device in self.devices.values():
+            _LOGGER.debug(f"{DOMAIN} - get_device_properties - {device}")
+            if await wait_for_value(device.__dict__, "properties", {}) == False:
                 return False
         return True
+
+    async def process_start_listening_response(self, states: dict):
+        self.data["devices"] = {}
+        self.data["stations"] = {}
+        self.devices = self.data["devices"]
+        self.stations = self.data["stations"]
+
+        for state in states["devices"]:
+            device = Device(state["serialNumber"], state)
+            self.devices[device.serial_number] = device
+            await self.async_get_properties_for_device(device.serial_number)
+
+        for state in states["stations"]:
+            device = Device(state["serialNumber"], state)
+            self.stations[device.serial_number] = device
+
+        self.devices = self.data["devices"]
+        self.stations = self.data["stations"]
+
+    async def process_get_properties_response(self, properties: dict):
+        device: Device = self.devices[get_child_value(properties, "serialNumber.value")]
+        device.set_properties(properties)
+        if device.is_camera() == True:
+            await self.async_get_livestream_status(device.serial_number)
 
     async def on_message(self, message):
         payload = message.json()
@@ -123,94 +111,56 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             return
 
         if message_type == "result":
-            message_id: str = payload["messageId"]
+            message_id = payload["messageId"]
             _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
             if not message_id in MESSAGE_IDS_TO_PROCESS:
                 if not GET_LIVESTREAM_STATUS_PLACEHOLDER in message_id:
                     return
 
             if message_id == START_LISTENING_MESSAGE["messageId"]:
-                _LOGGER.debug(f"{DOMAIN} - on_message start_listening")
-                self.state = message["state"]
-                for device in self.state["devices"]:
-                    await self.async_get_properties_for_device(device["serialNumber"])
-                    await self.async_get_livestream_status(device["serialNumber"])
+                await self.process_start_listening_response(message["state"])
 
             if message_id == GET_PROPERTIES_MESSAGE["messageId"]:
-                result = message["properties"]
-                serial_number = result["serialNumber"]["value"]
-                self.properties[serial_number] = result
-                device_type_raw = result["type"]["value"]
-                for device in self.state["devices"]:
-                    if device["serialNumber"] == serial_number:
-                        device["type_raw"] = device_type_raw
-                        device_type = DEVICE_TYPE(device_type_raw)
-                        device["type"] = str(device_type)
-                        device["category"] = DEVICE_CATEGORY.get(device_type, "UNKNOWN")
-                        break
+                await self.process_get_properties_response(message["properties"])
 
             if GET_LIVESTREAM_STATUS_PLACEHOLDER in message_id:
-                _LOGGER.debug(f"{DOMAIN} - GET_LIVESTREAM_STATUS_MESSAGE - {payload}")
                 result = message["livestreaming"]
                 serial_number = (payload["messageId"].replace(GET_LIVESTREAM_STATUS_PLACEHOLDER, "").replace(".", ""))
                 if result == True:
-                    for device in self.state["devices"]:
-                        if device["serialNumber"] == serial_number:
-                            device[START_LIVESTREAM_AT_INITIALIZE] = True
-                            break
+                    self.devices[serial_number].state[START_LIVESTREAM_AT_INITIALIZE] = True
 
         if message_type == "event":
             event_type = message["event"]
             if not event_type in EVENT_CONFIGURATION.keys():
                 return
 
-            event_sources = message["source"] + "s"
+            event_source = message["source"]
             serial_number = message["serialNumber"]
             event_property = message.get("name", EVENT_CONFIGURATION[event_type]["name"])
             event_value = message[EVENT_CONFIGURATION[event_type]["value"]]
             event_data_type = EVENT_CONFIGURATION[event_type]["type"]
 
-            if event_data_type == "cache":
-                self.set_cache_value_for_property(event_sources, serial_number, event_property, event_value)
-                if event_property in BUFFER_BASED_EVENTS:
-                    self.handle_queue_data(serial_number, event_property, event_value)
-                else:
-                    _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
-                    self.async_set_updated_data(self.data)
-
             if event_data_type == "state":
-                self.set_data_value_for_property(event_sources, serial_number, event_property, event_value)
                 _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
-                self.async_set_updated_data(self.data)
+                self.set_value_for_property(event_source, serial_number, event_property, event_value)
 
             if event_data_type == "event":
+                #with open("data.txt", "a") as file_object:
+                    #file_object.write(json.dumps(message))
+                    #file_object.write("\n")
+                self.devices[serial_number].set_codec(message["metadata"]["videoCodec"].lower())
                 self.hass.bus.fire(f"{DOMAIN}_{serial_number}_event_received", event_value)
-                video_codec = message["metadata"]["videoCodec"].lower()
-                if video_codec == "unknown":
-                    video_codec = "h264"
-                if video_codec == "h265":
-                    video_codec = "hevc"
-                self.cache[serial_number]["latest_codec"] = video_codec
 
-        else:
-            self.async_set_updated_data(self.data)
-
-    def handle_queue_data(self, serial_number, name, value):
-        self.data["cache"][serial_number]["queue"].put(value)
-        self.data["cache"][serial_number][name] = None
-
-    def set_data_value_for_property(self, sources: str, serial_number: str, property_name: str, value: str):
-        for entity in self.state[sources]:
-            if entity["serialNumber"] == serial_number:
-                entity[property_name] = value
-                _LOGGER.debug(f"{DOMAIN} - set_event_for_entity - {serial_number} {property_name} {value} - {entity}")
-                break
-
-    def set_cache_value_for_property(self, sources: str, serial_number: str, property_name: str, value):
+    def set_value_for_property(self, source: str, serial_number: str, property_name: str, value: str):
         if isinstance(value, str):
             value = value.replace("\x00", "")
-
-        self.data["cache"][serial_number][property_name] = value
+        device = None
+        if source == "device":
+            device: Device = self.devices[serial_number]
+        if source == "station":
+            device: Device = self.stations[serial_number]
+        device.state[property_name] = value
+        _LOGGER.debug(f"{DOMAIN} - set_event_for_entity - {source} / {serial_number} / {property_name} / {value}")
 
     async def on_open(self):
         _LOGGER.debug(f"{DOMAIN} - on_open - executed")
@@ -288,4 +238,10 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_reset_alarm(self, serial_no: str):
         message = STATION_RESET_ALARM.copy()
         message["serialNumber"] = serial_no
+        await self.async_send_message(json.dumps(message))
+
+    async def async_set_lock(self, serial_no: str, value: bool):
+        message = SET_LOCK_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        message["value"] = value
         await self.async_send_message(json.dumps(message))

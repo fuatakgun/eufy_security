@@ -2,6 +2,7 @@ import logging
 
 from decimal import Decimal
 
+from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_MOTION,
@@ -10,80 +11,72 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_POWER,
 )
 
-from .const import DOMAIN
+from .const import DOMAIN, Device
+from .const import get_child_value
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(hass, entry, async_add_devices):
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
 
     INSTRUMENTS = [
-        ("motion_sensor", "Motion Sensor", "motionDetected", None, DEVICE_CLASS_MOTION),
-        ("person_detector_sensor", "Person Detector Sensor", "personDetected", None, DEVICE_CLASS_MOTION),
-        ("pet_detector_sensor", "Pet Detector Sensor", "petDetected", None, DEVICE_CLASS_MOTION),
-        ("sound_detector_sensor", "Sound Detector Sensor", "soundDetected", None, DEVICE_CLASS_SOUND),
-        ("crying_detector_sensor", "Crying Detector Sensor", "cryingDetected", None, DEVICE_CLASS_SOUND),
-        ("sensor_open", "Sensor Open", "sensorOpen", None, DEVICE_CLASS_DOOR),
-        ("ringing_sensor", "Ringing Sensor", "ringing", "mdi:bell-ring", None),
-        ("enabled", "Enabled", "enabled", None, DEVICE_CLASS_POWER),
+        ("motion_sensor", "Motion Sensor", "state.motionDetected", None, DEVICE_CLASS_MOTION),
+        ("person_detector_sensor", "Person Detector Sensor", "state.personDetected", None, DEVICE_CLASS_MOTION),
+        ("pet_detector_sensor", "Pet Detector Sensor", "state.petDetected", None, DEVICE_CLASS_MOTION),
+        ("sound_detector_sensor", "Sound Detector Sensor", "state.soundDetected", None, DEVICE_CLASS_SOUND),
+        ("crying_detector_sensor", "Crying Detector Sensor", "state.cryingDetected", None, DEVICE_CLASS_SOUND),
+        ("sensor_open", "Sensor Open", "state.sensorOpen", None, DEVICE_CLASS_DOOR),
+        ("ringing_sensor", "Ringing Sensor", "state.ringing", "mdi:bell-ring", None),
+        ("enabled", "Enabled", "state.enabled", None, DEVICE_CLASS_POWER),
+        ("streaming", "Streaming Sensor", "is_streaming", None, DEVICE_CLASS_MOTION),
+
+        ("motion_tracking_enabled", "Motion Tracking", "state.motionTracking", "mdi:go-kart-track", None),
+        ("notification_person_enabled", "Notification for Person", "state.notificationPerson", "mdi:bell-ring", None),
+        ("notification_pet_enabled", "Notification for Pet", "state.notificationPet", "mdi:bell-ring", None),
+        ("notification_all_other_motion_enabled", "Notification for All Other Motion", "state.notificationAllOtherMotion", "mdi:bell-ring", None),
+        ("notification_crying_enabled", "Notification for Crying", "state.notificationCrying", "mdi:bell-ring", None),
+        ("notification_all_sound_enabled", "Notification for All Sound", "state.notificationAllSound", "mdi:bell-ring", None),
+        ("audio_recording_enabled", "Audio Recording", "state.audioRecording", "mdi:record-rec", None),
+        ("rtsp_stream_enabled", "RTSP Stream", "state.rtspStream", "mdi:cast-connected", None),
+        ("speaker_enabled", "Speaker", "state.speaker", "mdi:bullhorn", None),
+        ("microphone_enabled", "Microphone", "state.microphone", "mdi:microphone", None),
+        ("auto_night_vision_enabled", "Auto Night vision", "state.autoNightvision", "mdi:weather-night", None),
     ]
 
     entities = []
-    for entity in coordinator.state["devices"]:
+    for device in coordinator.devices.values():
         for id, description, key, icon, device_class in INSTRUMENTS:
-            if not entity.get(key, None) is None:
-                entities.append(
-                    EufySecurityBinarySensor(
-                        coordinator,
-                        entry,
-                        entity,
-                        id,
-                        description,
-                        key,
-                        icon,
-                        device_class,
-                    )
-                )
+            if not get_child_value(device.__dict__, key) is None:
+                entities.append(EufySecurityBinarySensor(coordinator, config_entry, device, id, description, key, icon, device_class))
 
     async_add_devices(entities, True)
 
 
 class EufySecurityBinarySensor(EufySecurityEntity):
     def __init__(
-        self,
-        coordinator: EufySecurityDataUpdateCoordinator,
-        entry: ConfigEntry,
-        entity: dict,
-        id: str,
-        description: str,
-        key: str,
-        icon: str,
-        device_class: str,
-    ):
-
-        super().__init__(coordinator, entry, entity)
+        self, coordinator: EufySecurityDataUpdateCoordinator, config_entry: ConfigEntry, device: Device, id: str, description: str, key: str, icon: str, device_class: str):
+        super().__init__(coordinator, config_entry, device)
         self._id = id
         self.description = description
         self.key = key
         self._icon = icon
         self._device_class = device_class
 
-        if self.id == "motion_sensor":
-            if entity["category"] in ["MOTION_SENSOR"]:
-                self.key = "motionDetection"
+        if self.id == "motion_sensor" and device.is_motion_sensor() == True:
+            self.key = "motionDetection"
 
         _LOGGER.debug(f"{DOMAIN} - binary init - {self.key}")
 
     @property
     def is_on(self):
-        return self.entity.get(self.key)
+        return get_child_value(self.device.__dict__, self.key)
 
     @property
     def state(self):
-        return self.entity.get(self.key)
+        return get_child_value(self.device.__dict__, self.key)
 
     @property
     def icon(self):
@@ -95,11 +88,11 @@ class EufySecurityBinarySensor(EufySecurityEntity):
 
     @property
     def name(self):
-        return f"{self.entity['name']} {self.description}"
+        return f"{self.device.name} {self.description}"
 
     @property
     def id(self):
-        return f"{DOMAIN}_{self.entity.get('serialNumber','missing_serial_number')}_{self._id}_binary_sensor"
+        return f"{DOMAIN}_{self.device.serial_number}_{self._id}_binary_sensor"
 
     @property
     def unique_id(self):
@@ -107,4 +100,4 @@ class EufySecurityBinarySensor(EufySecurityEntity):
 
     @property
     def state_attributes(self):
-        return self.entity
+        return {"state": self.device.state, "properties": self.device.properties}
