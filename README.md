@@ -148,8 +148,15 @@ Note: If you do not have the Add-On Store, please use this to run the container 
 You can use WebRTC for light speed streaming inside Home Assistant.
 
 1- Install WebRTC following these steps: https://github.com/AlexxIT/WebRTC#installation
-2- Disable Auto Start on Click to be sure that camera is not starting to stream autoamtically.
-2- Setup two conditional cards for each camera as below, do not forget to put correct camera entity names (replace `entrance` with your camera name)
+
+2- Disable Auto Start on Click to be sure that cameras are not starting to stream autoamtically.
+
+![image](https://user-images.githubusercontent.com/11085566/136706616-7ba09fec-f75b-4010-b58e-bf0f8f2d47da.png)
+
+3- Setup two conditional cards for each camera as below, do not forget to put correct camera entity names (replace `entrance` with your camera name)
+- So, when camera is not streaming, you will get latest captured image and when you click on image, it will start streaming (camera.turn_on service call).
+- When camera is streaming, you will get WebRTC card which has 1-2 seconds latency while streaming.
+
 ```
 - type: conditional
   conditions:
