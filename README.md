@@ -145,8 +145,36 @@ Note: If you do not have the Add-On Store, please use this to run the container 
 
 ## 6.3 Optional - WebRTC
 
-For faster streaming, please try out WebRTC, thanks @conorlap for this. - https://github.com/fuatakgun/eufy_security/issues/43
-I personally could not make it work but there are some users out there who are happy with the results.
+You can use WebRTC for light speed streaming inside Home Assistant.
+
+1- Install WebRTC following these steps: https://github.com/AlexxIT/WebRTC#installation
+2- Disable Auto Start on Click to be sure that camera is not starting to stream autoamtically.
+2- Setup two conditional cards for each camera as below, do not forget to put correct camera entity names (replace `entrance` with your camera name)
+```
+- type: conditional
+  conditions:
+    - entity: binary_sensor.entrance_streaming_sensor
+      state: 'False'
+  card:
+    type: picture-entity
+    entity: camera.entrance_camera
+    tap_action:
+      action: call-service
+      service: camera.turn_on
+      service_data: {}
+      target:
+        entity_id: camera.entrance_camera
+- type: conditional
+  conditions:
+    - entity: binary_sensor.entrance_streaming_sensor
+      state: 'True'
+  card:
+    type: custom:webrtc-camera
+    entity: camera.entrance_camera
+```
+
+Thanks @conorlap for this. - https://github.com/fuatakgun/eufy_security/issues/43
 
 
-Raise your issues in Github. 
+
+### Raise your issues in Github. ###
