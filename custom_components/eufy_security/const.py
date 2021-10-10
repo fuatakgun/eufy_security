@@ -271,10 +271,10 @@ class Device:
         self.type: str = None
         self.category: str = None
 
-        self.is_streaming: bool = False
-        self.stream_source_type: str = ""
-        self.stream_source_address: str = ""
-        self.codec = DEFAULT_CODEC
+        self.is_streaming: bool = None
+        self.stream_source_type: str = None
+        self.stream_source_address: str = None
+        self.codec = None
 
     def set_properties(self, properties: dict):
         self.properties = properties
@@ -287,6 +287,10 @@ class Device:
             self.state["rtspUrl"] = None
             self.state["liveStreamingStatus"] = None
             self.state[START_LIVESTREAM_AT_INITIALIZE] = False
+            self.is_streaming = False
+            self.stream_source_type = ""
+            self.stream_source_address = ""
+            self.codec = DEFAULT_CODEC
 
 
     def is_camera(self):

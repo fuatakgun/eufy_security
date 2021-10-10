@@ -262,15 +262,14 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
             self.device.is_streaming = False
 
     async def initiate_turn_on(self):
-        if self.coordinator.config.auto_start_stream == False:
-            return
         await self.coordinator.hass.async_add_executor_job(self.turn_on)
         await wait_for_value(self.device.__dict__, "is_streaming", False, interval=0.1)
 
     async def stream_source(self):
         _LOGGER.debug(f"{DOMAIN} {self.name} - stream_source - start")
         if self.device.is_streaming == False:
-            await self.initiate_turn_on()
+            if self.coordinator.config.auto_start_stream == False:
+                return None
             _LOGGER.debug(f"{DOMAIN} {self.name} - stream_source - initiate finished")
         _LOGGER.debug(f"{DOMAIN} {self.name} - stream_source - address - {self.device.stream_source_address}")
         return self.device.stream_source_address
