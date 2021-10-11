@@ -267,6 +267,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         if self.device.is_streaming == False:
             if self.coordinator.config.auto_start_stream == False:
                 return None
+            await self.initiate_turn_on()
             _LOGGER.debug(f"{DOMAIN} {self.name} - stream_source - initiate finished")
         _LOGGER.debug(f"{DOMAIN} {self.name} - stream_source - address - {self.device.stream_source_address}")
         return self.device.stream_source_address
