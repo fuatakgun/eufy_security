@@ -153,6 +153,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
                         self.write_bytes_to_ffmeg(frame_bytes)
                 _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - sleeping 2 - {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
             sleep(0.25)
+        _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - finish")
 
         if self.empty_queue_counter >= EMPTY_QUEUE_COUNTER_LIMIT and self.device.is_streaming == True:
             asyncio.run_coroutine_threadsafe(self.async_stop_livestream(), self.coordinator.hass.loop).result()
