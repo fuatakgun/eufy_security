@@ -190,10 +190,6 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
                 self.ffmpeg.kill()
             except Exception as ex:
                 _LOGGER.debug(f"{DOMAIN} {self.name} - stop_ffmpeg exception: {ex}- traceback: {traceback.format_exc()}")
-            try:
-                os.close(self.fifo)
-            except Exception as ex:
-                _LOGGER.debug(f"{DOMAIN} {self.name} - stop_ffmpeg exception: {ex}- traceback: {traceback.format_exc()}")
             _LOGGER.debug(f"{DOMAIN} {self.name} - stop_ffmpeg - 2")
         except Exception as ex2:
             _LOGGER.error(f"{DOMAIN} {self.name} - stop_ffmpeg exception: {ex2}- traceback: {traceback.format_exc()}")
