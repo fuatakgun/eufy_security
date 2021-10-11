@@ -5,32 +5,33 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 # 1. Services #
 ## 1.1 Camera Services ##
 - start_rtsp / stop_rtsp (RTSP): **if your camera can stream over RTSP, please enable it over eufy app, this is more more reliable and less power consuming and you can use these services to start and stop stream.**. Attention: users had reported that using `stop_rtsp` is disabling RTSP functionality at all for the camera. https://github.com/fuatakgun/eufy_security/issues/53 
-- start_livesteam / stop_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming and there is at least 10 seconds delay.
+- start_livesteam / stop_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming for your HA instance.
 - turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
 - enable / disable: enable and disable respective device
 
 ## 1.2 Station Services ##
+![image](https://user-images.githubusercontent.com/11085566/127906780-ba18d5a0-03c3-407a-922a-dc519e59dfe8.png)
 - alarm_arm_home / alarm_arm_away / alarm_disarm / alarm_guard_schedule (requires configuration on eufy app) / alarm_guard_geo (requires configuration on eufy app)
 - alarm_arm_custom1 / alarm_arm_custom2 / alarm_arm_custom3 - you need to create custom configurations for these to work
-![image](https://user-images.githubusercontent.com/11085566/127906780-ba18d5a0-03c3-407a-922a-dc519e59dfe8.png)
 - alarm_trigger / alarm_trigger_with_duration - trigger alarm on home station
+- reset_alarm - stop the alarm state
 
+## 1.2 Integration Services ##
+- force_sync - get latest changes from cloud as some changes are not generating notifications to be captured automatically
 
 # 2. Known Bugs / Issues #
-1- Having multiple p2p streaming at parallel causes issues - https://github.com/fuatakgun/eufy_security/issues/25
-
-2- Lock is not supported yet - https://github.com/fuatakgun/eufy_security/issues/23
-
-3- Motion sensor is not supported yet - https://github.com/fuatakgun/eufy_security/issues/22
+Please throw some :)
 
 # 3. Troubleshooting
 1- Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications for them. This integration depends on push notifications to catch events.
 
-2- If your HA instant crashes and your camera supports 2k video streaming, try to reduce quality, 2k video encoding might be hard for your hardware. With latest codebase, I have tried to reduce the load on HA instance for this. https://github.com/fuatakgun/eufy_security/issues/20#issuecomment-886757165
+2- RTSP - As of now, live stream is limited to 3 minutes and this is a hard limitation by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but your home assistant will not be notified on this. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442 
 
-3- As of now, live stream is limited to 3 minutes and this is hard limit implemented by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but your home assistant will not be notified on this. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442
+3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality this could change between 1 to 5 seconds. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
 
-4- Please do not enable `Preload Stream` functionality in Camera View window for two reasons; it is not adding functionality in our use case and it sends a signal to enable live stream to your cameras which might end up excessive battery consumption.
+![image](https://user-images.githubusercontent.com/11085566/136794616-fa238dd8-9bd6-41d8-ac14-2c0fb4f0eb23.png)
+
+4- Please do not enable `Preload Stream` functionality in Camera View if your camera is battery powered (not streaming all the time) for two reasons; it is not adding functionality in our use case and it sends a signal to enable live stream to your cameras which might end up excessive battery consumption.
 ![image](https://user-images.githubusercontent.com/11085566/128697823-f83b5ce5-1f31-48c9-ac6d-712bd56b504b.png)
 
 5- One user reported that there is an issue regarding to 2k Battery Doorbell in terms of receiving motion and person detection sensor. If you are having a similar issue, please apply this solution: https://github.com/fuatakgun/eufy_security/issues/22#issuecomment-908157691
@@ -40,7 +41,7 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 - If you are located in EU, use my account: `fuatakgun@gmail.com`
 - If you are located in US, use shared test account: `eufydeveloper@gmail.com`
 
-6- If you have any other issue, please create it on github repository, give information about your home assistant hardware, camera model, streaming type (rtsp or p2p), steps required to generate the issue. Enable excessive logging and share your logs from integration and related add ons.
+6- If you have any other issue, please create it an issue on github repository, give information about your home assistant hardware, camera model, streaming type (rtsp or p2p), steps required to generate the issue. Enable excessive logging and share your logs from integration and related add ons.
 
 ```
 logger:
@@ -54,7 +55,7 @@ logger:
 
 Please follow screenshots below. In summary;
 - You will first install HASS Add On assuming you are running on Hassos or Supervised. If not, please execute this command to run docker instance manually ```docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -p 3000:3000 bropat/eufy-security-ws:latest```
-- As an optional step, you can install RTSP Server Add On to have faster/more reliable p2p streaming. I will deprecate/not support file based streaming soon, so, please migrate in timely manner.
+- Later on, you should install RTSP Server Add On to have faster/more reliable p2p streaming. I will deprecate/not support file based streaming soon, so, please migrate in timely manner. If you are not using Hassos or Supervised installation please execute this command to run docker instance manually ```docker run --rm -it -e RTSP_PROTOCOLS=tcp -d -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server```
 - When you are done with HASS Add On, you will install integration via adding integration address to HACS, downloading files over UI, restarting home assistant and setting up integration.
 - Double check if your `configuration.yaml` includes `ffmpeg` integration. If not, please do like this; https://www.home-assistant.io/integrations/ffmpeg/#configuration . This integration relies on `ffmpeg` to be setup.
 
@@ -95,11 +96,6 @@ Please follow screenshots below. In summary;
 
 5- Start the Add-On and validate if it is running well checking the logs.
 ![image](https://user-images.githubusercontent.com/11085566/127866173-af817b84-034e-449e-8143-a94a78564052.png)
-
-Note: If you do not have the Add-On Store, please use this to run the container outside of HASS.
-
-```docker run --rm -it -e RTSP_PROTOCOLS=tcp -d -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server```
-
 
 ## 6.3 Installing Integration
 
