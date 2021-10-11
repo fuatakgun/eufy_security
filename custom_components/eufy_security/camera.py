@@ -32,7 +32,7 @@ STATE_PERSON_DETECTED = "Person Detected"
 STATE_LIVE_STREAMING = "livestream started"
 STREAMING_SOURCE_RTSP = "rtsp"
 STREAMING_SOURCE_P2P = "p2p"
-EMPTY_QUEUE_COUNTER_LIMIT = 5
+EMPTY_QUEUE_COUNTER_LIMIT = 10
 FFMPEG_COMMAND = [
     "-y",
     "-analyzeduration", "{analyze_duration}",
