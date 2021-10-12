@@ -141,19 +141,20 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
     def handle_queue_threaded(self):
         _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - start - {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
         while self.empty_queue_counter < EMPTY_QUEUE_COUNTER_LIMIT:
-            _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - writing size and state - {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
+            _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - while - {self.empty_queue_counter} {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
             if self.queue.empty() == True or self.ffmpeg.is_running == False:
                 self.empty_queue_counter = self.empty_queue_counter + 1
-                _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - sleeping 1 {self.empty_queue_counter} - {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
+                _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - sleeping 1 {self.empty_queue_counter} {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
             else:
                 while not self.queue.empty() and self.ffmpeg.is_running == True:
                     self.empty_queue_counter = 0
                     frame_bytes = bytearray(self.queue.get()["data"])
                     if not frame_bytes is None:
                         self.write_bytes_to_ffmeg(frame_bytes)
-                _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - sleeping 2 - {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
+                _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - sleeping 2 - {self.empty_queue_counter} {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
+            _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - sleeping 3 - {self.empty_queue_counter} {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
             sleep(0.25)
-        _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - finish")
+        _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - finish - {self.empty_queue_counter} {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
 
         if self.empty_queue_counter >= EMPTY_QUEUE_COUNTER_LIMIT and self.device.is_streaming == True:
             asyncio.run_coroutine_threadsafe(self.async_stop_livestream(), self.coordinator.hass.loop).result()
