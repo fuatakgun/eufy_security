@@ -273,10 +273,10 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         _LOGGER.debug(f"{DOMAIN} {self.name} - stream_source - address - {self.device.stream_source_address}")
         return self.device.stream_source_address
 
-    def camera_image(self, width, height) -> bytes:
+    def camera_image(self, width=None, height=None) -> bytes:
         return asyncio.run_coroutine_threadsafe(self.async_camera_image(width, height), self.coordinator.hass.loop).result()
 
-    async def async_camera_image(self, width, height) -> bytes:
+    async def async_camera_image(self, width=None, height=None) -> bytes:
         # if streaming is active, do not overwrite live image
         if self.device.is_streaming == True:
             size_command = None
