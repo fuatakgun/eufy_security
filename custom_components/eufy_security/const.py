@@ -3,6 +3,7 @@ import logging
 import asyncio
 from enum import Enum
 from queue import Queue
+import time
 from homeassistant.config_entries import ConfigEntry
 
 from homeassistant.const import (
@@ -11,6 +12,7 @@ from homeassistant.const import (
     DEVICE_CLASS_SIGNAL_STRENGTH,
 )
 from homeassistant.components.binary_sensor import DEVICE_CLASS_MOTION
+from homeassistant.core import callback
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -46,16 +48,19 @@ DEFAULT_FFMPEG_ANALYZE_DURATION: float = 1.2 # microseconds
 DEFAULT_CODEC = "h264"
 DEFAULT_AUTO_START_STREAM = True
 
-START_LIVESTREAM_AT_INITIALIZE = "start livestream at initialize"
+P2P_LIVESTREAMING_STATUS = "p2pLiveStreamingStatus"
+RTSP_LIVESTREAMING_STATUS = "rtspLiveStreamingStatus"
+STREAMING_EVENT_NAMES = [RTSP_LIVESTREAMING_STATUS, P2P_LIVESTREAMING_STATUS]
 LATEST_CODEC = "latest codec"
 SET_API_SCHEMA = {
     "messageId": "set_api_schema",
     "command": "set_api_schema",
-    "schemaVersion": 3,
+    "schemaVersion": 6,
 }
 START_LISTENING_MESSAGE = {"messageId": "start_listening", "command": "start_listening"}
 POLL_REFRESH_MESSAGE = {"messageId": "poll_refresh", "command": "driver.poll_refresh"}
-GET_LIVESTREAM_STATUS_PLACEHOLDER = "get_livestream_status"
+GET_P2P_LIVESTREAM_STATUS_PLACEHOLDER = "get_p2p_livestream_status"
+GET_RTSP_LIVESTREAM_STATUS_PLACEHOLDER = "get_rtsp_livestream_status"
 GET_PROPERTIES_METADATA_MESSAGE = {
     "messageId": "get_properties_metadata",
     "command": "{0}.get_properties_metadata",
@@ -66,8 +71,13 @@ GET_PROPERTIES_MESSAGE = {
     "command": "{0}.get_properties",
     "serialNumber": None,
 }
-GET_LIVESTREAM_STATUS_MESSAGE = {
-    "messageId": GET_LIVESTREAM_STATUS_PLACEHOLDER + ".{serial_no}",
+GET_RTSP_LIVESTREAM_STATUS_MESSAGE = {
+    "messageId": "get_rtsp_livestream_status",
+    "command": "device.is_rtsp_livestreaming",
+    "serialNumber": None,
+}
+GET_P2P_LIVESTREAM_STATUS_MESSAGE = {
+    "messageId": "get_p2p_livestream_status",
     "command": "device.is_livestreaming",
     "serialNumber": None,
 }
@@ -77,7 +87,12 @@ SET_RTSP_STREAM_MESSAGE = {
     "serialNumber": None,
     "value": None,
 }
-SET_LIVESTREAM_MESSAGE = {
+SET_RTSP_LIVESTREAM_MESSAGE = {
+    "messageId": "start_rtsp_livestream",
+    "command": "device.{state}_rtsp_livestream",
+    "serialNumber": None,
+}
+SET_P2P_LIVESTREAM_MESSAGE = {
     "messageId": "start_livesteam",
     "command": "device.{state}_livestream",
     "serialNumber": None,
@@ -116,10 +131,15 @@ SET_LOCK_MESSAGE = {
 MESSAGE_IDS_TO_PROCESS = [
     START_LISTENING_MESSAGE["messageId"],
     GET_PROPERTIES_MESSAGE["messageId"],
-    GET_LIVESTREAM_STATUS_MESSAGE["messageId"],
+    GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"],
+    GET_RTSP_LIVESTREAM_STATUS_MESSAGE["messageId"],
 ]
 MESSAGE_TYPES_TO_PROCESS = ["result", "event"]
 PROPERTY_CHANGED_PROPERTY_NAME = "event_property_name"
+P2P_LIVESTREAM_STARTED = "livestream started"
+P2P_LIVESTREAM_STOPPED = "livestream stopped"
+RTSP_LIVESTREAM_STARTED = "rtsp livestream started"
+RTSP_LIVESTREAM_STOPPED = "rtsp livestream stopped"
 EVENT_CONFIGURATION: dict = {
     "property changed": {
         "name": PROPERTY_CHANGED_PROPERTY_NAME,
@@ -136,18 +156,28 @@ EVENT_CONFIGURATION: dict = {
         "value": "state",
         "type": "state",
     },
-    "got rtsp url": {
-        "name": "rtspUrl",
-        "value": "rtspUrl",
-        "type": "state",
-    },
-    "livestream started": {
-        "name": "liveStreamingStatus",
+    # "got rtsp url": {
+    #     "name": "rtspUrl",
+    #     "value": "rtspUrl",
+    #     "type": "state",
+    # },
+    P2P_LIVESTREAM_STARTED: {
+        "name": P2P_LIVESTREAMING_STATUS,
         "value": "event",
         "type": "state",
     },
-    "livestream stopped": {
-        "name": "liveStreamingStatus",
+    P2P_LIVESTREAM_STOPPED: {
+        "name": P2P_LIVESTREAMING_STATUS,
+        "value": "event",
+        "type": "state",
+    },
+    RTSP_LIVESTREAM_STARTED: {
+        "name": RTSP_LIVESTREAMING_STATUS,
+        "value": "event",
+        "type": "state",
+    },
+    RTSP_LIVESTREAM_STOPPED: {
+        "name": RTSP_LIVESTREAMING_STATUS,
         "value": "event",
         "type": "state",
     },
@@ -271,10 +301,16 @@ class Device:
         self.type: str = None
         self.category: str = None
 
-        self.is_streaming: bool = None
-        self.stream_source_type: str = None
-        self.stream_source_address: str = None
-        self.codec = None
+        self.state[P2P_LIVESTREAMING_STATUS] = False
+        self.state[RTSP_LIVESTREAMING_STATUS] = False
+        self.is_rtsp_streaming: bool = False
+        self.is_p2p_streaming: bool = False
+        self.is_streaming: bool = False
+        self.stream_source_type: str = ""
+        self.stream_source_address: str = ""
+        self.codec: str = DEFAULT_CODEC
+
+        self.callback = None
 
     def set_properties(self, properties: dict):
         self.properties = properties
@@ -282,15 +318,6 @@ class Device:
         type = DEVICE_TYPE(self.type_raw)
         self.type = str(type)
         self.category = DEVICE_CATEGORY.get(type, "UNKNOWN")
-
-        if self.is_camera() == True:
-            self.state["rtspUrl"] = None
-            self.state["liveStreamingStatus"] = None
-            self.state[START_LIVESTREAM_AT_INITIALIZE] = False
-            self.is_streaming = False
-            self.stream_source_type = ""
-            self.stream_source_address = ""
-            self.codec = DEFAULT_CODEC
 
 
     def is_camera(self):
@@ -308,12 +335,29 @@ class Device:
             return True
         return False
 
+    def set_streaming_status(self):
+        if self.state[P2P_LIVESTREAMING_STATUS] == P2P_LIVESTREAM_STARTED:
+            self.is_p2p_streaming = True
+        else:
+            self.is_p2p_streaming = False
+
+        if self.state[RTSP_LIVESTREAMING_STATUS] == RTSP_LIVESTREAM_STARTED:
+            self.is_rtsp_streaming = True
+        else:
+            self.is_rtsp_streaming = False
+
+        if not self.callback is None:
+            self.callback()
+
     def set_codec(self, codec: str):
         if codec == "unknown":
             codec = "h264"
         if codec == "h265":
             codec = "hevc"
         self.codec = codec
+
+    def set_streaming_status_callback(self, callback):
+        self.callback = callback
 
 class EufyConfig:
     def __init__(self, config_entry: ConfigEntry) -> None:

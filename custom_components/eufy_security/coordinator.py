@@ -13,7 +13,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.helpers.translation import component_translation_path
-from .const import CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL, DEVICE_TYPE, LATEST_CODEC, SET_LOCK_MESSAGE, EufyConfig, get_child_value, wait_for_value, Device
+from .const import P2P_LIVESTREAM_STARTED, P2P_LIVESTREAMING_STATUS, RTSP_LIVESTREAM_STARTED, RTSP_LIVESTREAMING_STATUS, EufyConfig, get_child_value, wait_for_value, Device
 
 from .const import (
     DOMAIN,
@@ -26,14 +26,18 @@ from .const import (
     SET_RTSP_STREAM_MESSAGE,
     GET_PROPERTIES_MESSAGE,
     GET_PROPERTIES_METADATA_MESSAGE,
-    GET_LIVESTREAM_STATUS_MESSAGE,
-    GET_LIVESTREAM_STATUS_PLACEHOLDER,
-    SET_LIVESTREAM_MESSAGE,
+    GET_RTSP_LIVESTREAM_STATUS_MESSAGE,
+    GET_P2P_LIVESTREAM_STATUS_MESSAGE,
+    GET_RTSP_LIVESTREAM_STATUS_PLACEHOLDER,
+    GET_P2P_LIVESTREAM_STATUS_PLACEHOLDER,
+    SET_RTSP_LIVESTREAM_MESSAGE,
+    SET_P2P_LIVESTREAM_MESSAGE,
     SET_DEVICE_STATE_MESSAGE,
     SET_GUARD_MODE_MESSAGE,
+    SET_LOCK_MESSAGE,
     STATION_TRIGGER_ALARM,
     STATION_RESET_ALARM,
-    START_LIVESTREAM_AT_INITIALIZE,
+    STREAMING_EVENT_NAMES
 )
 from .websocket import EufySecurityWebSocket
 
@@ -50,6 +54,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         self.data = {}
         self.devices: dict = None
         self.stations: dict = None
+        self.update_listener = None
 
     async def initialize_ws(self) -> bool:
         self.ws: EufySecurityWebSocket = EufySecurityWebSocket(self.hass, self.config.host, self.config.port, self.session, self.on_open, self.on_message, self.on_close, self.on_error)
@@ -97,7 +102,8 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         device: Device = self.devices[get_child_value(properties, "serialNumber.value")]
         device.set_properties(properties)
         if device.is_camera() == True:
-            await self.async_get_livestream_status(device.serial_number)
+            await self.async_get_p2p_livestream_status(device.serial_number)
+            await self.async_get_rtsp_livestream_status(device.serial_number)
 
     async def on_message(self, message):
         payload = message.json()
@@ -114,8 +120,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             message_id = payload["messageId"]
             _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
             if not message_id in MESSAGE_IDS_TO_PROCESS:
-                if not GET_LIVESTREAM_STATUS_PLACEHOLDER in message_id:
-                    return
+                return
 
             if message_id == START_LISTENING_MESSAGE["messageId"]:
                 await self.process_start_listening_response(message["state"])
@@ -123,14 +128,17 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             if message_id == GET_PROPERTIES_MESSAGE["messageId"]:
                 await self.process_get_properties_response(message["properties"])
 
-            if GET_LIVESTREAM_STATUS_PLACEHOLDER in message_id:
-                result = message["livestreaming"]
-                serial_number = (payload["messageId"].replace(GET_LIVESTREAM_STATUS_PLACEHOLDER, "").replace(".", ""))
-                if result == True:
-                    self.devices[serial_number].state[START_LIVESTREAM_AT_INITIALIZE] = True
+            if message_id == GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"]:
+                if message["livestreaming"] == True:
+                    self.set_value_for_property("device", message["serialNumber"], P2P_LIVESTREAMING_STATUS, P2P_LIVESTREAM_STARTED)
+
+            if message_id == GET_RTSP_LIVESTREAM_STATUS_MESSAGE["messageId"]:
+                if message["livestreaming"] == True:
+                    self.set_value_for_property("device", message["serialNumber"], RTSP_LIVESTREAMING_STATUS, RTSP_LIVESTREAM_STARTED)
 
         if message_type == "event":
             event_type = message["event"]
+            #_LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
             if not event_type in EVENT_CONFIGURATION.keys():
                 return
 
@@ -141,13 +149,14 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             event_data_type = EVENT_CONFIGURATION[event_type]["type"]
 
             if event_data_type == "state":
-                _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
+                #_LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
                 self.set_value_for_property(event_source, serial_number, event_property, event_value)
 
             if event_data_type == "event":
                 #with open("data.txt", "a") as file_object:
                     #file_object.write(json.dumps(message))
                     #file_object.write("\n")
+                #_LOGGER.debug(f"{DOMAIN} - video_bytes - {len(json.dumps(event_value))}")
                 self.devices[serial_number].set_codec(message["metadata"]["videoCodec"].lower())
                 self.hass.bus.fire(f"{DOMAIN}_{serial_number}_event_received", event_value)
 
@@ -156,10 +165,14 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             value = value.replace("\x00", "")
         device = None
         if source == "device":
-            device: Device = self.devices[serial_number]
+            target_dict = self.devices
         if source == "station":
-            device: Device = self.stations[serial_number]
+            target_dict = self.stations
+        device: Device = target_dict[serial_number]
         device.state[property_name] = value
+
+        if property_name in STREAMING_EVENT_NAMES:
+            device.set_streaming_status()
         _LOGGER.debug(f"{DOMAIN} - set_event_for_entity - {source} / {serial_number} / {property_name} / {value}")
 
     async def on_open(self):
@@ -170,13 +183,6 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def on_error(self, message):
         _LOGGER.debug(f"{DOMAIN} - on_error - executed - {message}")
-
-    async def _async_update_data(self):
-        try:
-            await self.async_send_message(json.dumps(POLL_REFRESH_MESSAGE))
-            return self.data
-        except Exception as exception:
-            raise UpdateFailed() from exception
 
     async def async_send_message(self, message):
         if self.ws.ws is None or self.ws.ws.closed == True:
@@ -199,10 +205,14 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         message["serialNumber"] = serial_no
         await self.async_send_message(json.dumps(message))
 
-    async def async_get_livestream_status(self, serial_no: str):
-        message = GET_LIVESTREAM_STATUS_MESSAGE.copy()
+    async def async_get_rtsp_livestream_status(self, serial_no: str):
+        message = GET_RTSP_LIVESTREAM_STATUS_MESSAGE.copy()
         message["serialNumber"] = serial_no
-        message["messageId"] = message["messageId"].replace("{serial_no}", serial_no)
+        await self.async_send_message(json.dumps(message))
+
+    async def async_get_p2p_livestream_status(self, serial_no: str):
+        message = GET_P2P_LIVESTREAM_STATUS_MESSAGE.copy()
+        message["serialNumber"] = serial_no
         await self.async_send_message(json.dumps(message))
 
     async def async_set_rtsp(self, serial_no: str, value: bool):
@@ -211,8 +221,14 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         message["value"] = value
         await self.async_send_message(json.dumps(message))
 
-    async def async_set_livestream(self, serial_no: str, value: str):
-        message = SET_LIVESTREAM_MESSAGE.copy()
+    async def async_set_rtsp_livestream(self, serial_no: str, value: str):
+        message = SET_RTSP_LIVESTREAM_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        message["command"] = message["command"].replace("{state}", value)
+        await self.async_send_message(json.dumps(message))
+
+    async def async_set_p2p_livestream(self, serial_no: str, value: str):
+        message = SET_P2P_LIVESTREAM_MESSAGE.copy()
         message["serialNumber"] = serial_no
         message["command"] = message["command"].replace("{state}", value)
         await self.async_send_message(json.dumps(message))
@@ -245,3 +261,10 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         message["serialNumber"] = serial_no
         message["value"] = value
         await self.async_send_message(json.dumps(message))
+
+    async def _async_update_data(self):
+        try:
+            await self.async_send_message(json.dumps(POLL_REFRESH_MESSAGE))
+            return self.data
+        except Exception as exception:
+            raise UpdateFailed() from exception

@@ -55,7 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     async def update(event_time_utc):
         coordinator.async_set_updated_data(coordinator.data)
 
-    async_track_time_interval(hass, update, timedelta(seconds=1))
+    coordinator.update_listener = async_track_time_interval(hass, update, timedelta(seconds=1))
     config_entry.add_update_listener(async_reload_entry)
     return True
 
@@ -70,6 +70,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
             ]
         )
     )
+    coordinator.update_listener()
     if unloaded:
         hass.data[DOMAIN] = []
 
