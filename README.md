@@ -4,9 +4,10 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 
 # 1. Services #
 ## 1.1 Camera Services ##
-- start_rtsp / stop_rtsp (RTSP): **if your camera can stream over RTSP, please enable it over eufy app, this is more more reliable and less power consuming and you can use these services to start and stop stream.**. Attention: users had reported that using `stop_rtsp` is disabling RTSP functionality at all for the camera. https://github.com/fuatakgun/eufy_security/issues/53 
-- start_livesteam / stop_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming for your HA instance.
+- start_rtsp_livestream / stop_rtsp_livestream (RTSP): **if your camera can stream over RTSP, please enable it over eufy app, this is more more reliable and less power consuming and you can use these services to start and stop stream.**. This service starts a new stream using RTSP. Currently, it is limited to one stream per home assistant. https://github.com/bropat/eufy-security-client/issues/63
+- start_livesteam / start_p2p_livestream / stop_livestream / stop_p2p_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming for your HA instance.
 - turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
+- enable_rtsp / disable_rtsp: to enable RTSP option in cameras, you can use this services, but I rather prefer you to enable it using the mobile app because enabling rtsp configuration also triggers a new stream to start which causes issues for integration.
 - enable / disable: enable and disable respective device
 
 ## 1.2 Station Services ##
@@ -23,11 +24,11 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 Please throw some :)
 
 # 3. Troubleshooting
-1- Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications for them. This integration depends on push notifications to catch events.
+1- **Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications with full picture for them. This integration depends on push notifications to catch events.**
 
 2- RTSP - As of now, live stream is limited to 3 minutes and this is a hard limitation by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but your home assistant will not be notified on this. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442 
 
-3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality this could change between 1 to 5 seconds. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
+3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality this could change between 1 to 5 seconds. I am able to stream more than 15 minutes for my 2C cameras using P2P. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
 
 ![image](https://user-images.githubusercontent.com/11085566/136794616-fa238dd8-9bd6-41d8-ac14-2c0fb4f0eb23.png)
 
@@ -45,7 +46,6 @@ Please throw some :)
 
 ```
 logger:
-  default: info
   logs:
     custom_components.eufy_security: debug
 ```
