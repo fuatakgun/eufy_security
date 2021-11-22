@@ -186,6 +186,11 @@ EVENT_CONFIGURATION: dict = {
         "value": "buffer",
         "type": "event",
     },
+    "alarm event": {
+        "name": "alarmEvent",
+        "value": "alarmEvent",
+        "type": "state",
+    },
 }
 
 STATE_ALARM_CUSTOM1 = "custom1"

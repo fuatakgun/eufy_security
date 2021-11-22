@@ -10,6 +10,7 @@ from homeassistant.const import (
     STATE_ALARM_ARMED_AWAY,
     STATE_ALARM_ARMED_HOME,
     STATE_ALARM_DISARMED,
+    STATE_ALARM_TRIGGERED,
 )
 from homeassistant.helpers import entity_platform, service
 import homeassistant.helpers.config_validation as cv
@@ -128,5 +129,8 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
 
     @property
     def state(self):
+        if not self.device.state.get("alarmEvent", None) is None:
+            self.device.state["alarmEvent"] = None
+            return STATE_ALARM_TRIGGERED
         current_mode = self.device.state.get("currentMode")
         return CODES_TO_STATES[current_mode]
