@@ -108,7 +108,3 @@ class EufySecurityBinarySensor(EufySecurityEntity):
     @property
     def unique_id(self):
         return self.id
-
-    @property
-    def state_attributes(self):
-        return {"state": self.device.state, "properties": self.device.properties}

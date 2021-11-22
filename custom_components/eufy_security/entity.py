@@ -36,3 +36,12 @@ class EufySecurityEntity(CoordinatorEntity):
     @property
     def should_poll(self) -> bool:
         return False
+
+    @property
+    def state_attributes(self):
+        return {
+            "type": self.device.type,
+            "category": self.device.category,
+            "state": self.device.state,
+            "properties": self.device.properties,
+        }

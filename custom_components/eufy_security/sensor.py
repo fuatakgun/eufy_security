@@ -26,9 +26,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         ("battery", "Battery", "state.battery", PERCENTAGE, None, DEVICE_CLASS_BATTERY),
         ("wifiRSSI", "Wifi RSSI", "state.wifiRSSI", None, None, DEVICE_CLASS_SIGNAL_STRENGTH),
         ("detected_person_name", "Detected Person Name", "state.personName", None, None, None),
-        ("speaker_volume", "Speaker Volume", "state.speakerVolume", PERCENTAGE, None, None),
-        ("motion_detection_type", "Motion Detection Type", "state.motionDetectionType", None, None, None),
-        
+    ]
+
+    CAMERA_INSTRUMENTS = [
         ("stream_source_type", "Streaming Source Type", "stream_source_type", None, None, None),
         ("stream_source_address", "Streaming Source Address", "stream_source_address", None, None, None),
         ("codec", "Codec", "codec", None, None, None),
@@ -36,7 +36,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     entities = []
     for device in coordinator.devices.values():
-        for id, description, key, unit, icon, device_class in INSTRUMENTS:
+        instruments = INSTRUMENTS
+        _LOGGER.debug(f"{DOMAIN} {device.name} - {device.serial_number} - {device.is_camera()}")
+        if device.is_camera() == True:
+            instruments = instruments + CAMERA_INSTRUMENTS
+        for id, description, key, unit, icon, device_class in instruments:
             if not get_child_value(device.__dict__, key) is None:
                 entities.append(EufySecuritySensor(coordinator, config_entry, device, id, description, key, unit, icon, device_class))
 
@@ -80,7 +84,3 @@ class EufySecuritySensor(EufySecurityEntity):
     @property
     def unique_id(self):
         return self.id
-
-    @property
-    def state_attributes(self):
-        return {"state": self.device.state, "properties": self.device.properties}

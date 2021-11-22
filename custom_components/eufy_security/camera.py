@@ -256,8 +256,8 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         await wait_for_value(self.device.__dict__, "is_streaming", False, interval=0.5)
 
     async def stream_source(self):
-        _LOGGER.debug(f"{DOMAIN} {self.name} - stream_source - start")
         if self.device.is_streaming == False:
+            _LOGGER.debug(f"{DOMAIN} {self.name} - stream_source - start - {self.device.is_streaming}")
             if self.coordinator.config.auto_start_stream == False:
                 return None
             await self.initiate_turn_on()
@@ -363,12 +363,8 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
     @property
     def state_attributes(self):
         return {
-            "state": self.device.state,
-            "properties": self.device.properties,
             "inherited": super().state_attributes,
             "custom": {
-                "type": self.device.type,
-                "category": self.device.category,
                 "is_streaming": self.device.is_streaming,
                 "stream_source_type": self.device.stream_source_type,
                 "stream_source_address": self.device.stream_source_address,

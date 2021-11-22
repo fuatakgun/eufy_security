@@ -130,7 +130,3 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
     def state(self):
         current_mode = self.device.state.get("currentMode")
         return CODES_TO_STATES[current_mode]
-
-    @property
-    def state_attributes(self):
-        return {"state": self.device.state, "properties": self.device.properties}
