@@ -1,4 +1,6 @@
-I have baked a custom integration to control Eufy Security Cameras and access RSTP (real time streaming protocol) and P2P (peer to peer) stream if possible. You can turn on and turn off cameras and if your camera is on, you can view live stream. Morevoer, there are some additional sensors for motion detection, person detection, battery level and wifi signal. 
+I have baked a custom integration to control Eufy Security Cameras and access RTSP (real time streaming protocol) and P2P (peer to peer) stream if possible. Integration supports doorbells, cameras, home bases, motion and contact sensors and it is far from complete. 
+
+Under the hood, it is using `eufy-security-ws` (https://github.com/bropat/eufy-security-ws) web socket application which uses `eufy-security-client` (https://github.com/bropat/eufy-security-client) to communicate with eufy servers and devices over cloud and peer to peer connection. So, I am following versioning of `eufy-security-ws` directly as add-on version.
 
 **Big thanks to @bropat who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat**
 
@@ -17,16 +19,20 @@ I have baked a custom integration to control Eufy Security Cameras and access RS
 - alarm_trigger / alarm_trigger_with_duration - trigger alarm on home station
 - reset_alarm - stop the alarm state
 
-## 1.2 Integration Services ##
+## 1.3 Other Devices ##
+Locks (not the Wifi), motion and contact sensors are supported and native services can be used.
+
+## 1.4 Integration Services ##
 - force_sync - get latest changes from cloud as some changes are not generating notifications to be captured automatically
 
-# 2. Known Bugs / Issues #
-Please throw some :)
+# 2. Known Bugs / Issues / Supported Devices #
+Check here: https://github.com/fuatakgun/eufy_security/issues
+Supported devices: https://github.com/bropat/eufy-security-client#known-working-devices
 
 # 3. Troubleshooting
-1- **Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account and enable notifications with full picture for them. This integration depends on push notifications to catch events.**
+1- **Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account (preferably with adming rights), enable motion notifications with full picture and enable push notifications. This integration depends on push notifications to catch any updates.**
 
-2- RTSP - As of now, live stream is limited to 3 minutes and this is a hard limitation by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but your home assistant will not be notified on this. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442 
+2- RTSP - As of now, live stream is limited to 3 minutes and this is a hard limitation by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but **home assistant will not be notified on this**. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442 
 
 3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality this could change between 1 to 5 seconds. I am able to stream more than 15 minutes for my 2C cameras using P2P. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
 
@@ -54,12 +60,12 @@ logger:
 ***Warning, there is an existing integration (https://github.com/nonsleepr/ha-eufy-security) and I have used the same internal name with this integration, unintentinally. You can not keep both integrations and trying to install might cause issues. You can backup old one if you want to test this, just rename `custom_components/eufy_security` into something else (eg `eufy_security_nonsleepr`)***
 
 Please follow screenshots below. In summary;
-- You will first install HASS Add On assuming you are running on Hassos or Supervised. If not, please execute this command to run docker instance manually ```docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -p 3000:3000 bropat/eufy-security-ws:0.5.3```
+- You will first install HASS Add On assuming you are running on Hassos or Supervised. If not, please execute this command to run docker instance manually ```docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -p 3000:3000 bropat/eufy-security-ws:X.Y.Z```. To find out correct values for X.Y.Z, please chek here https://github.com/fuatakgun/eufy_security_addon/blob/main/config.json#L3
 - Later on, you should install RTSP Server Add On to have faster/more reliable p2p streaming. I will deprecate/not support file based streaming soon, so, please migrate in timely manner. If you are not using Hassos or Supervised installation please execute this command to run docker instance manually ```docker run --rm -it -e RTSP_PROTOCOLS=tcp -d -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server```
 - When you are done with HASS Add On, you will install integration via adding integration address to HACS, downloading files over UI, restarting home assistant and setting up integration.
-- Double check if your `configuration.yaml` includes `ffmpeg` integration. If not, please do like this; https://www.home-assistant.io/integrations/ffmpeg/#configuration . This integration relies on `ffmpeg` to be setup.
+- Double check if your `configuration.yaml` includes `ffmpeg` integration. If not, please do like this; https://www.home-assistant.io/integrations/ffmpeg/#configuration . This integration relies on `ffmpeg` to be setup to live stream via P2P and capture images from live RTSP/P2P streams.
 
-## 6.1 Installing Eufy Security Add On
+## 6.1 Installing Eufy Security Add On - Required
 1- Go to Add-On Store page and select `Repositories`
 
 ![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
@@ -81,7 +87,7 @@ Please follow screenshots below. In summary;
 
 ![5-add-on-log](https://user-images.githubusercontent.com/11085566/126563928-3ee2d48d-06e2-4681-9076-3992f4546b16.PNG)
 
-## 6.2 Installing RTSP Simple Server Add On (for faster P2P streaming)
+## 6.2 Installing RTSP Simple Server Add On (for faster P2P streaming) - Required
 1- Go to Add-On Store page and select `Repositories`
 ![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
 
@@ -139,7 +145,7 @@ Please follow screenshots below. In summary;
 10- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
 ![image](https://user-images.githubusercontent.com/11085566/127866543-1345d56f-b4f3-4154-96c7-a278d747cf8d.png)
 
-## 6.3 Optional - WebRTC
+## 6.3 WebRTC - Optional
 
 You can use WebRTC for light speed streaming inside Home Assistant.
 
