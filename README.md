@@ -79,7 +79,7 @@ Please follow screenshots below. In summary;
 
 ![3-add-on-visible](https://user-images.githubusercontent.com/11085566/126563911-ec5e0e52-312b-4e65-a25b-54a02a348752.PNG)
 
-4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and **country code (2 letter)**. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
+4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and **country code (2 letter)**, save the configs and start the add-on. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
 
 ![4-add-on-configure](https://user-images.githubusercontent.com/11085566/126563919-273e413b-f2ac-49c4-8342-dfd5c5887ccf.PNG)
 
@@ -97,7 +97,7 @@ Please follow screenshots below. In summary;
 3- Confirm that you can see `RTSP Simple Server Addon` - probably at the end of the page
 ![image](https://user-images.githubusercontent.com/11085566/127865866-5c47cfd1-0130-4a6a-a00c-8a763acd2100.png)
 
-4- Click on `RTSP Simple Server Addon`, install add-on, please do not change any configuration.
+4- Click on `RTSP Simple Server Addon`, install add-on, please do not change any configuration and start the add-on.
 ![image](https://user-images.githubusercontent.com/11085566/127866038-44d2db72-2e20-46bd-a3d7-328213bf6713.png)
 
 5- Start the Add-On and validate if it is running well checking the logs.
