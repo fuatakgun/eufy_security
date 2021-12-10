@@ -4,7 +4,7 @@ from homeassistant.components.lock import LockEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
-from .const import DOMAIN, Device
+from .const import COORDINATOR, DOMAIN, Device
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
 
@@ -12,7 +12,7 @@ from .coordinator import EufySecurityDataUpdateCoordinator
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
-    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
+    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     for device in coordinator.devices.values():
         if device.is_lock() == True:
             async_add_devices([Lock(coordinator, config_entry, device)], True)

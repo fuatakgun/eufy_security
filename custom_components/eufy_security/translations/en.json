@@ -8,6 +8,13 @@
           "host": "Host IP Address (eg 192.168.178.22)",
           "port": "Port (eg 3000)"
         }
+      },
+      "reauth_confirm": {
+        "title": "Eufy Security: Captcha",
+        "description": "{captcha_image}",
+        "data": {
+          "captcha": "Captcha"
+        }
       }
     },
     "error": {

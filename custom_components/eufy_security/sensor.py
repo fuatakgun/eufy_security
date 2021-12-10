@@ -11,7 +11,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, Device
+from .const import COORDINATOR, DOMAIN, Device
 from. const import get_child_value
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
@@ -20,7 +20,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
-    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
+    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     INSTRUMENTS = [
         ("battery", "Battery", "state.battery", PERCENTAGE, None, DEVICE_CLASS_BATTERY),

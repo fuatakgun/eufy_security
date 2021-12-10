@@ -1,6 +1,7 @@
 import logging
 
 import asyncio
+from datetime import datetime
 from enum import Enum
 from queue import Queue
 import time
@@ -20,6 +21,8 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 NAME = "Eufy Security"
 DOMAIN = "eufy_security"
 VERSION = "0.0.1"
+COORDINATOR = "coordinator"
+CAPTCHA_CONFIG = "captcha_config"
 
 # Platforms
 ALARM_CONTROL_PANEL = "alarm_control_panel"
@@ -32,6 +35,7 @@ PLATFORMS = [CAMERA, BINARY_SENSOR, SENSOR, ALARM_CONTROL_PANEL, LOCK]
 # Configuration and options
 CONF_HOST = "host"
 CONF_PORT = "port"
+CONF_CAPTCHA = "captcha"
 CONF_USE_RTSP_SERVER_ADDON = "use_rtsp_server_addon"
 CONF_RTSP_SERVER_ADDRESS = "rtsp_server_address"
 CONF_RTSP_SERVER_PORT = "rtsp_server_port"
@@ -52,80 +56,25 @@ P2P_LIVESTREAMING_STATUS = "p2pLiveStreamingStatus"
 RTSP_LIVESTREAMING_STATUS = "rtspLiveStreamingStatus"
 STREAMING_EVENT_NAMES = [RTSP_LIVESTREAMING_STATUS, P2P_LIVESTREAMING_STATUS]
 LATEST_CODEC = "latest codec"
-SET_API_SCHEMA = {
-    "messageId": "set_api_schema",
-    "command": "set_api_schema",
-    "schemaVersion": 6,
-}
+SET_API_SCHEMA = {"messageId": "set_api_schema", "command": "set_api_schema", "schemaVersion": 7}
+DRIVER_CONNECT_MESSAGE = {"messageId": "driver_connect", "command": "driver.connect"}
+SET_CAPTCHA_MESSAGE = {"messageId": "driver_set_captcha", "command": "driver.set_captcha", "captchaId": None, "captcha": None}
 START_LISTENING_MESSAGE = {"messageId": "start_listening", "command": "start_listening"}
 POLL_REFRESH_MESSAGE = {"messageId": "poll_refresh", "command": "driver.poll_refresh"}
 GET_P2P_LIVESTREAM_STATUS_PLACEHOLDER = "get_p2p_livestream_status"
 GET_RTSP_LIVESTREAM_STATUS_PLACEHOLDER = "get_rtsp_livestream_status"
-GET_PROPERTIES_METADATA_MESSAGE = {
-    "messageId": "get_properties_metadata",
-    "command": "{0}.get_properties_metadata",
-    "serialNumber": None,
-}
-GET_PROPERTIES_MESSAGE = {
-    "messageId": "get_properties",
-    "command": "{0}.get_properties",
-    "serialNumber": None,
-}
-GET_RTSP_LIVESTREAM_STATUS_MESSAGE = {
-    "messageId": "get_rtsp_livestream_status",
-    "command": "device.is_rtsp_livestreaming",
-    "serialNumber": None,
-}
-GET_P2P_LIVESTREAM_STATUS_MESSAGE = {
-    "messageId": "get_p2p_livestream_status",
-    "command": "device.is_livestreaming",
-    "serialNumber": None,
-}
-SET_RTSP_STREAM_MESSAGE = {
-    "messageId": "set_rtsp_stream_on",
-    "command": "device.set_rtsp_stream",
-    "serialNumber": None,
-    "value": None,
-}
-SET_RTSP_LIVESTREAM_MESSAGE = {
-    "messageId": "start_rtsp_livestream",
-    "command": "device.{state}_rtsp_livestream",
-    "serialNumber": None,
-}
-SET_P2P_LIVESTREAM_MESSAGE = {
-    "messageId": "start_livesteam",
-    "command": "device.{state}_livestream",
-    "serialNumber": None,
-}
-SET_DEVICE_STATE_MESSAGE = {
-    "messageId": "enable_device",
-    "command": "device.enable_device",
-    "serialNumber": None,
-    "value": None
-}
-SET_GUARD_MODE_MESSAGE = {
-    "messageId": "set_guard_mode",
-    "command": "station.set_guard_mode",
-    "serialNumber": None,
-    "mode": None
-}
-STATION_TRIGGER_ALARM = {
-    "messageId": "trigger_alarm",
-    "command": "station.trigger_alarm",
-    "serialNumber": None,
-    "seconds": 10
-}
-STATION_RESET_ALARM = {
-    "messageId": "reset_alarm",
-    "command": "station.reset_alarm",
-    "serialNumber": None
-}
-SET_LOCK_MESSAGE = {
-    "messageId": "lock_device",
-    "command": "device.lock_device",
-    "serialNumber": None,
-    "value": None,
-}
+GET_PROPERTIES_METADATA_MESSAGE = {"messageId": "get_properties_metadata", "command": "{0}.get_properties_metadata", "serialNumber": None}
+GET_PROPERTIES_MESSAGE = {"messageId": "get_properties", "command": "{0}.get_properties", "serialNumber": None}
+GET_RTSP_LIVESTREAM_STATUS_MESSAGE = {"messageId": "get_rtsp_livestream_status", "command": "device.is_rtsp_livestreaming", "serialNumber": None}
+GET_P2P_LIVESTREAM_STATUS_MESSAGE = {"messageId": "get_p2p_livestream_status", "command": "device.is_livestreaming", "serialNumber": None}
+SET_RTSP_STREAM_MESSAGE = {"messageId": "set_rtsp_stream_on", "command": "device.set_rtsp_stream", "serialNumber": None, "value": None}
+SET_RTSP_LIVESTREAM_MESSAGE = {"messageId": "start_rtsp_livestream", "command": "device.{state}_rtsp_livestream", "serialNumber": None}
+SET_P2P_LIVESTREAM_MESSAGE = {"messageId": "start_livesteam", "command": "device.{state}_livestream", "serialNumber": None}
+SET_DEVICE_STATE_MESSAGE = {"messageId": "enable_device", "command": "device.enable_device", "serialNumber": None, "value": None}
+SET_GUARD_MODE_MESSAGE = {"messageId": "set_guard_mode", "command": "station.set_guard_mode", "serialNumber": None, "mode": None}
+STATION_TRIGGER_ALARM = {"messageId": "trigger_alarm", "command": "station.trigger_alarm", "serialNumber": None, "seconds": 10}
+STATION_RESET_ALARM = {"messageId": "reset_alarm", "command": "station.reset_alarm", "serialNumber": None}
+SET_LOCK_MESSAGE = {"messageId": "lock_device", "command": "device.lock_device", "serialNumber": None, "value": None}
 
 
 MESSAGE_IDS_TO_PROCESS = [
@@ -133,6 +82,8 @@ MESSAGE_IDS_TO_PROCESS = [
     GET_PROPERTIES_MESSAGE["messageId"],
     GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"],
     GET_RTSP_LIVESTREAM_STATUS_MESSAGE["messageId"],
+    DRIVER_CONNECT_MESSAGE["messageId"],
+    SET_CAPTCHA_MESSAGE["messageId"]
 ]
 MESSAGE_TYPES_TO_PROCESS = ["result", "event"]
 PROPERTY_CHANGED_PROPERTY_NAME = "event_property_name"
@@ -141,6 +92,16 @@ P2P_LIVESTREAM_STOPPED = "livestream stopped"
 RTSP_LIVESTREAM_STARTED = "rtsp livestream started"
 RTSP_LIVESTREAM_STOPPED = "rtsp livestream stopped"
 EVENT_CONFIGURATION: dict = {
+    "connected": {
+        "name": "event",
+        "value": "event",
+        "type": "driver",
+    },
+    "captcha request": {
+        "name": "captcha",
+        "value": "captcha",
+        "type": "captcha",
+    },
     "property changed": {
         "name": PROPERTY_CHANGED_PROPERTY_NAME,
         "value": "value",
@@ -156,11 +117,6 @@ EVENT_CONFIGURATION: dict = {
         "value": "state",
         "type": "state",
     },
-    # "got rtsp url": {
-    #     "name": "rtspUrl",
-    #     "value": "rtspUrl",
-    #     "type": "state",
-    # },
     P2P_LIVESTREAM_STARTED: {
         "name": P2P_LIVESTREAMING_STATUS,
         "value": "event",
@@ -374,3 +330,26 @@ class EufyConfig:
         self.rtsp_server_port: int = config_entry.options.get(CONF_RTSP_SERVER_PORT, DEFAULT_RTSP_SERVER_PORT)
         self.ffmpeg_analyze_duration: int = config_entry.options.get(CONF_FFMPEG_ANALYZE_DURATION, DEFAULT_FFMPEG_ANALYZE_DURATION)
         self.auto_start_stream: bool = config_entry.options.get(CONF_AUTO_START_STREAM, DEFAULT_AUTO_START_STREAM)
+
+        _LOGGER.debug(f"{DOMAIN} - config class initialized")
+
+class CaptchaConfig:
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.required = False
+        self.id = None
+        self.image = None
+        self.requested_at = None
+        self.user_input = None
+        self.result = None
+
+    def set(self, id, image):
+        self.required = True
+        self.id = id
+        self.image = image
+        self.requested_at = datetime.now()
+
+    def set_input(self, captcha):
+        self.user_input = captcha

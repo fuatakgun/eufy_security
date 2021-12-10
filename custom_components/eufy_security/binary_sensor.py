@@ -11,7 +11,7 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_POWER,
 )
 
-from .const import DOMAIN, Device
+from .const import COORDINATOR, DOMAIN, Device
 from .const import get_child_value
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
@@ -20,11 +20,11 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
-    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
+    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     INSTRUMENTS = [
         ("status_led_enabled", "Status Led Enabled", "state.statusLed", "mdi: led-on", None),
-        
+
         ("motion_sensor", "Motion Sensor", "state.motionDetected", None, DEVICE_CLASS_MOTION),
         ("motion_detection_enabled", "Motion Detection Enabled", "state.motionDetection", None, DEVICE_CLASS_MOTION),
         ("person_detector_sensor", "Person Detector Sensor", "state.personDetected", None, DEVICE_CLASS_MOTION),

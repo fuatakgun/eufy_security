@@ -21,7 +21,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DEFAULT_CODEC, DOMAIN, NAME, Device
+from .const import COORDINATOR, DEFAULT_CODEC, DOMAIN, NAME, Device
 from .const import wait_for_value
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
@@ -63,7 +63,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
-    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
+    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     entities = []
     for device in coordinator.devices.values():

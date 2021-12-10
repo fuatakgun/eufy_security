@@ -17,7 +17,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.components.alarm_control_panel.const import SUPPORT_ALARM_ARM_AWAY, SUPPORT_ALARM_ARM_HOME, SUPPORT_ALARM_TRIGGER
 
-from .const import DOMAIN, STATE_ALARM_CUSTOM1, STATE_ALARM_CUSTOM2, STATE_ALARM_CUSTOM3, STATE_GUARD_GEO, STATE_GUARD_SCHEDULE, Device
+from .const import COORDINATOR, DOMAIN, STATE_ALARM_CUSTOM1, STATE_ALARM_CUSTOM2, STATE_ALARM_CUSTOM3, STATE_GUARD_GEO, STATE_GUARD_SCHEDULE, Device
 from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
 
@@ -52,7 +52,7 @@ ALARM_TRIGGER_SCHEMA = make_entity_service_schema(
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
-    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN]
+    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     entities = []
     for device in coordinator.stations.values():

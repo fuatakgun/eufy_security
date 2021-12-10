@@ -6,15 +6,30 @@ send_message:
       name: Message
       description: Raw message in JSON format
       required: true
+force_sync:
+  name: Force Sync
+  description: Pull latest data from cloud and update internal state
 start_p2p_livestream:
   name: Start Live Stream over P2P
   description: Send start live stream command to camera
   target:
     entity:
       domain: camera
+start_livestream:
+  name: Start Live Stream over P2P - to be deprecated!!!
+  description: Send start live stream command to camera - to be deprecated!!!
+  target:
+    entity:
+      domain: camera
 stop_p2p_livestream:
   name: Stop Live Stream over P2P
   description: Send stop live stream command to camera
+  target:
+    entity:
+      domain: camera
+stop_livestream:
+  name: Stop Live Stream over P2P - to be deprecated!!!
+  description: Send stop live stream command to camera - to be deprecated!!!
   target:
     entity:
       domain: camera
@@ -31,26 +46,26 @@ stop_rtsp_livestream:
     entity:
       domain: camera
 enable_rtsp:
-  name: Enable RTSP Configuration
+  name: Enable RTSP Configuration (not real stream)
   description: Enable RTSP Configuration
   target:
     entity:
       domain: camera
 disable_rtsp:
-  name: Disable RTSP Configuration
+  name: Disable RTSP Configuration (not real stream)
   description: Disable RTSP Configuration
   target:
     entity:
       domain: camera
 enable:
   name: Enable
-  description: Enable
+  description: Enable a device or station
   target:
     entity:
       domain: camera
 disable:
   name: Disable
-  description: Disable
+  description: Disable a device or station
   target:
     entity:
       domain: camera
@@ -97,3 +112,9 @@ alarm_trigger_with_duration:
       required: true
       example: 10
       default: 10
+reset_alarm:
+  name: Reset Alarm for Panel
+  description: Enable
+  target:
+    entity:
+      domain: alarm_control_panel
