@@ -134,15 +134,30 @@ Please follow screenshots below. In summary;
 
 ![12-integration-configure](https://user-images.githubusercontent.com/11085566/126563976-234005e7-2920-4ef0-a301-187d4d929f10.png)
 
-8- You will be shown devices connected to your account.
+8- You will be shown devices connected to your account. Or you can be alerted with captcha notification.
 
 ![13-integration-done](https://user-images.githubusercontent.com/11085566/126563982-38b3a00a-ff6a-45aa-8dcc-b04e864a37f8.PNG)
 
-9- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this.
+9- Follow screenshots below for captcha
+a. Get notified about captcha request
+![image](https://user-images.githubusercontent.com/11085566/145604195-7b5499b3-9603-468b-aa03-84121047719b.png)
+
+b. Go to Integrations Page and click `RECONFIGURE`
+![image](https://user-images.githubusercontent.com/11085566/145604271-3cfd3a5a-a6ba-42dc-8b9b-b0f8e759c8b2.png)
+
+c. Enter the correct code and click `Submit` (I will put wrong intentionally)
+![image](https://user-images.githubusercontent.com/11085566/145604402-7f5f0feb-339a-49d8-b97f-f136ddf5121b.png)
+
+d. If you put the wrong code, after couple of seconds, you will get a similar error in Integrations page, but this time, `RECONFIGURE` button will be missing. Please Disable and Enable back the integration to get the respective option again. (Working on a better solution)
+![image](https://user-images.githubusercontent.com/11085566/145604673-c1a8e17a-0969-4d8d-a0df-647ce5c36741.png)
+
+e. After entering correct captcha code, your devices will be ready to use.
+
+10- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this.
 
 ![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
 
-10- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
+11- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
 ![image](https://user-images.githubusercontent.com/11085566/127866543-1345d56f-b4f3-4154-96c7-a278d747cf8d.png)
 
 ## 6.3 WebRTC - Optional
