@@ -55,11 +55,11 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._errors = {}
 
     async def async_step_user(self, user_input=None):
-        self.coordinator = self.hass.data[DOMAIN][COORDINATOR]
         _LOGGER.debug(f"{DOMAIN} async_step_user - {user_input} - {self.__dict__}")
         self._errors = {}
 
         if self.source == SOURCE_REAUTH:
+            self.coordinator = self.hass.data[DOMAIN][COORDINATOR]
             self.coordinator.captcha_config.set_input(user_input[CONF_CAPTCHA])
             if self._async_current_entries():
                 await self.hass.config_entries.async_reload(self.context["entry_id"])
