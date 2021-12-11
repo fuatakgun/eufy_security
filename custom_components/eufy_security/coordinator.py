@@ -135,7 +135,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
         for device in self.devices.values():
             _LOGGER.debug(f"{DOMAIN} - get_device_properties - {device}")
-            if await wait_for_value(device.__dict__, "properties", {}) == False:
+            if await wait_for_value(device.__dict__, "properties", None) == False:
                 return False
         return True
 
