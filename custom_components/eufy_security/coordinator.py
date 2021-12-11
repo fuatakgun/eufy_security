@@ -108,10 +108,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                     self.captcha_config.reset()
                 await wait_for_value(self.__dict__, "driver_connected", False)
                 await self.check_if_captcha_required()
+                await asyncio.sleep(30)
+                await self.async_start_listening()
 
 
     async def set_devices(self):
-        if await self.async_start_listening() == False or await self.async_get_device_properties() == False:
+        if await self.async_get_device_properties() == False:
             _LOGGER.debug(f"{DOMAIN} - connect - async_start_listening False - {self.config.__dict__}")
             raise ConfigEntryNotReady("Start Listening was not completed in timely manner")
 
