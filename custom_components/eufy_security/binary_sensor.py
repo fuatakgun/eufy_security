@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_MOTION,
     DEVICE_CLASS_SOUND,
@@ -83,10 +84,12 @@ class EufySecurityBinarySensor(EufySecurityEntity):
 
     @property
     def is_on(self):
-        return get_child_value(self.device.__dict__, self.key)
+        return bool(get_child_value(self.device.__dict__, self.key))
 
     @property
     def state(self):
+        if self.coordinator.config.fix_binary_sensor_state == True:
+            return STATE_ON if self.is_on else STATE_OFF
         return get_child_value(self.device.__dict__, self.key)
 
     @property

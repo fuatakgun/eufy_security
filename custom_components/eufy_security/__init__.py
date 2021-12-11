@@ -39,10 +39,8 @@ async def async_setup(hass: HomeAssistant, config: Config):
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
-
     captcha_config = hass.data[DOMAIN].get(CAPTCHA_CONFIG, CaptchaConfig())
     coordinator = hass.data[DOMAIN].get(COORDINATOR, EufySecurityDataUpdateCoordinator(hass, config_entry, captcha_config))
-
     hass.data[DOMAIN][COORDINATOR] = coordinator
     hass.data[DOMAIN][CAPTCHA_CONFIG] = captcha_config
 
@@ -60,7 +58,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     return True
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    coordinator = hass.data[DOMAIN]
+    coordinator = hass.data[DOMAIN][COORDINATOR]
     unloaded = all(
         await asyncio.gather(
             *[
@@ -72,7 +70,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     )
     coordinator.update_listener()
     if unloaded:
-        hass.data[DOMAIN] = []
+        hass.data[DOMAIN] = {}
 
     return unloaded
 

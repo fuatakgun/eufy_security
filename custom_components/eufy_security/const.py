@@ -33,24 +33,26 @@ LOCK = "lock"
 PLATFORMS = [CAMERA, BINARY_SENSOR, SENSOR, ALARM_CONTROL_PANEL, LOCK]
 
 # Configuration and options
-CONF_HOST = "host"
-CONF_PORT = "port"
-CONF_CAPTCHA = "captcha"
-CONF_USE_RTSP_SERVER_ADDON = "use_rtsp_server_addon"
-CONF_RTSP_SERVER_ADDRESS = "rtsp_server_address"
-CONF_RTSP_SERVER_PORT = "rtsp_server_port"
-CONF_FFMPEG_ANALYZE_DURATION = "ffmpeg_analyze_duration"
-CONF_SYNC_INTERVAL = "sync_interval"
-CONF_AUTO_START_STREAM = "auto_start_stream"
+CONF_HOST: str = "host"
+CONF_PORT: str = "port"
+CONF_CAPTCHA: str = "captcha"
+CONF_USE_RTSP_SERVER_ADDON: str = "use_rtsp_server_addon"
+CONF_RTSP_SERVER_ADDRESS: str = "rtsp_server_address"
+CONF_RTSP_SERVER_PORT: str = "rtsp_server_port"
+CONF_FFMPEG_ANALYZE_DURATION: str = "ffmpeg_analyze_duration"
+CONF_SYNC_INTERVAL: str = "sync_interval"
+CONF_AUTO_START_STREAM: str = "auto_start_stream"
+CONF_FIX_BINARY_SENSOR_STATE: str = "fix_binary_sensor_state"
 
-DEFAULT_HOST = "0.0.0.0"
-DEFAULT_PORT = 3000
-DEFAULT_USE_RTSP_SERVER_ADDON = False
-DEFAULT_RTSP_SERVER_PORT = 8554
-DEFAULT_SYNC_INTERVAL = 600  # seconds
+DEFAULT_HOST: str = "0.0.0.0"
+DEFAULT_PORT: int = 3000
+DEFAULT_USE_RTSP_SERVER_ADDON: bool = False
+DEFAULT_RTSP_SERVER_PORT: int = 8554
+DEFAULT_SYNC_INTERVAL: int = 600  # seconds
 DEFAULT_FFMPEG_ANALYZE_DURATION: float = 1.2 # microseconds
-DEFAULT_CODEC = "h264"
-DEFAULT_AUTO_START_STREAM = True
+DEFAULT_CODEC: str = "h264"
+DEFAULT_AUTO_START_STREAM: bool = True
+DEFAULT_FIX_BINARY_SENSOR_STATE: bool = False
 
 P2P_LIVESTREAMING_STATUS = "p2pLiveStreamingStatus"
 RTSP_LIVESTREAMING_STATUS = "rtspLiveStreamingStatus"
@@ -330,6 +332,7 @@ class EufyConfig:
         self.rtsp_server_port: int = config_entry.options.get(CONF_RTSP_SERVER_PORT, DEFAULT_RTSP_SERVER_PORT)
         self.ffmpeg_analyze_duration: int = config_entry.options.get(CONF_FFMPEG_ANALYZE_DURATION, DEFAULT_FFMPEG_ANALYZE_DURATION)
         self.auto_start_stream: bool = config_entry.options.get(CONF_AUTO_START_STREAM, DEFAULT_AUTO_START_STREAM)
+        self.fix_binary_sensor_state: bool = config_entry.options.get(CONF_FIX_BINARY_SENSOR_STATE, DEFAULT_FIX_BINARY_SENSOR_STATE)
 
         _LOGGER.debug(f"{DOMAIN} - config class initialized")
 
