@@ -34,7 +34,7 @@ Supported devices: https://github.com/bropat/eufy-security-client#known-working-
 
 2- RTSP - As of now, live stream is limited to 3 minutes and this is a hard limitation by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but **home assistant will not be notified on this**. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442 
 
-3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality this could change between 1 to 5 seconds. I am able to stream more than 15 minutes for my 2C cameras using P2P. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
+3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality (**please always set Streaming Quality to Low**) this could change between 1 to 5 seconds. I am able to stream more than 15 minutes for my 2C cameras using P2P. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
 
 ![image](https://user-images.githubusercontent.com/11085566/136794616-fa238dd8-9bd6-41d8-ac14-2c0fb4f0eb23.png)
 
@@ -79,7 +79,7 @@ Please follow screenshots below. In summary;
 
 ![3-add-on-visible](https://user-images.githubusercontent.com/11085566/126563911-ec5e0e52-312b-4e65-a25b-54a02a348752.PNG)
 
-4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and **country code (2 letter)**. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
+4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and **country code (2 letter)**, save the configs and start the add-on. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
 
 ![4-add-on-configure](https://user-images.githubusercontent.com/11085566/126563919-273e413b-f2ac-49c4-8342-dfd5c5887ccf.PNG)
 
@@ -97,7 +97,7 @@ Please follow screenshots below. In summary;
 3- Confirm that you can see `RTSP Simple Server Addon` - probably at the end of the page
 ![image](https://user-images.githubusercontent.com/11085566/127865866-5c47cfd1-0130-4a6a-a00c-8a763acd2100.png)
 
-4- Click on `RTSP Simple Server Addon`, install add-on, please do not change any configuration.
+4- Click on `RTSP Simple Server Addon`, install add-on, please do not change any configuration and start the add-on.
 ![image](https://user-images.githubusercontent.com/11085566/127866038-44d2db72-2e20-46bd-a3d7-328213bf6713.png)
 
 5- Start the Add-On and validate if it is running well checking the logs.
@@ -134,18 +134,33 @@ Please follow screenshots below. In summary;
 
 ![12-integration-configure](https://user-images.githubusercontent.com/11085566/126563976-234005e7-2920-4ef0-a301-187d4d929f10.png)
 
-8- You will be shown devices connected to your account.
+8- You will be shown devices connected to your account. Or you can be alerted with captcha notification.
 
 ![13-integration-done](https://user-images.githubusercontent.com/11085566/126563982-38b3a00a-ff6a-45aa-8dcc-b04e864a37f8.PNG)
 
-9- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this.
+9- Follow screenshots below for captcha
+a. Get notified about captcha request
+![image](https://user-images.githubusercontent.com/11085566/145604195-7b5499b3-9603-468b-aa03-84121047719b.png)
+
+b. Go to Integrations Page and click `RECONFIGURE`
+![image](https://user-images.githubusercontent.com/11085566/145604271-3cfd3a5a-a6ba-42dc-8b9b-b0f8e759c8b2.png)
+
+c. Enter the correct code and click `Submit` (I will put wrong intentionally)
+![image](https://user-images.githubusercontent.com/11085566/145604402-7f5f0feb-339a-49d8-b97f-f136ddf5121b.png)
+
+d. If you put the wrong code, after couple of seconds, you will get a similar error in Integrations page, but this time, `RECONFIGURE` button will be missing. Please Disable and Enable back the integration to get the respective option again. (Working on a better solution)
+![image](https://user-images.githubusercontent.com/11085566/145604673-c1a8e17a-0969-4d8d-a0df-647ce5c36741.png)
+
+e. After entering correct captcha code, your devices will be ready to use.
+
+10- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this. More importantly, please set your `Streaming Quality` settings to `Low` per each camera using Eufy Security app, otherwise WebRTC will fail to stream the video. Underlying issue is realted mid or high quality codecs are not supported by WebRTC.
 
 ![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
 
-10- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
+11- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
 ![image](https://user-images.githubusercontent.com/11085566/127866543-1345d56f-b4f3-4154-96c7-a278d747cf8d.png)
 
-## 6.3 WebRTC - Optional
+## 6.3 WebRTC - Required
 
 You can use WebRTC for light speed streaming inside Home Assistant.
 
