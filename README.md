@@ -34,7 +34,7 @@ Supported devices: https://github.com/bropat/eufy-security-client#known-working-
 
 2- RTSP - As of now, live stream is limited to 3 minutes and this is a hard limitation by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but **home assistant will not be notified on this**. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442 
 
-3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality this could change between 1 to 5 seconds. I am able to stream more than 15 minutes for my 2C cameras using P2P. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
+3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality (**please always set Streaming Quality to Low**) this could change between 1 to 5 seconds. I am able to stream more than 15 minutes for my 2C cameras using P2P. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
 
 ![image](https://user-images.githubusercontent.com/11085566/136794616-fa238dd8-9bd6-41d8-ac14-2c0fb4f0eb23.png)
 
@@ -153,14 +153,14 @@ d. If you put the wrong code, after couple of seconds, you will get a similar er
 
 e. After entering correct captcha code, your devices will be ready to use.
 
-10- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this.
+10- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this. More importantly, please set your `Streaming Quality` settings to `Low` per each camera using Eufy Security app, otherwise WebRTC will fail to stream the video. Underlying issue is realted mid or high quality codecs are not supported by WebRTC.
 
 ![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
 
 11- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
 ![image](https://user-images.githubusercontent.com/11085566/127866543-1345d56f-b4f3-4154-96c7-a278d747cf8d.png)
 
-## 6.3 WebRTC - Optional
+## 6.3 WebRTC - Required
 
 You can use WebRTC for light speed streaming inside Home Assistant.
 
