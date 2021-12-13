@@ -32,6 +32,11 @@ async def async_setup(hass: HomeAssistant, config: Config):
         coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
         await coordinator.async_refresh()
 
+    async def async_driver_connect(call):
+        coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
+        await coordinator.async_driver_connect()
+
+    hass.services.async_register(DOMAIN, "driver_connect", async_driver_connect)
     hass.services.async_register(DOMAIN, "force_sync", async_force_sync)
     hass.services.async_register(DOMAIN, "send_message", async_handle_send_message)
     return True

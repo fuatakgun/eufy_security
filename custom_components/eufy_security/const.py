@@ -30,7 +30,8 @@ BINARY_SENSOR = "binary_sensor"
 CAMERA = "camera"
 SENSOR = "sensor"
 LOCK = "lock"
-PLATFORMS = [CAMERA, BINARY_SENSOR, SENSOR, ALARM_CONTROL_PANEL, LOCK]
+SWITCH = "switch"
+PLATFORMS = [CAMERA, BINARY_SENSOR, SENSOR, ALARM_CONTROL_PANEL, LOCK, SWITCH]
 
 # Configuration and options
 CONF_HOST: str = "host"
@@ -74,6 +75,7 @@ SET_RTSP_LIVESTREAM_MESSAGE = {"messageId": "start_rtsp_livestream", "command": 
 SET_P2P_LIVESTREAM_MESSAGE = {"messageId": "start_livesteam", "command": "device.{state}_livestream", "serialNumber": None}
 SET_DEVICE_STATE_MESSAGE = {"messageId": "enable_device", "command": "device.enable_device", "serialNumber": None, "value": None}
 SET_GUARD_MODE_MESSAGE = {"messageId": "set_guard_mode", "command": "station.set_guard_mode", "serialNumber": None, "mode": None}
+SET_PROPERTY_MESSAGE = {"messageId": "device_set_property", "command": "device.set_property", "serialNumber": None, "name": None, "value": None}
 STATION_TRIGGER_ALARM = {"messageId": "trigger_alarm", "command": "station.trigger_alarm", "serialNumber": None, "seconds": 10}
 STATION_RESET_ALARM = {"messageId": "reset_alarm", "command": "station.reset_alarm", "serialNumber": None}
 SET_LOCK_MESSAGE = {"messageId": "lock_device", "command": "device.lock_device", "serialNumber": None, "value": None}
@@ -82,6 +84,7 @@ SET_LOCK_MESSAGE = {"messageId": "lock_device", "command": "device.lock_device",
 MESSAGE_IDS_TO_PROCESS = [
     START_LISTENING_MESSAGE["messageId"],
     GET_PROPERTIES_MESSAGE["messageId"],
+    GET_PROPERTIES_METADATA_MESSAGE["messageId"],
     GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"],
     GET_RTSP_LIVESTREAM_STATUS_MESSAGE["messageId"],
     DRIVER_CONNECT_MESSAGE["messageId"],
@@ -260,6 +263,7 @@ class Device:
         self.software_version: str = state["softwareVersion"]
 
         self.properties: dict = None
+        self.properties_metadata: dict = None
         self.type_raw: str = None
         self.type: str = None
         self.category: str = None
@@ -282,6 +286,8 @@ class Device:
         self.type = str(type)
         self.category = DEVICE_CATEGORY.get(type, "UNKNOWN")
 
+    def set_properties_metadata(self, properties_metadata: dict):
+        self.properties_metadata = properties_metadata
 
     def is_camera(self):
         if self.category in ["CAMERA", "DOORBELL"]:

@@ -9,6 +9,9 @@ send_message:
 force_sync:
   name: Force Sync
   description: Pull latest data from cloud and update internal state
+driver_connect:
+  name: Connect To Driver
+  description: Connect to Add-On Driver
 start_p2p_livestream:
   name: Start Live Stream over P2P
   description: Send start live stream command to camera

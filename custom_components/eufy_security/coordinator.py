@@ -38,6 +38,7 @@ from .const import (
     SET_P2P_LIVESTREAM_MESSAGE,
     SET_DEVICE_STATE_MESSAGE,
     SET_GUARD_MODE_MESSAGE,
+    SET_PROPERTY_MESSAGE,
     SET_LOCK_MESSAGE,
     STATION_TRIGGER_ALARM,
     STATION_RESET_ALARM,
@@ -111,7 +112,6 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                 await asyncio.sleep(30)
                 await self.async_start_listening()
 
-
     async def set_devices(self):
         if await self.async_get_device_properties() == False:
             _LOGGER.debug(f"{DOMAIN} - connect - async_start_listening False - {self.config.__dict__}")
@@ -132,6 +132,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_get_device_properties(self):
         for device in self.devices.values():
             await self.async_get_properties_for_device(device.serial_number)
+            await self.async_get_properties_metadata_for_device(device.serial_number)
 
         _LOGGER.debug(f"{DOMAIN} - get_device_properties")
 
@@ -171,6 +172,11 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             await self.async_get_p2p_livestream_status(device.serial_number)
             await self.async_get_rtsp_livestream_status(device.serial_number)
 
+    async def process_get_properties_metadata_response(self, serial_number, properties_metadata: dict):
+        _LOGGER.debug(f"{DOMAIN} - process_get_properties_metadata_response - {serial_number} - {properties_metadata}")
+        device: Device = self.devices[serial_number]
+        device.set_properties_metadata(properties_metadata)
+
     async def on_message(self, message):
         payload = message.json()
         message_type: str = payload["type"]
@@ -201,6 +207,9 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             if message_id == GET_PROPERTIES_MESSAGE["messageId"]:
                 await self.process_get_properties_response(message["properties"])
 
+            if message_id == GET_PROPERTIES_METADATA_MESSAGE["messageId"]:
+                await self.process_get_properties_metadata_response(message["serialNumber"], message["properties"])
+
             if message_id == GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"]:
                 if message["livestreaming"] == True:
                     self.set_value_for_property("device", message["serialNumber"], P2P_LIVESTREAMING_STATUS, P2P_LIVESTREAM_STARTED)
@@ -211,14 +220,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
         if message_type == "event":
             event_type = message["event"]
-            _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
+            #_LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
             if not event_type in EVENT_CONFIGURATION.keys():
                 return
 
             event_value = message[EVENT_CONFIGURATION[event_type]["value"]]
             event_data_type = EVENT_CONFIGURATION[event_type]["type"]
-
-            _LOGGER.debug(f"{DOMAIN} - on_message - {event_value} - {event_data_type}")
 
             if event_data_type == "captcha":
                 self.captcha_config.set(message["captchaId"], message["captcha"])
@@ -336,6 +343,13 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_reset_alarm(self, serial_no: str):
         message = STATION_RESET_ALARM.copy()
         message["serialNumber"] = serial_no
+        await self.async_send_message(json.dumps(message))
+
+    async def async_set_property(self, serial_no: str, name: str, value: str):
+        message = SET_PROPERTY_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        message["name"] = name
+        message["value"] = value
         await self.async_send_message(json.dumps(message))
 
     async def async_set_lock(self, serial_no: str, value: bool):
