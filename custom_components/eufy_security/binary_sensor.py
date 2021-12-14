@@ -37,6 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         ("crying_detector_sensor", "Crying Detector Sensor", "state.cryingDetected", None, DEVICE_CLASS_SOUND),
 
         ("sensor_open", "Sensor Open", "state.sensorOpen", None, DEVICE_CLASS_DOOR),
+        ("battery_low", "Battery Low", "state.batteryLow", None, DEVICE_CLASS_BATTERY),
 
         ("ringing_sensor", "Ringing Sensor", "state.ringing", "mdi:bell-ring", None),
 
@@ -52,6 +53,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         ("microphone_enabled", "Microphone", "state.microphone", "mdi:microphone", None),
         ("auto_night_vision_enabled", "Auto Night vision", "state.autoNightvision", "mdi:weather-night", None),
         ("audio_recording_enabled", "Audio Recording", "state.audioRecording", "mdi:record-rec", None),
+        ("charging", "Charging Status", "state.chargingStatus", None, DEVICE_CLASS_BATTERY_CHARGING),
 
         ("enabled", "Enabled", "state.enabled", None, DEVICE_CLASS_POWER),
         ("streaming", "Streaming Sensor", "is_streaming", None, DEVICE_CLASS_MOTION),
@@ -84,7 +86,13 @@ class EufySecurityBinarySensor(EufySecurityEntity):
 
     @property
     def is_on(self):
-        return bool(get_child_value(self.device.__dict__, self.key))
+        value = get_child_value(self.device.__dict__, self.key)
+        if self._id == "charging_status":
+            if value == "1":
+                value = True
+            else:
+                value = False
+        return bool(value)
 
     @property
     def state(self):
