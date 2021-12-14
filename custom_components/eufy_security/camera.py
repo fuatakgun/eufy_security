@@ -101,7 +101,6 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         # p2p streaming
         self.start_stream_function = self.async_start_p2p_livestream
         self.stop_stream_function = self.async_stop_p2p_livestream
-        self.queue: Queue = Queue()
 
         # video generation using ffmpeg for p2p
         self.ffmpeg_binary = self.coordinator.hass.data[DATA_FFMPEG].binary
@@ -140,21 +139,21 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
     async def handle_incoming_video_data(self, event):
         await self.check_and_set_codec()
-        self.queue.put(event.data)
+        self.device.queue.put(event.data)
 
     def handle_queue_threaded(self):
         sleep_duration = 0.1
-        _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - start - {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
+        _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - start - {self.device.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
         for i in range(0,10):
             if self.ffmpeg.is_running == False:
                 sleep(sleep_duration)
 
         while self.ffmpeg.is_running == True and self.device.is_streaming == True:
-            _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - while - {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
-            while not self.queue.empty():
-                self.write_bytes_to_ffmeg(bytearray(self.queue.get()["data"]))
+            _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - while - {self.device.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
+            while not self.device.queue.empty():
+                self.write_bytes_to_ffmeg(bytearray(self.device.queue.get()["data"]))
             sleep(sleep_duration)
-        _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - finish - {self.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
+        _LOGGER.debug(f"{DOMAIN} {self.name} - handle_queue_threaded - finish - {self.device.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}")
 
     def write_bytes_to_ffmeg(self, frame_bytes):
         if self.ffmpeg.is_running == True:
@@ -191,7 +190,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
     def start_p2p(self):
         _LOGGER.debug(f"{DOMAIN} {self.name} - start_p2p - 1")
-        self.queue.queue.clear()
+        self.device.queue.queue.clear()
         self.empty_queue_counter = 0
         if self.ffmpeg.is_running == True:
             _LOGGER.debug(f"{DOMAIN} {self.name} - start_p2p - ffmeg - running - stop it")
@@ -204,7 +203,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         self.p2p_thread.start()
 
     def stop_p2p(self):
-        self.queue.queue.clear()
+        self.device.queue.queue.clear()
         if not self.stream is None:
             self.stream.stop()
             self.stream = None
@@ -302,6 +301,26 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
     def turn_off(self) -> None:
         asyncio.run_coroutine_threadsafe(self.stop_stream_function(), self.coordinator.hass.loop).result()
 
+    async def check_and_notify_rtsp_enabled(self):
+        if self.device.state.get("rtspStream") == False:
+            self.coordinator.hass.components.persistent_notification.async_create(
+                f"RSTP needs to enabled for Camera {self.device.name}",
+                title="Eufy Security - Not Enabled - RTSP",
+                notification_id="eufy_security_not_enabled_rtsp",
+            )
+            return False
+        return True
+
+    async def check_and_notify_rtsp_supported(self):
+        if self.device.state.get("rtspStream", None) is None:
+            self.coordinator.hass.components.persistent_notification.async_create(
+                f"Camera {self.device.name} does not support RTSP",
+                title="Eufy Security - Not Supported - RTSP",
+                notification_id="eufy_security_not_supported_rtsp",
+            )
+            return False
+        return True
+
     async def async_start_p2p_livestream(self, executed_at=None) -> None:
         await self.coordinator.async_set_p2p_livestream(self.device.serial_number, "start")
 
@@ -309,16 +328,20 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         await self.coordinator.async_set_p2p_livestream(self.device.serial_number, "stop")
 
     async def async_start_rtsp_livestream(self, executed_at=None) -> None:
-        await self.coordinator.async_set_rtsp_livestream(self.device.serial_number, "start")
+        if await self.check_and_notify_rtsp_supported() == True and await self.check_and_notify_rtsp_enabled():
+            await self.coordinator.async_set_rtsp_livestream(self.device.serial_number, "start")
 
     async def async_stop_rtsp_livestream(self) -> None:
-        await self.coordinator.async_set_rtsp_livestream(self.device.serial_number, "stop")
+        if await self.check_and_notify_rtsp_supported() == True and await self.check_and_notify_rtsp_enabled():
+            await self.coordinator.async_set_rtsp_livestream(self.device.serial_number, "stop")
 
     async def async_enable_rtsp(self) -> None:
-        await self.coordinator.async_set_rtsp(self.device.serial_number, True)
+        if await self.check_and_notify_rtsp_supported() == True:
+            await self.coordinator.async_set_rtsp(self.device.serial_number, True)
 
     async def async_disable_rtsp(self) -> None:
-        await self.coordinator.async_set_rtsp(self.device.serial_number, False)
+        if await self.check_and_notify_rtsp_supported() == True:
+            await self.coordinator.async_set_rtsp(self.device.serial_number, False)
 
     async def async_enable(self) -> None:
         await self.coordinator.async_set_device_state(self.device.serial_number, True)

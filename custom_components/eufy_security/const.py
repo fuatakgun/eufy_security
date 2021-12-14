@@ -277,6 +277,7 @@ class Device:
         self.stream_source_type: str = ""
         self.stream_source_address: str = ""
         self.codec: str = DEFAULT_CODEC
+        self.queue: Queue = Queue()
 
         self.callback = None
 

@@ -32,6 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         ("stream_source_type", "Streaming Source Type", "stream_source_type", None, None, None),
         ("stream_source_address", "Streaming Source Address", "stream_source_address", None, None, None),
         ("codec", "Codec", "codec", None, None, None),
+        ("stream_queue_size", "Stream Queue Size", "queue", None, None, None),
     ]
 
     entities = []
@@ -58,6 +59,8 @@ class EufySecuritySensor(EufySecurityEntity):
 
     @property
     def state(self):
+        if self._id == "stream_queue_size":
+            return self.device.queue.qsize()
         return get_child_value(self.device.__dict__, self.key)
 
     @property
