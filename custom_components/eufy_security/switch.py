@@ -37,6 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         ("speaker", "Speaker", "speaker"),
         ("audio_recording", "Audio Recording", "audioRecording"),
         ("light", "Light", "light"),
+        ("rtsp_stream", "RTSP Stream", "rtspStream"),
     ]
 
     entities = []
