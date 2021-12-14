@@ -10,6 +10,8 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_SOUND,
     DEVICE_CLASS_DOOR,
     DEVICE_CLASS_POWER,
+    DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_BATTERY_CHARGING,
 )
 
 from .const import COORDINATOR, DOMAIN, Device
@@ -98,7 +100,7 @@ class EufySecurityBinarySensor(EufySecurityEntity):
     def state(self):
         if self.coordinator.config.fix_binary_sensor_state == True:
             return STATE_ON if self.is_on else STATE_OFF
-        return get_child_value(self.device.__dict__, self.key)
+        return self.is_on
 
     @property
     def icon(self):
