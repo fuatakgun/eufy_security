@@ -84,7 +84,7 @@ class EufySecurityBinarySensor(EufySecurityEntity):
         if self.id == "motion_sensor" and device.is_motion_sensor() == True:
             self.key = "motionDetection"
 
-        _LOGGER.debug(f"{DOMAIN} - binary init - {self.key}")
+        _LOGGER.debug(f"{DOMAIN} - binary init - {self.device.serial_number} {self.key}")
 
     @property
     def is_on(self):

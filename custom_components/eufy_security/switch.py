@@ -24,6 +24,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     INSTRUMENTS = [
         ("enabled", "Enabled", "enabled"),
         ("motion_detection", "Motion Detection", "motionDetection"),
+        ("motion_tracking", "Motion Tracking", "motionTracking"),
         ("person_detection", "Person Detection", "personDetection"),
         ("pet_detection", "Pet Detection", "petDetection"),
         ("crying_detection", "Crying Detection", "cryingDetection"),
@@ -32,7 +33,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         ("anti_theft_detection", "Anti Theft Detection", "antitheftDetection"),
         ("auto_night_vision", "Auto Night Vision", "autoNightvision"),
         ("night_vision", "Night Vision", "nightvision"),
-        ("audio_recording", "Audio Recording", "audioRecording"),
         ("microphone", "Microphone", "microphone"),
         ("speaker", "Speaker", "speaker"),
         ("audio_recording", "Audio Recording", "audioRecording"),

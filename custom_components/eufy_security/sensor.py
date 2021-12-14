@@ -37,7 +37,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     entities = []
     for device in coordinator.devices.values():
         instruments = INSTRUMENTS
-        _LOGGER.debug(f"{DOMAIN} {device.name} - {device.serial_number} - {device.is_camera()}")
         if device.is_camera() == True:
             instruments = instruments + CAMERA_INSTRUMENTS
         for id, description, key, unit, icon, device_class in instruments:

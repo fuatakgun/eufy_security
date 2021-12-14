@@ -140,6 +140,9 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug(f"{DOMAIN} - get_device_properties - {device}")
             if await wait_for_value(device.__dict__, "properties", None) == False:
                 return False
+            _LOGGER.debug(f"{DOMAIN} - get_device_properties_metadata - {device}")
+            if await wait_for_value(device.__dict__, "properties_metadata", None) == False:
+                return False
         return True
 
     async def process_driver_connect_response(self, connected: bool):
