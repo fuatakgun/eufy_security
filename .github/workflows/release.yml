@@ -7,9 +7,40 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Semantic Releaser
-        uses: jossef/action-semantic-releaser@v1
+      - uses: actions/checkout@v2
+            
+      - name: Gets semantic release info
+        id: semantic_release_info
+        uses: jossef/action-semantic-release-info@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Update Version and Commit   
+        if: ${{steps.semantic_release_info.outputs.version != ''}}
+        run: |
+          echo "Version: ${{steps.semantic_release_info.outputs.version}}"
+          sed -i "s/\"version\": \".*\",/\"version\": \"${{steps.semantic_release_info.outputs.version}}\",/g" custom_components/eufy_security/manifest.json 
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "chore: bumping version to ${{steps.semantic_release_info.outputs.version}}"
+          git tag ${{ steps.semantic_release_info.outputs.git_tag }}
+          
+      - name: Push changes
+        if: ${{steps.semantic_release_info.outputs.version != ''}}
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ github.token }}
+          tags: true
+
+      - name: Create GitHub Release
+        if: ${{steps.semantic_release_info.outputs.version != ''}}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: ${{ steps.semantic_release_info.outputs.git_tag }}
+          release_name: ${{ steps.semantic_release_info.outputs.git_tag }}
+          body: ${{ steps.semantic_release_info.outputs.notes }}
+          draft: false
+          prerelease: false
+
