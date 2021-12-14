@@ -32,7 +32,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         ("anti_theft_detection", "Anti Theft Detection", "antitheftDetection"),
         ("auto_night_vision", "Auto Night Vision", "autoNightvision"),
         ("night_vision", "Night Vision", "nightvision"),
-        ("audio_recording", "Audio Recording", "audioRecording"),
         ("microphone", "Microphone", "microphone"),
         ("speaker", "Speaker", "speaker"),
         ("audio_recording", "Audio Recording", "audioRecording"),
