@@ -26,7 +26,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     INSTRUMENTS = [
-        ("status_led_enabled", "Status Led Enabled", "state.statusLed", "mdi: led-on", None),
+        ("status_led_enabled", "Status Led Enabled", "state.statusLed", "mdi:led-on", None),
 
         ("motion_sensor", "Motion Sensor", "state.motionDetected", None, DEVICE_CLASS_MOTION),
         ("motion_detection_enabled", "Motion Detection Enabled", "state.motionDetection", None, DEVICE_CLASS_MOTION),
