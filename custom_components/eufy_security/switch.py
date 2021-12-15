@@ -9,6 +9,7 @@ from homeassistant.const import (
     DEVICE_CLASS_SIGNAL_STRENGTH,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import COORDINATOR, DOMAIN, Device
 from. const import get_child_value
@@ -22,36 +23,36 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     INSTRUMENTS = [
-        ("enabled", "Enabled", "enabled"),
-        ("motion_detection", "Motion Detection", "motionDetection"),
-        ("motion_tracking", "Motion Tracking", "motionTracking"),
-        ("person_detection", "Person Detection", "personDetection"),
-        ("pet_detection", "Pet Detection", "petDetection"),
-        ("crying_detection", "Crying Detection", "cryingDetection"),
-        ("indoor_chime", "Indoor Chime", "chimeIndoor"),
-        ("status_led", "Status Led", "statusLed"),
-        ("anti_theft_detection", "Anti Theft Detection", "antitheftDetection"),
-        ("auto_night_vision", "Auto Night Vision", "autoNightvision"),
-        ("night_vision", "Night Vision", "nightvision"),
-        ("microphone", "Microphone", "microphone"),
-        ("speaker", "Speaker", "speaker"),
-        ("audio_recording", "Audio Recording", "audioRecording"),
-        ("light", "Light", "light"),
-        ("rtsp_stream", "RTSP Stream", "rtspStream"),
+        ("enabled", "Enabled", "enabled", EntityCategory.CONFIG),
+        ("motion_detection", "Motion Detection", "motionDetection", EntityCategory.CONFIG),
+        ("motion_tracking", "Motion Tracking", "motionTracking", EntityCategory.CONFIG),
+        ("person_detection", "Person Detection", "personDetection", EntityCategory.CONFIG),
+        ("pet_detection", "Pet Detection", "petDetection", EntityCategory.CONFIG),
+        ("crying_detection", "Crying Detection", "cryingDetection", EntityCategory.CONFIG),
+        ("indoor_chime", "Indoor Chime", "chimeIndoor", EntityCategory.CONFIG),
+        ("status_led", "Status Led", "statusLed", EntityCategory.CONFIG),
+        ("anti_theft_detection", "Anti Theft Detection", "antitheftDetection", EntityCategory.CONFIG),
+        ("auto_night_vision", "Auto Night Vision", "autoNightvision", EntityCategory.CONFIG),
+        ("night_vision", "Night Vision", "nightvision", EntityCategory.CONFIG),
+        ("microphone", "Microphone", "microphone", EntityCategory.CONFIG),
+        ("speaker", "Speaker", "speaker", EntityCategory.CONFIG),
+        ("audio_recording", "Audio Recording", "audioRecording", EntityCategory.CONFIG),
+        ("light", "Light", "light", EntityCategory.CONFIG),
+        ("rtsp_stream", "RTSP Stream", "rtspStream", EntityCategory.CONFIG),
     ]
 
     entities = []
     for device in coordinator.devices.values():
         instruments = INSTRUMENTS
-        for id, description, key in instruments:
+        for id, description, key, entity_category in instruments:
             if not get_child_value(device.state, key) is None:
-                entities.append(EufySwitchEntity(coordinator, config_entry, device, id, description, key, "False", "True"))
+                entities.append(EufySwitchEntity(coordinator, config_entry, device, id, description, key, "False", "True", entity_category))
 
     async_add_devices(entities, True)
 
 
 class EufySwitchEntity(EufySecurityEntity, SwitchEntity):
-    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, config_entry: ConfigEntry, device: Device, id: str, description: str, key: str, off_value: str, on_value: str):
+    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, config_entry: ConfigEntry, device: Device, id: str, description: str, key: str, off_value: str, on_value: str, entity_category: str):
         EufySecurityEntity.__init__(self, coordinator, config_entry, device)
         SwitchEntity.__init__(self)
         self._id = id
@@ -59,6 +60,7 @@ class EufySwitchEntity(EufySecurityEntity, SwitchEntity):
         self.key = key
         self.off_value = str(off_value)
         self.on_value = str(on_value)
+        self._attr_entity_category = entity_category
 
     @property
     def is_on(self):

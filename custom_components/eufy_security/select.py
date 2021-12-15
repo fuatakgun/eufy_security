@@ -9,6 +9,7 @@ from homeassistant.const import (
     DEVICE_CLASS_SIGNAL_STRENGTH,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import COORDINATOR, DOMAIN, Device
 from. const import get_child_value
@@ -22,26 +23,26 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     INSTRUMENTS = [
-        ("night_vision", "Night Vision", "nightvision"),
-        ("power_working_mode", "Power Working Mode", "powerWorkingMode"),
-        ("video_streaming_quality", "Video Streaming Quality", "videoStreamingQuality"),
-        ("video_recording_quality", "Video Recording Quality", "videoRecordingQuality"),
-        ("motion_detection_type", "Motion Detection Type", "motionDetectionType"),
-        ("rotation_speed", "Rotation Speed", "rotationSpeed"),
+        ("night_vision", "Night Vision", "nightvision", EntityCategory.CONFIG),
+        ("power_working_mode", "Power Working Mode", "powerWorkingMode", EntityCategory.CONFIG),
+        ("video_streaming_quality", "Video Streaming Quality", "videoStreamingQuality", EntityCategory.CONFIG),
+        ("video_recording_quality", "Video Recording Quality", "videoRecordingQuality", EntityCategory.CONFIG),
+        ("motion_detection_type", "Motion Detection Type", "motionDetectionType", EntityCategory.CONFIG),
+        ("rotation_speed", "Rotation Speed", "rotationSpeed", EntityCategory.CONFIG),
     ]
 
     entities = []
     for device in coordinator.devices.values():
         instruments = INSTRUMENTS
-        for id, description, key in instruments:
+        for id, description, key, entity_category in instruments:
             if not get_child_value(device.state, key) is None:
-                entities.append(EufySelectEntity(coordinator, config_entry, device, id, description, key))
+                entities.append(EufySelectEntity(coordinator, config_entry, device, id, description, key, entity_category))
 
     async_add_devices(entities, True)
 
 
 class EufySelectEntity(EufySecurityEntity, SelectEntity):
-    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, config_entry: ConfigEntry, device: Device, id: str, description: str, key: str):
+    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, config_entry: ConfigEntry, device: Device, id: str, description: str, key: str, entity_category: str):
         EufySecurityEntity.__init__(self, coordinator, config_entry, device)
         SelectEntity.__init__(self)
         self._id = id
@@ -52,6 +53,7 @@ class EufySelectEntity(EufySecurityEntity, SelectEntity):
         self.values_to_states = self.states.get("states", {})
         self.states_to_values = {v: k for k, v in self.values_to_states.items()}
         self._attr_options: list[str] = list(self.values_to_states.values())
+        self._attr_entity_category = entity_category
 
         _LOGGER.debug(f"{DOMAIN} - {self.device.name} - {self.id} - select init - {self.values_to_states} - {self.states_to_values}")
 
