@@ -12,6 +12,7 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from .const import COORDINATOR, DOMAIN, DEFAULT_HOST, DEFAULT_PORT, CONF_HOST, CONF_PORT, CONF_CAPTCHA
 from .const import CONF_AUTO_START_STREAM, DEFAULT_AUTO_START_STREAM, CONF_USE_RTSP_SERVER_ADDON, DEFAULT_USE_RTSP_SERVER_ADDON, CONF_FFMPEG_ANALYZE_DURATION, DEFAULT_FFMPEG_ANALYZE_DURATION
 from .const import CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL, CONF_RTSP_SERVER_ADDRESS, DEFAULT_RTSP_SERVER_PORT, CONF_RTSP_SERVER_PORT, CONF_FIX_BINARY_SENSOR_STATE, DEFAULT_FIX_BINARY_SENSOR_STATE
+from .const import CONF_ALARM_CUSTOM1_NAME, DEFAULT_ALARM_CUSTOM1_NAME, CONF_ALARM_CUSTOM2_NAME, DEFAULT_ALARM_CUSTOM2_NAME, CONF_ALARM_CUSTOM3_NAME, DEFAULT_ALARM_CUSTOM3_NAME
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .websocket import EufySecurityWebSocket
 
@@ -30,6 +31,9 @@ class EufySecurityOptionFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_FFMPEG_ANALYZE_DURATION, default=self.config_entry.options.get(CONF_FFMPEG_ANALYZE_DURATION, DEFAULT_FFMPEG_ANALYZE_DURATION)): vol.All(vol.Coerce(float), vol.Range(min=1, max=5)),
                 vol.Optional(CONF_AUTO_START_STREAM, default=self.config_entry.options.get(CONF_AUTO_START_STREAM, DEFAULT_AUTO_START_STREAM)): bool,
                 vol.Optional(CONF_FIX_BINARY_SENSOR_STATE, default=self.config_entry.options.get(CONF_FIX_BINARY_SENSOR_STATE, DEFAULT_FIX_BINARY_SENSOR_STATE)): bool,
+                vol.Optional(CONF_ALARM_CUSTOM1_NAME, default=self.config_entry.options.get(CONF_ALARM_CUSTOM1_NAME, DEFAULT_ALARM_CUSTOM1_NAME)): str,
+                vol.Optional(CONF_ALARM_CUSTOM2_NAME, default=self.config_entry.options.get(CONF_ALARM_CUSTOM2_NAME, DEFAULT_ALARM_CUSTOM2_NAME)): str,
+                vol.Optional(CONF_ALARM_CUSTOM3_NAME, default=self.config_entry.options.get(CONF_ALARM_CUSTOM3_NAME, DEFAULT_ALARM_CUSTOM3_NAME)): str,
             }
         )
 

@@ -11,6 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.event import async_call_later, async_track_time_interval
 
 from .const import COORDINATOR, CAPTCHA_CONFIG, CONF_PORT, CONF_HOST, DOMAIN, PLATFORMS, DEFAULT_SYNC_INTERVAL, CONF_USE_RTSP_SERVER_ADDON, DEFAULT_USE_RTSP_SERVER_ADDON, CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL
+from .const import CONF_ALARM_CUSTOM1_NAME, CONF_ALARM_CUSTOM2_NAME, CONF_ALARM_CUSTOM3_NAME, DEFAULT_ALARM_CUSTOM1_NAME, DEFAULT_ALARM_CUSTOM2_NAME, DEFAULT_ALARM_CUSTOM3_NAME
 from .const import CaptchaConfig
 from .coordinator import EufySecurityDataUpdateCoordinator
 

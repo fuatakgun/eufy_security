@@ -17,6 +17,13 @@ from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.helpers.translation import component_translation_path
 
 from .const import P2P_LIVESTREAM_STARTED, P2P_LIVESTREAMING_STATUS, RTSP_LIVESTREAM_STARTED, RTSP_LIVESTREAMING_STATUS, EufyConfig, get_child_value, wait_for_value, Device, CaptchaConfig
+from homeassistant.const import (
+    STATE_ALARM_ARMED_AWAY,
+    STATE_ALARM_ARMED_HOME,
+    STATE_ALARM_DISARMED,
+    STATE_ALARM_TRIGGERED
+)
+from .const import STATE_GUARD_GEO, STATE_GUARD_SCHEDULE
 from .const import (
     DOMAIN,
     MESSAGE_IDS_TO_PROCESS,
@@ -48,7 +55,6 @@ from .websocket import EufySecurityWebSocket
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-
 class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry, captcha_config: CaptchaConfig) -> None:
         self.config: EufyConfig = EufyConfig(config_entry)
@@ -74,6 +80,34 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             return False
         return True
 
+    def get_alarm_state_from_code(self, alarm_code: int):
+        CODES_TO_STATES = {
+            0: STATE_ALARM_ARMED_AWAY,
+            1: STATE_ALARM_ARMED_HOME,
+            2: STATE_GUARD_SCHEDULE,
+            3: self.config.alarm_custom1_name,
+            4: self.config.alarm_custom2_name,
+            5: self.config.alarm_custom3_name,
+            6: STATE_ALARM_DISARMED,
+            47: STATE_GUARD_GEO,
+            63: STATE_ALARM_DISARMED
+        }
+        return CODES_TO_STATES[alarm_code]
+        
+    def get_alarm_code_from_state(self, alarm_state: str):
+        STATES_TO_CODES = {
+            STATE_ALARM_ARMED_AWAY: 0,
+            STATE_ALARM_ARMED_HOME: 1,
+            STATE_GUARD_SCHEDULE: 2,
+            self.config.alarm_custom1_name: 3,
+            self.config.alarm_custom2_name: 4,
+            self.config.alarm_custom3_name: 5,
+            STATE_GUARD_GEO: 47,
+            STATE_ALARM_DISARMED: 63,
+        }
+        return STATES_TO_CODES[alarm_state]
+
+    
     async def connect(self):
         if self.is_connected() == True:
             return

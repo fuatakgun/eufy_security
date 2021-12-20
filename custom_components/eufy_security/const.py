@@ -45,6 +45,11 @@ CONF_FFMPEG_ANALYZE_DURATION: str = "ffmpeg_analyze_duration"
 CONF_SYNC_INTERVAL: str = "sync_interval"
 CONF_AUTO_START_STREAM: str = "auto_start_stream"
 CONF_FIX_BINARY_SENSOR_STATE: str = "fix_binary_sensor_state"
+CONF_ALARM_CUSTOM1_NAME: str = "custom1"
+CONF_ALARM_CUSTOM2_NAME: str  = "custom2"
+CONF_ALARM_CUSTOM3_NAME: str  = "custom3"
+STATE_GUARD_SCHEDULE = "schedule"
+STATE_GUARD_GEO = "geo"
 
 DEFAULT_HOST: str = "0.0.0.0"
 DEFAULT_PORT: int = 3000
@@ -55,6 +60,11 @@ DEFAULT_FFMPEG_ANALYZE_DURATION: float = 1.2 # microseconds
 DEFAULT_CODEC: str = "h264"
 DEFAULT_AUTO_START_STREAM: bool = True
 DEFAULT_FIX_BINARY_SENSOR_STATE: bool = False
+DEFAULT_ALARM_CUSTOM1_NAME: str  = "custom1"
+DEFAULT_ALARM_CUSTOM2_NAME: str  = "custom2"
+DEFAULT_ALARM_CUSTOM3_NAME: str  = "custom3"
+STATE_GUARD_SCHEDULE = "schedule"
+STATE_GUARD_GEO = "geo"
 
 P2P_LIVESTREAMING_STATUS = "p2pLiveStreamingStatus"
 RTSP_LIVESTREAMING_STATUS = "rtspLiveStreamingStatus"
@@ -154,12 +164,6 @@ EVENT_CONFIGURATION: dict = {
         "type": "state",
     },
 }
-
-STATE_ALARM_CUSTOM1 = "custom1"
-STATE_ALARM_CUSTOM2 = "custom2"
-STATE_ALARM_CUSTOM3 = "custom3"
-STATE_GUARD_SCHEDULE = "schedule"
-STATE_GUARD_GEO = "geo"
 
 class DEVICE_TYPE(Enum):
     STATION = 0
@@ -341,6 +345,10 @@ class EufyConfig:
         self.ffmpeg_analyze_duration: int = config_entry.options.get(CONF_FFMPEG_ANALYZE_DURATION, DEFAULT_FFMPEG_ANALYZE_DURATION)
         self.auto_start_stream: bool = config_entry.options.get(CONF_AUTO_START_STREAM, DEFAULT_AUTO_START_STREAM)
         self.fix_binary_sensor_state: bool = config_entry.options.get(CONF_FIX_BINARY_SENSOR_STATE, DEFAULT_FIX_BINARY_SENSOR_STATE)
+        
+        self.alarm_custom1_name: str = config_entry.options.get(CONF_ALARM_CUSTOM1_NAME, DEFAULT_ALARM_CUSTOM1_NAME)
+        self.alarm_custom2_name: str = config_entry.options.get(CONF_ALARM_CUSTOM2_NAME, DEFAULT_ALARM_CUSTOM2_NAME)
+        self.alarm_custom3_name: str = config_entry.options.get(CONF_ALARM_CUSTOM3_NAME, DEFAULT_ALARM_CUSTOM3_NAME)
 
         _LOGGER.debug(f"{DOMAIN} - config class initialized")
 

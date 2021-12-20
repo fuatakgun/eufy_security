@@ -35,7 +35,10 @@
           "rtsp_server_port": "TCP Port for RTSP Add On (P2P)",
           "ffmpeg_analyze_duration": "Video Analzyze Duration in seconds [1 to 5] (P2P)",
           "auto_start_stream": "Auto Start Stream on Click",
-          "fix_binary_sensor_state": "Fix Binary Sensor States (True/False to On/Off)"
+          "fix_binary_sensor_state": "Fix Binary Sensor States (True/False to On/Off)",
+		  "custom1": "Name for custom security mode 1",
+		  "custom2": "Name for custom security mode 2",
+		  "custom3": "Name for custom security mode 3"
         }
       }
     }
