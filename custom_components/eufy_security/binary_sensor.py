@@ -8,9 +8,11 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_SOUND,
 )
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import COORDINATOR, DOMAIN, Device, get_child_value
 from .coordinator import EufySecurityDataUpdateCoordinator
@@ -29,8 +31,9 @@ async def async_setup_entry(
             "status_led_enabled",
             "Status Led Enabled",
             "state.statusLed",
-            "mdi: led-on",
+            "mdi:led-on",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "motion_sensor",
@@ -38,6 +41,7 @@ async def async_setup_entry(
             "state.motionDetected",
             None,
             DEVICE_CLASS_MOTION,
+            None,
         ),
         (
             "motion_detection_enabled",
@@ -45,6 +49,7 @@ async def async_setup_entry(
             "state.motionDetection",
             None,
             DEVICE_CLASS_MOTION,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "person_detector_sensor",
@@ -52,6 +57,7 @@ async def async_setup_entry(
             "state.personDetected",
             None,
             DEVICE_CLASS_MOTION,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "person_detection_enabled",
@@ -59,6 +65,7 @@ async def async_setup_entry(
             "state.personDetection",
             None,
             DEVICE_CLASS_MOTION,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "pet_detector_sensor",
@@ -66,6 +73,7 @@ async def async_setup_entry(
             "state.petDetected",
             None,
             DEVICE_CLASS_MOTION,
+            None,
         ),
         (
             "pet_detection_enabled",
@@ -73,6 +81,7 @@ async def async_setup_entry(
             "state.petDetection",
             "mdi: dog",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "sound_detector_sensor",
@@ -80,6 +89,7 @@ async def async_setup_entry(
             "state.soundDetected",
             None,
             DEVICE_CLASS_SOUND,
+            None,
         ),
         (
             "sound_detection_enabled",
@@ -87,6 +97,7 @@ async def async_setup_entry(
             "state.soundDetection",
             "mdi: account-voice",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "crying_detector_sensor",
@@ -94,16 +105,39 @@ async def async_setup_entry(
             "state.cryingDetected",
             None,
             DEVICE_CLASS_SOUND,
+            None,
         ),
-        ("sensor_open", "Sensor Open", "state.sensorOpen", None, DEVICE_CLASS_DOOR),
-        ("battery_low", "Battery Low", "state.batteryLow", None, DEVICE_CLASS_BATTERY),
-        ("ringing_sensor", "Ringing Sensor", "state.ringing", "mdi:bell-ring", None),
+        (
+            "sensor_open",
+            "Sensor Open",
+            "state.sensorOpen",
+            None,
+            DEVICE_CLASS_DOOR,
+            None,
+        ),
+        (
+            "battery_low",
+            "Battery Low",
+            "state.batteryLow",
+            None,
+            DEVICE_CLASS_BATTERY,
+            EntityCategory.DIAGNOSTIC,
+        ),
+        (
+            "ringing_sensor",
+            "Ringing Sensor",
+            "state.ringing",
+            "mdi:bell-ring",
+            None,
+            None,
+        ),
         (
             "motion_tracking_enabled",
             "Motion Tracking",
             "state.motionTracking",
             "mdi:go-kart-track",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "notification_person_enabled",
@@ -111,6 +145,7 @@ async def async_setup_entry(
             "state.notificationPerson",
             "mdi:bell-ring",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "notification_pet_enabled",
@@ -118,6 +153,7 @@ async def async_setup_entry(
             "state.notificationPet",
             "mdi:bell-ring",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "notification_all_other_motion_enabled",
@@ -125,6 +161,7 @@ async def async_setup_entry(
             "state.notificationAllOtherMotion",
             "mdi:bell-ring",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "notification_crying_enabled",
@@ -132,6 +169,7 @@ async def async_setup_entry(
             "state.notificationCrying",
             "mdi:bell-ring",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "notification_all_sound_enabled",
@@ -139,14 +177,23 @@ async def async_setup_entry(
             "state.notificationAllSound",
             "mdi:bell-ring",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
-        ("speaker_enabled", "Speaker", "state.speaker", "mdi:bullhorn", None),
+        (
+            "speaker_enabled",
+            "Speaker",
+            "state.speaker",
+            "mdi:bullhorn",
+            None,
+            EntityCategory.DIAGNOSTIC,
+        ),
         (
             "microphone_enabled",
             "Microphone",
             "state.microphone",
             "mdi:microphone",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "auto_night_vision_enabled",
@@ -154,6 +201,7 @@ async def async_setup_entry(
             "state.autoNightvision",
             "mdi:weather-night",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "audio_recording_enabled",
@@ -161,6 +209,7 @@ async def async_setup_entry(
             "state.audioRecording",
             "mdi:record-rec",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "charging",
@@ -168,21 +217,37 @@ async def async_setup_entry(
             "state.chargingStatus",
             None,
             DEVICE_CLASS_BATTERY_CHARGING,
+            EntityCategory.DIAGNOSTIC,
         ),
-        ("enabled", "Enabled", "state.enabled", None, DEVICE_CLASS_POWER),
-        ("streaming", "Streaming Sensor", "is_streaming", None, DEVICE_CLASS_MOTION),
+        (
+            "enabled",
+            "Enabled",
+            "state.enabled",
+            None,
+            DEVICE_CLASS_POWER,
+            EntityCategory.DIAGNOSTIC,
+        ),
+        (
+            "streaming",
+            "Streaming Sensor",
+            "is_streaming",
+            None,
+            DEVICE_CLASS_MOTION,
+            EntityCategory.DIAGNOSTIC,
+        ),
         (
             "rtsp_stream_enabled",
             "RTSP Stream",
             "state.rtspStream",
             "mdi:cast-connected",
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
     ]
 
     entities = []
     for device in coordinator.devices.values():
-        for id, description, key, icon, device_class in INSTRUMENTS:
+        for id, description, key, icon, device_class, entity_category in INSTRUMENTS:
             if not get_child_value(device.__dict__, key) is None:
                 entities.append(
                     EufySecurityBinarySensor(
@@ -194,6 +259,7 @@ async def async_setup_entry(
                         key,
                         icon,
                         device_class,
+                        entity_category,
                     )
                 )
 
@@ -211,6 +277,7 @@ class EufySecurityBinarySensor(EufySecurityEntity):
         key: str,
         icon: str,
         device_class: str,
+        entity_category: str,
     ):
         super().__init__(coordinator, config_entry, device)
         self._id = id
@@ -218,6 +285,7 @@ class EufySecurityBinarySensor(EufySecurityEntity):
         self.key = key
         self._icon = icon
         self._device_class = device_class
+        self._attr_entity_category = entity_category
 
         if self.id == "motion_sensor" and device.is_motion_sensor() is True:
             self.key = "motionDetection"

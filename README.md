@@ -62,7 +62,7 @@ logger:
 Please follow screenshots below. In summary;
 - You will first install HASS Add On assuming you are running on Hassos or Supervised. If not, please execute this command to run docker instance manually ```docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -p 3000:3000 bropat/eufy-security-ws:X.Y.Z```. To find out correct values for X.Y.Z, please chek here https://github.com/fuatakgun/eufy_security_addon/blob/main/config.json#L3
 - Later on, you should install RTSP Server Add On to have faster/more reliable p2p streaming. I will deprecate/not support file based streaming soon, so, please migrate in timely manner. If you are not using Hassos or Supervised installation please execute this command to run docker instance manually ```docker run --rm -it -e RTSP_PROTOCOLS=tcp -d -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server```
-- When you are done with HASS Add On, you will install integration via adding integration address to HACS, downloading files over UI, restarting home assistant and setting up integration.
+- When you are done with HASS Add On, you will install integration via HACS, downloading files over UI, restarting home assistant and setting up integration.
 - Double check if your `configuration.yaml` includes `ffmpeg` integration. If not, please do like this; https://www.home-assistant.io/integrations/ffmpeg/#configuration . This integration relies on `ffmpeg` to be setup to live stream via P2P and capture images from live RTSP/P2P streams.
 
 ## 6.1 Installing Eufy Security Add On - Required
@@ -105,40 +105,33 @@ Please follow screenshots below. In summary;
 
 ## 6.3 Installing Integration
 
-1- Go to HACS and click on `Custom repositories`
+1- Go to HACS and search for 'Eufy Security'
 
-![6-hacs-custom-repositories](https://user-images.githubusercontent.com/11085566/126563932-e9fc2783-02a1-42d3-8f4a-bc0fa2edf386.PNG)
-
-2- Add custom integration repository URL 
-```https://github.com/fuatakgun/eufy_security/```
-
-![7-hacs-add](https://user-images.githubusercontent.com/11085566/126563937-4ad08d92-b9c1-45e3-a205-be9b244bc3a7.PNG)
-
-3- Install the `Eufy Secucirty` repository
+2- Install the `Eufy Security` repository
 
 ![8-hacs-install](https://user-images.githubusercontent.com/11085566/126563950-1c89c1e8-f77d-46ac-8910-77048500a07f.PNG)
 
-4- You need to restart your HA instance to pick up new repository.
+3- You need to restart your HA instance to pick up new repository.
 
 ![9-hacs-restart](https://user-images.githubusercontent.com/11085566/126563954-b801e4ea-b93e-4695-928d-a82221fe01f4.PNG)
 
-5- After restart, go to `Configuration` - `Integrations` page and click on `Add Integration`
+4- After restart, go to `Configuration` - `Integrations` page and click on `Add Integration`
 
 ![10-integrations](https://user-images.githubusercontent.com/11085566/126563961-a05c5e50-b006-4759-b55a-548f691a13d8.PNG)
 
-6- Search for ```Eufy Security``` and click on it
+5- Search for ```Eufy Security``` and click on it
 
 ![11-integration-search](https://user-images.githubusercontent.com/11085566/126563968-920a74de-ab93-456b-b4b2-dcf651a07f9f.PNG)
 
-7- In next page, use ```localhost``` if you have used Add-on installation, otherwise put your Docker instance ip address and keep `3000` as port
+6- In next page, use ```localhost``` if you have used Add-on installation, otherwise put your Docker instance ip address and keep `3000` as port
 
 ![12-integration-configure](https://user-images.githubusercontent.com/11085566/126563976-234005e7-2920-4ef0-a301-187d4d929f10.png)
 
-8- You will be shown devices connected to your account. Or you can be alerted with captcha notification.
+7- You will be shown devices connected to your account. Or you can be alerted with captcha notification.
 
 ![13-integration-done](https://user-images.githubusercontent.com/11085566/126563982-38b3a00a-ff6a-45aa-8dcc-b04e864a37f8.PNG)
 
-9- Follow screenshots below for captcha
+8- Follow screenshots below for captcha
 a. Get notified about captcha request
 ![image](https://user-images.githubusercontent.com/11085566/145604195-7b5499b3-9603-468b-aa03-84121047719b.png)
 
@@ -153,11 +146,11 @@ d. If you put the wrong code, after couple of seconds, you will get a similar er
 
 e. After entering correct captcha code, your devices will be ready to use.
 
-10- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this. More importantly, please set your `Streaming Quality` settings to `Low` per each camera using Eufy Security app, otherwise WebRTC will fail to stream the video. Underlying issue is realted mid or high quality codecs are not supported by WebRTC.
+9- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this. More importantly, please set your `Streaming Quality` settings to `Low` per each camera using Eufy Security app, otherwise WebRTC will fail to stream the video. Underlying issue is realted mid or high quality codecs are not supported by WebRTC.
 
 ![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
 
-11- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
+10- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
 ![image](https://user-images.githubusercontent.com/11085566/127866543-1345d56f-b4f3-4154-96c7-a278d747cf8d.png)
 
 ## 6.3 WebRTC - Required

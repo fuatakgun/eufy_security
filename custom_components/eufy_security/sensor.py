@@ -7,6 +7,7 @@ from homeassistant.const import (
     PERCENTAGE,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import COORDINATOR, DOMAIN, Device, get_child_value
 from .coordinator import EufySecurityDataUpdateCoordinator
@@ -21,7 +22,15 @@ async def async_setup_entry(
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     INSTRUMENTS = [
-        ("battery", "Battery", "state.battery", PERCENTAGE, None, DEVICE_CLASS_BATTERY),
+        (
+            "battery",
+            "Battery",
+            "state.battery",
+            PERCENTAGE,
+            None,
+            DEVICE_CLASS_BATTERY,
+            EntityCategory.DIAGNOSTIC,
+        ),
         (
             "wifiRSSI",
             "Wifi RSSI",
@@ -29,11 +38,13 @@ async def async_setup_entry(
             None,
             None,
             DEVICE_CLASS_SIGNAL_STRENGTH,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "detected_person_name",
             "Detected Person Name",
             "state.personName",
+            None,
             None,
             None,
             None,
@@ -48,6 +59,7 @@ async def async_setup_entry(
             None,
             None,
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
         (
             "stream_source_address",
@@ -56,9 +68,18 @@ async def async_setup_entry(
             None,
             None,
             None,
+            EntityCategory.DIAGNOSTIC,
         ),
-        ("codec", "Codec", "codec", None, None, None),
-        ("stream_queue_size", "Stream Queue Size", "queue", None, None, None),
+        ("codec", "Codec", "codec", None, None, None, EntityCategory.DIAGNOSTIC),
+        (
+            "stream_queue_size",
+            "Stream Queue Size",
+            "queue",
+            None,
+            None,
+            None,
+            EntityCategory.DIAGNOSTIC,
+        ),
     ]
 
     entities = []
@@ -66,7 +87,15 @@ async def async_setup_entry(
         instruments = INSTRUMENTS
         if device.is_camera() is True:
             instruments = instruments + CAMERA_INSTRUMENTS
-        for id, description, key, unit, icon, device_class in instruments:
+        for (
+            id,
+            description,
+            key,
+            unit,
+            icon,
+            device_class,
+            entity_category,
+        ) in instruments:
             if not get_child_value(device.__dict__, key) is None:
                 entities.append(
                     EufySecuritySensor(
@@ -79,6 +108,7 @@ async def async_setup_entry(
                         unit,
                         icon,
                         device_class,
+                        entity_category,
                     )
                 )
 
@@ -97,6 +127,7 @@ class EufySecuritySensor(EufySecurityEntity):
         unit: str,
         icon: str,
         device_class: str,
+        entity_category: str,
     ):
         super().__init__(coordinator, config_entry, device)
         self._id = id
@@ -105,6 +136,7 @@ class EufySecuritySensor(EufySecurityEntity):
         self.unit = unit
         self._icon = icon
         self._device_class = device_class
+        self._attr_entity_category = entity_category
 
     @property
     def state(self):
