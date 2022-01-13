@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 
@@ -104,7 +106,7 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
         coordinator: EufySecurityDataUpdateCoordinator,
         config_entry: ConfigEntry,
         device: Device,
-    ):
+    ) -> None:
         EufySecurityEntity.__init__(self, coordinator, config_entry, device)
         AlarmControlPanelEntity.__init__(self)
         self._attr_code_arm_required = False
@@ -133,33 +135,33 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
 
         await self.coordinator.async_set_guard_mode(self.device.serial_number, code)
 
-    def alarm_disarm(self, code) -> None:
+    def alarm_disarm(self, code: str | None = None) -> None:
         asyncio.run_coroutine_threadsafe(
             self.set_guard_mode(STATE_ALARM_DISARMED), self.coordinator.hass.loop
         ).result()
 
-    def alarm_off(self, code) -> None:
+    def alarm_off(self, code: str | None = None) -> None:
         asyncio.run_coroutine_threadsafe(
             self.set_guard_mode(STATE_GUARD_OFF), self.coordinator.hass.loop
         ).result()
 
-    def alarm_arm_home(self, code) -> None:
+    def alarm_arm_home(self, code: str | None = None) -> None:
         asyncio.run_coroutine_threadsafe(
             self.set_guard_mode(STATE_ALARM_ARMED_HOME), self.coordinator.hass.loop
         ).result()
 
-    def alarm_arm_away(self, code) -> None:
+    def alarm_arm_away(self, code: str | None = None) -> None:
         asyncio.run_coroutine_threadsafe(
             self.set_guard_mode(STATE_ALARM_ARMED_AWAY), self.coordinator.hass.loop
         ).result()
 
-    def alarm_arm_custom_bypass(self, code) -> None:
+    def alarm_arm_custom_bypass(self, code: str | None = None) -> None:
         self.alarm_arm_custom1()
 
-    def alarm_arm_night(self, code) -> None:
+    def alarm_arm_night(self, code: str | None = None) -> None:
         self.alarm_arm_custom2()
 
-    def alarm_arm_vacation(self, code) -> None:
+    def alarm_arm_vacation(self, code: str | None = None) -> None:
         self.alarm_arm_custom3()
 
     def alarm_guard_schedule(self) -> None:
@@ -187,7 +189,7 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
             self.set_guard_mode(STATE_GUARD_GEO), self.coordinator.hass.loop
         ).result()
 
-    def alarm_trigger(self, code) -> None:
+    def alarm_trigger(self, code: str | None = None) -> None:
         asyncio.run_coroutine_threadsafe(
             self.coordinator.async_trigger_alarm(self.device.serial_number),
             self.coordinator.hass.loop,
@@ -204,7 +206,6 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
             self.coordinator.async_reset_alarm(self.device.serial_number),
             self.coordinator.hass.loop,
         ).result()
-
 
     @property
     def id(self):
@@ -227,9 +228,9 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
         if current_mode in CUSTOM_CODES:
             position = CUSTOM_CODES.index(current_mode)
             if position == 0:
-                self.coordinator.config.name_for_custom1
+                return self.coordinator.config.name_for_custom1
             if position == 1:
-                self.coordinator.config.name_for_custom2
+                return self.coordinator.config.name_for_custom2
             if position == 2:
-                self.coordinator.config.name_for_custom3
+                return self.coordinator.config.name_for_custom3
         return CODES_TO_STATES[current_mode]
