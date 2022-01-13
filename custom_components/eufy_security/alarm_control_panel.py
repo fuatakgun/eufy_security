@@ -82,6 +82,7 @@ async def async_setup_entry(
     async_add_devices(entities, True)
     # register entity level services
     platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service("alarm_off", {}, "alarm_off")
     platform.async_register_entity_service(
         "alarm_guard_schedule", {}, "alarm_guard_schedule"
     )
