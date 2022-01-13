@@ -204,6 +204,7 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
             self.coordinator.hass.loop,
         ).result()
 
+
     @property
     def id(self):
         return f"{DOMAIN}_{self.device.serial_number}_station"
