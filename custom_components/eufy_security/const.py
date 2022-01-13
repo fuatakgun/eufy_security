@@ -1,19 +1,10 @@
-import logging
-
 import asyncio
 from datetime import datetime
 from enum import Enum
+import logging
 from queue import Queue
-import time
-from homeassistant.config_entries import ConfigEntry
 
-from homeassistant.const import (
-    PERCENTAGE,
-    DEVICE_CLASS_BATTERY,
-    DEVICE_CLASS_SIGNAL_STRENGTH,
-)
-from homeassistant.components.binary_sensor import DEVICE_CLASS_MOTION
-from homeassistant.core import callback
+from homeassistant.config_entries import ConfigEntry
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -45,41 +36,118 @@ CONF_FFMPEG_ANALYZE_DURATION: str = "ffmpeg_analyze_duration"
 CONF_SYNC_INTERVAL: str = "sync_interval"
 CONF_AUTO_START_STREAM: str = "auto_start_stream"
 CONF_FIX_BINARY_SENSOR_STATE: str = "fix_binary_sensor_state"
+CONF_MAP_EXTRA_ALARM_MODES: str = "map_extra_alarm_modes"
+CONF_NAME_FOR_CUSTOM1 = "name_for_custom1"
+CONF_NAME_FOR_CUSTOM2 = "name_for_custom2"
+CONF_NAME_FOR_CUSTOM3 = "name_for_custom3"
 
 DEFAULT_HOST: str = "0.0.0.0"
 DEFAULT_PORT: int = 3000
 DEFAULT_USE_RTSP_SERVER_ADDON: bool = False
 DEFAULT_RTSP_SERVER_PORT: int = 8554
 DEFAULT_SYNC_INTERVAL: int = 600  # seconds
-DEFAULT_FFMPEG_ANALYZE_DURATION: float = 1.2 # microseconds
+DEFAULT_FFMPEG_ANALYZE_DURATION: float = 1.2  # microseconds
 DEFAULT_CODEC: str = "h264"
 DEFAULT_AUTO_START_STREAM: bool = True
 DEFAULT_FIX_BINARY_SENSOR_STATE: bool = False
+DEFAULT_MAP_EXTRA_ALARM_MODES: bool = False
+DEFAULT_NAME_FOR_CUSTOM1: str = "Custom 1"
+DEFAULT_NAME_FOR_CUSTOM2: str = "Custom 2"
+DEFAULT_NAME_FOR_CUSTOM3: str = "Custom 3"
+
 
 P2P_LIVESTREAMING_STATUS = "p2pLiveStreamingStatus"
 RTSP_LIVESTREAMING_STATUS = "rtspLiveStreamingStatus"
 STREAMING_EVENT_NAMES = [RTSP_LIVESTREAMING_STATUS, P2P_LIVESTREAMING_STATUS]
 LATEST_CODEC = "latest codec"
-SET_API_SCHEMA = {"messageId": "set_api_schema", "command": "set_api_schema", "schemaVersion": 7}
+SET_API_SCHEMA = {
+    "messageId": "set_api_schema",
+    "command": "set_api_schema",
+    "schemaVersion": 7,
+}
 DRIVER_CONNECT_MESSAGE = {"messageId": "driver_connect", "command": "driver.connect"}
-SET_CAPTCHA_MESSAGE = {"messageId": "driver_set_captcha", "command": "driver.set_captcha", "captchaId": None, "captcha": None}
+SET_CAPTCHA_MESSAGE = {
+    "messageId": "driver_set_captcha",
+    "command": "driver.set_captcha",
+    "captchaId": None,
+    "captcha": None,
+}
 START_LISTENING_MESSAGE = {"messageId": "start_listening", "command": "start_listening"}
 POLL_REFRESH_MESSAGE = {"messageId": "poll_refresh", "command": "driver.poll_refresh"}
 GET_P2P_LIVESTREAM_STATUS_PLACEHOLDER = "get_p2p_livestream_status"
 GET_RTSP_LIVESTREAM_STATUS_PLACEHOLDER = "get_rtsp_livestream_status"
-GET_PROPERTIES_METADATA_MESSAGE = {"messageId": "get_properties_metadata", "command": "{0}.get_properties_metadata", "serialNumber": None}
-GET_PROPERTIES_MESSAGE = {"messageId": "get_properties", "command": "{0}.get_properties", "serialNumber": None}
-GET_RTSP_LIVESTREAM_STATUS_MESSAGE = {"messageId": "get_rtsp_livestream_status", "command": "device.is_rtsp_livestreaming", "serialNumber": None}
-GET_P2P_LIVESTREAM_STATUS_MESSAGE = {"messageId": "get_p2p_livestream_status", "command": "device.is_livestreaming", "serialNumber": None}
-SET_RTSP_STREAM_MESSAGE = {"messageId": "set_rtsp_stream_on", "command": "device.set_rtsp_stream", "serialNumber": None, "value": None}
-SET_RTSP_LIVESTREAM_MESSAGE = {"messageId": "start_rtsp_livestream", "command": "device.{state}_rtsp_livestream", "serialNumber": None}
-SET_P2P_LIVESTREAM_MESSAGE = {"messageId": "start_livesteam", "command": "device.{state}_livestream", "serialNumber": None}
-SET_DEVICE_STATE_MESSAGE = {"messageId": "enable_device", "command": "device.enable_device", "serialNumber": None, "value": None}
-SET_GUARD_MODE_MESSAGE = {"messageId": "set_guard_mode", "command": "station.set_guard_mode", "serialNumber": None, "mode": None}
-SET_PROPERTY_MESSAGE = {"messageId": "device_set_property", "command": "device.set_property", "serialNumber": None, "name": None, "value": None}
-STATION_TRIGGER_ALARM = {"messageId": "trigger_alarm", "command": "station.trigger_alarm", "serialNumber": None, "seconds": 10}
-STATION_RESET_ALARM = {"messageId": "reset_alarm", "command": "station.reset_alarm", "serialNumber": None}
-SET_LOCK_MESSAGE = {"messageId": "lock_device", "command": "device.lock_device", "serialNumber": None, "value": None}
+GET_PROPERTIES_METADATA_MESSAGE = {
+    "messageId": "get_properties_metadata",
+    "command": "{0}.get_properties_metadata",
+    "serialNumber": None,
+}
+GET_PROPERTIES_MESSAGE = {
+    "messageId": "get_properties",
+    "command": "{0}.get_properties",
+    "serialNumber": None,
+}
+GET_RTSP_LIVESTREAM_STATUS_MESSAGE = {
+    "messageId": "get_rtsp_livestream_status",
+    "command": "device.is_rtsp_livestreaming",
+    "serialNumber": None,
+}
+GET_P2P_LIVESTREAM_STATUS_MESSAGE = {
+    "messageId": "get_p2p_livestream_status",
+    "command": "device.is_livestreaming",
+    "serialNumber": None,
+}
+SET_RTSP_STREAM_MESSAGE = {
+    "messageId": "set_rtsp_stream_on",
+    "command": "device.set_rtsp_stream",
+    "serialNumber": None,
+    "value": None,
+}
+SET_RTSP_LIVESTREAM_MESSAGE = {
+    "messageId": "start_rtsp_livestream",
+    "command": "device.{state}_rtsp_livestream",
+    "serialNumber": None,
+}
+SET_P2P_LIVESTREAM_MESSAGE = {
+    "messageId": "start_livesteam",
+    "command": "device.{state}_livestream",
+    "serialNumber": None,
+}
+SET_DEVICE_STATE_MESSAGE = {
+    "messageId": "enable_device",
+    "command": "device.enable_device",
+    "serialNumber": None,
+    "value": None,
+}
+SET_GUARD_MODE_MESSAGE = {
+    "messageId": "set_guard_mode",
+    "command": "station.set_guard_mode",
+    "serialNumber": None,
+    "mode": None,
+}
+SET_PROPERTY_MESSAGE = {
+    "messageId": "device_set_property",
+    "command": "device.set_property",
+    "serialNumber": None,
+    "name": None,
+    "value": None,
+}
+STATION_TRIGGER_ALARM = {
+    "messageId": "trigger_alarm",
+    "command": "station.trigger_alarm",
+    "serialNumber": None,
+    "seconds": 10,
+}
+STATION_RESET_ALARM = {
+    "messageId": "reset_alarm",
+    "command": "station.reset_alarm",
+    "serialNumber": None,
+}
+SET_LOCK_MESSAGE = {
+    "messageId": "lock_device",
+    "command": "device.lock_device",
+    "serialNumber": None,
+    "value": None,
+}
 
 
 MESSAGE_IDS_TO_PROCESS = [
@@ -89,7 +157,7 @@ MESSAGE_IDS_TO_PROCESS = [
     GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"],
     GET_RTSP_LIVESTREAM_STATUS_MESSAGE["messageId"],
     DRIVER_CONNECT_MESSAGE["messageId"],
-    SET_CAPTCHA_MESSAGE["messageId"]
+    SET_CAPTCHA_MESSAGE["messageId"],
 ]
 MESSAGE_TYPES_TO_PROCESS = ["result", "event"]
 PROPERTY_CHANGED_PROPERTY_NAME = "event_property_name"
@@ -160,6 +228,8 @@ STATE_ALARM_CUSTOM2 = "custom2"
 STATE_ALARM_CUSTOM3 = "custom3"
 STATE_GUARD_SCHEDULE = "schedule"
 STATE_GUARD_GEO = "geo"
+STATE_GUARD_OFF = "off"
+
 
 class DEVICE_TYPE(Enum):
     STATION = 0
@@ -195,6 +265,7 @@ class DEVICE_TYPE(Enum):
     SOLO_CAMERA_SPOTLIGHT_1080 = 60
     SOLO_CAMERA_SPOTLIGHT_2K = 61
     SOLO_CAMERA_SPOTLIGHT_SOLAR = 62
+
 
 DEVICE_CATEGORY = {
     DEVICE_TYPE.STATION: "STATION",
@@ -232,27 +303,34 @@ DEVICE_CATEGORY = {
     DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_SOLAR: "CAMERA",
 }
 
-async def wait_for_value(ref_dict: dict, ref_key: str, value, max_counter: int=50, interval=0.25):
+
+async def wait_for_value(
+    ref_dict: dict, ref_key: str, value, max_counter: int = 50, interval=0.25
+):
     _LOGGER.debug(f"{DOMAIN} - wait start - {ref_key}")
     for counter in range(max_counter):
-        _LOGGER.debug(f"{DOMAIN} - wait - {counter} - {ref_key} {ref_dict.get(ref_key)}")
+        _LOGGER.debug(
+            f"{DOMAIN} - wait - {counter} - {ref_key} {ref_dict.get(ref_key)}"
+        )
         if ref_dict.get(ref_key, value) == value:
             await asyncio.sleep(interval)
         else:
             return True
     return False
 
+
 def get_child_value(data, key, default_value=None):
     value = data
     for x in key.split("."):
         try:
             value = value[x]
-        except:
+        except Exception as ex1:  # pylint: disable=broad-except
             try:
                 value = value[int(x)]
-            except:
+            except Exception as ex1:  # pylint: disable=broad-except
                 value = default_value
     return value
+
 
 class Device:
     def __init__(self, serial_number: str, state: dict) -> None:
@@ -317,7 +395,7 @@ class Device:
         else:
             self.is_rtsp_streaming = False
 
-        if not self.callback is None:
+        if self.callback is not None:
             self.callback()
 
     def set_codec(self, codec: str):
@@ -330,19 +408,47 @@ class Device:
     def set_streaming_status_callback(self, callback):
         self.callback = callback
 
+
 class EufyConfig:
     def __init__(self, config_entry: ConfigEntry) -> None:
         self.host: str = config_entry.data.get(CONF_HOST)
         self.port: int = config_entry.data.get(CONF_PORT)
-        self.sync_interval: int = config_entry.options.get(CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL)
-        self.use_rtsp_server_addon: bool = config_entry.options.get(CONF_USE_RTSP_SERVER_ADDON, DEFAULT_USE_RTSP_SERVER_ADDON)
-        self.rtsp_server_address: str = config_entry.options.get(CONF_RTSP_SERVER_ADDRESS, self.host)
-        self.rtsp_server_port: int = config_entry.options.get(CONF_RTSP_SERVER_PORT, DEFAULT_RTSP_SERVER_PORT)
-        self.ffmpeg_analyze_duration: int = config_entry.options.get(CONF_FFMPEG_ANALYZE_DURATION, DEFAULT_FFMPEG_ANALYZE_DURATION)
-        self.auto_start_stream: bool = config_entry.options.get(CONF_AUTO_START_STREAM, DEFAULT_AUTO_START_STREAM)
-        self.fix_binary_sensor_state: bool = config_entry.options.get(CONF_FIX_BINARY_SENSOR_STATE, DEFAULT_FIX_BINARY_SENSOR_STATE)
+        self.sync_interval: int = config_entry.options.get(
+            CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL
+        )
+        self.use_rtsp_server_addon: bool = config_entry.options.get(
+            CONF_USE_RTSP_SERVER_ADDON, DEFAULT_USE_RTSP_SERVER_ADDON
+        )
+        self.rtsp_server_address: str = config_entry.options.get(
+            CONF_RTSP_SERVER_ADDRESS, self.host
+        )
+        self.rtsp_server_port: int = config_entry.options.get(
+            CONF_RTSP_SERVER_PORT, DEFAULT_RTSP_SERVER_PORT
+        )
+        self.ffmpeg_analyze_duration: int = config_entry.options.get(
+            CONF_FFMPEG_ANALYZE_DURATION, DEFAULT_FFMPEG_ANALYZE_DURATION
+        )
+        self.auto_start_stream: bool = config_entry.options.get(
+            CONF_AUTO_START_STREAM, DEFAULT_AUTO_START_STREAM
+        )
+        self.fix_binary_sensor_state: bool = config_entry.options.get(
+            CONF_FIX_BINARY_SENSOR_STATE, DEFAULT_FIX_BINARY_SENSOR_STATE
+        )
+        self.map_extra_alarm_modes: bool = config_entry.options.get(
+            CONF_MAP_EXTRA_ALARM_MODES, DEFAULT_MAP_EXTRA_ALARM_MODES
+        )
+        self.name_for_custom1: str = config_entry.options.get(
+            CONF_NAME_FOR_CUSTOM1, DEFAULT_NAME_FOR_CUSTOM1
+        )
+        self.name_for_custom2: str = config_entry.options.get(
+            CONF_NAME_FOR_CUSTOM2, DEFAULT_NAME_FOR_CUSTOM2
+        )
+        self.name_for_custom3: str = config_entry.options.get(
+            CONF_NAME_FOR_CUSTOM3, DEFAULT_NAME_FOR_CUSTOM3
+        )
 
         _LOGGER.debug(f"{DOMAIN} - config class initialized")
+
 
 class CaptchaConfig:
     def __init__(self):

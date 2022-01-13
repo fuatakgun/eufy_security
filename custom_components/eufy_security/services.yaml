@@ -84,6 +84,12 @@ alarm_guard_geo:
   target:
     entity:
       domain: alarm_control_panel
+alarm_off:
+  name: Change Mode to Off
+  description: Change Mode to Off
+  target:
+    entity:
+      domain: alarm_control_panel
 alarm_arm_custom1:
   name: Change Mode to Custom 1
   description: Change Mode to Custom 1

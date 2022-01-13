@@ -1,24 +1,32 @@
 import logging
-from homeassistant.components.lock import LockEntity
 
-from homeassistant.core import HomeAssistant
+from homeassistant.components.lock import LockEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 
 from .const import COORDINATOR, DOMAIN, Device
-from .entity import EufySecurityEntity
 from .coordinator import EufySecurityDataUpdateCoordinator
-
+from .entity import EufySecurityEntity
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
+
+async def async_setup_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
+):
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     for device in coordinator.devices.values():
-        if device.is_lock() == True:
+        if device.is_lock() is True:
             async_add_devices([Lock(coordinator, config_entry, device)], True)
 
+
 class Lock(EufySecurityEntity, LockEntity):
-    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, config_entry: ConfigEntry, device: Device):
+    def __init__(
+        self,
+        coordinator: EufySecurityDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+        device: Device,
+    ):
         EufySecurityEntity.__init__(self, coordinator, config_entry, device)
         LockEntity.__init__(self)
 

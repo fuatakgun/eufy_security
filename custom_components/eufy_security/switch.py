@@ -1,24 +1,19 @@
 import logging
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.const import (
-    ENERGY_KILO_WATT_HOUR,
-    PERCENTAGE,
-    DEVICE_CLASS_BATTERY,
-    DEVICE_CLASS_SIGNAL_STRENGTH,
-)
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import COORDINATOR, DOMAIN, Device
-from. const import get_child_value
-from .entity import EufySecurityEntity
+from .const import COORDINATOR, DOMAIN, Device, get_child_value
 from .coordinator import EufySecurityDataUpdateCoordinator
+from .entity import EufySecurityEntity
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
+async def async_setup_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
+):
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     INSTRUMENTS = [
@@ -45,13 +40,34 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         instruments = INSTRUMENTS
         for id, description, key in instruments:
             if not get_child_value(device.state, key) is None:
-                entities.append(EufySwitchEntity(coordinator, config_entry, device, id, description, key, "False", "True"))
+                entities.append(
+                    EufySwitchEntity(
+                        coordinator,
+                        config_entry,
+                        device,
+                        id,
+                        description,
+                        key,
+                        "False",
+                        "True",
+                    )
+                )
 
     async_add_devices(entities, True)
 
 
 class EufySwitchEntity(EufySecurityEntity, SwitchEntity):
-    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, config_entry: ConfigEntry, device: Device, id: str, description: str, key: str, off_value: str, on_value: str):
+    def __init__(
+        self,
+        coordinator: EufySecurityDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+        device: Device,
+        id: str,
+        description: str,
+        key: str,
+        off_value: str,
+        on_value: str,
+    ):
         EufySecurityEntity.__init__(self, coordinator, config_entry, device)
         SwitchEntity.__init__(self)
         self._id = id
@@ -70,10 +86,14 @@ class EufySwitchEntity(EufySecurityEntity, SwitchEntity):
         return None
 
     async def async_turn_off(self):
-        await self.coordinator.async_set_property(self.device.serial_number, self.key, self.off_value)
+        await self.coordinator.async_set_property(
+            self.device.serial_number, self.key, self.off_value
+        )
 
     async def async_turn_on(self):
-        await self.coordinator.async_set_property(self.device.serial_number, self.key, self.on_value)
+        await self.coordinator.async_set_property(
+            self.device.serial_number, self.key, self.on_value
+        )
 
     @property
     def name(self):

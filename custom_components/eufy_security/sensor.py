@@ -1,36 +1,62 @@
 import logging
 
-from decimal import Decimal
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ENERGY_KILO_WATT_HOUR,
-    PERCENTAGE,
     DEVICE_CLASS_BATTERY,
     DEVICE_CLASS_SIGNAL_STRENGTH,
+    PERCENTAGE,
 )
 from homeassistant.core import HomeAssistant
 
-from .const import COORDINATOR, DOMAIN, Device
-from. const import get_child_value
-from .entity import EufySecurityEntity
+from .const import COORDINATOR, DOMAIN, Device, get_child_value
 from .coordinator import EufySecurityDataUpdateCoordinator
+from .entity import EufySecurityEntity
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
+async def async_setup_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
+):
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     INSTRUMENTS = [
         ("battery", "Battery", "state.battery", PERCENTAGE, None, DEVICE_CLASS_BATTERY),
-        ("wifiRSSI", "Wifi RSSI", "state.wifiRSSI", None, None, DEVICE_CLASS_SIGNAL_STRENGTH),
-        ("detected_person_name", "Detected Person Name", "state.personName", None, None, None),
+        (
+            "wifiRSSI",
+            "Wifi RSSI",
+            "state.wifiRSSI",
+            None,
+            None,
+            DEVICE_CLASS_SIGNAL_STRENGTH,
+        ),
+        (
+            "detected_person_name",
+            "Detected Person Name",
+            "state.personName",
+            None,
+            None,
+            None,
+        ),
     ]
 
     CAMERA_INSTRUMENTS = [
-        ("stream_source_type", "Streaming Source Type", "stream_source_type", None, None, None),
-        ("stream_source_address", "Streaming Source Address", "stream_source_address", None, None, None),
+        (
+            "stream_source_type",
+            "Streaming Source Type",
+            "stream_source_type",
+            None,
+            None,
+            None,
+        ),
+        (
+            "stream_source_address",
+            "Streaming Source Address",
+            "stream_source_address",
+            None,
+            None,
+            None,
+        ),
         ("codec", "Codec", "codec", None, None, None),
         ("stream_queue_size", "Stream Queue Size", "queue", None, None, None),
     ]
@@ -38,17 +64,40 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     entities = []
     for device in coordinator.devices.values():
         instruments = INSTRUMENTS
-        if device.is_camera() == True:
+        if device.is_camera() is True:
             instruments = instruments + CAMERA_INSTRUMENTS
         for id, description, key, unit, icon, device_class in instruments:
             if not get_child_value(device.__dict__, key) is None:
-                entities.append(EufySecuritySensor(coordinator, config_entry, device, id, description, key, unit, icon, device_class))
+                entities.append(
+                    EufySecuritySensor(
+                        coordinator,
+                        config_entry,
+                        device,
+                        id,
+                        description,
+                        key,
+                        unit,
+                        icon,
+                        device_class,
+                    )
+                )
 
     async_add_devices(entities, True)
 
 
 class EufySecuritySensor(EufySecurityEntity):
-    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, config_entry: ConfigEntry, device: Device, id: str, description: str, key: str, unit: str, icon: str, device_class: str):
+    def __init__(
+        self,
+        coordinator: EufySecurityDataUpdateCoordinator,
+        config_entry: ConfigEntry,
+        device: Device,
+        id: str,
+        description: str,
+        key: str,
+        unit: str,
+        icon: str,
+        device_class: str,
+    ):
         super().__init__(coordinator, config_entry, device)
         self._id = id
         self.description = description

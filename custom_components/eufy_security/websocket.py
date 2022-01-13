@@ -1,10 +1,9 @@
-import logging
-
 import asyncio
-import aiohttp
+import logging
 import traceback
-from typing import Any, Coroutine, Text
-from typing import Callable  # noqa pylint: disable=unused-import
+from typing import Any, Callable, Coroutine, Text
+
+import aiohttp
 
 from .const import DOMAIN
 
@@ -38,7 +37,9 @@ class EufySecurityWebSocket:
 
     async def connect(self):
         _LOGGER.debug(f"{DOMAIN} - set_ws - connect")
-        self.ws: aiohttp.ClientWebSocketResponse = (await self.session.ws_connect(self.base, autoclose=False, autoping=True, heartbeat=60))
+        self.ws: aiohttp.ClientWebSocketResponse = await self.session.ws_connect(
+            self.base, autoclose=False, autoping=True, heartbeat=60
+        )
         task = self.loop.create_task(self.process_messages())
         task.add_done_callback(self.on_close)
         await self.async_on_open()
@@ -54,7 +55,12 @@ class EufySecurityWebSocket:
             try:
                 await self.on_message(msg)
             except Exception as ex:  # pylint: disable=broad-except
-                _LOGGER.error(f"{DOMAIN} - Exception - process_messages: %s - traceback: %s - message: %s", ex, traceback.format_exc(), msg)
+                _LOGGER.error(
+                    f"{DOMAIN} - Exception - process_messages: %s - traceback: %s - message: %s",
+                    ex,
+                    traceback.format_exc(),
+                    msg,
+                )
 
     async def on_message(self, message):
         if self.message_callback is not None:
@@ -63,11 +69,15 @@ class EufySecurityWebSocket:
     def on_error(self, error: Text = "Unspecified") -> None:
         _LOGGER.debug(f"{DOMAIN} - WebSocket Error: %s", error)
         if self.error_callback is not None:
-            asyncio.run_coroutine_threadsafe(self.error_callback(error), self.loop).result()
+            asyncio.run_coroutine_threadsafe(
+                self.error_callback(error), self.loop
+            ).result()
 
     def on_close(self, future="") -> None:
         _LOGGER.debug(f"{DOMAIN} - WebSocket Connection Closed. %s", future)
-        _LOGGER.debug(f"{DOMAIN} - WebSocket Connection Closed. %s", self.close_callback)
+        _LOGGER.debug(
+            f"{DOMAIN} - WebSocket Connection Closed. %s", self.close_callback
+        )
         if self.close_callback is not None:
             self.ws = None
             asyncio.run_coroutine_threadsafe(self.close_callback(), self.loop)

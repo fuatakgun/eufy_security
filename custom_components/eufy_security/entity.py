@@ -1,19 +1,21 @@
 import logging
-from homeassistant.config_entries import ConfigEntry
 
-from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, NAME, VERSION, Device
-from .const import CONF_FFMPEG_ANALYZE_DURATION, CONF_HOST, CONF_RTSP_SERVER_ADDRESS, CONF_RTSP_SERVER_PORT, CONF_USE_RTSP_SERVER_ADDON
-from .const import DEFAULT_FFMPEG_ANALYZE_DURATION, DEFAULT_RTSP_SERVER_PORT, DEFAULT_USE_RTSP_SERVER_ADDON
+from .const import DOMAIN, NAME, Device
 from .coordinator import EufySecurityDataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 class EufySecurityEntity(CoordinatorEntity):
-    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, entry: ConfigEntry, device: Device):
+    def __init__(
+        self,
+        coordinator: EufySecurityDataUpdateCoordinator,
+        entry: ConfigEntry,
+        device: Device,
+    ):
         super().__init__(coordinator)
         self.entry: ConfigEntry = entry
         self.device: Device = device

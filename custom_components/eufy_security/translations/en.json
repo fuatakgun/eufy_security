@@ -35,7 +35,11 @@
           "rtsp_server_port": "TCP Port for RTSP Add On (P2P)",
           "ffmpeg_analyze_duration": "Video Analzyze Duration in seconds [1 to 5] (P2P)",
           "auto_start_stream": "Auto Start Stream on Click",
-          "fix_binary_sensor_state": "Fix Binary Sensor States (True/False to On/Off)"
+          "fix_binary_sensor_state": "Fix Binary Sensor States (True/False to On/Off)",
+          "map_extra_alarm_modes": "Map Custom Guard Modes into Bypass, Night and Vacation (in order)",
+          "name_for_custom1": "Override Name for Custom1 Guard Mode",
+          "name_for_custom2": "Override Name for Custom2 Guard Mode",
+          "name_for_custom3": "Override Name for Custom3 Guard Mode"
         }
       }
     }
