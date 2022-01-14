@@ -391,9 +391,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             target_dict = self.stations
         try:
             device: Device = target_dict[serial_number]
-            device.state[property_name] = value
-            if property_name in STREAMING_EVENT_NAMES:
-                device.set_streaming_status()
+            device.set_property(property_name, value)
         except Exception as ex:
             _LOGGER.error(
                 f"{DOMAIN} - Event received but device is missing, maybe not connected"

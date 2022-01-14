@@ -57,6 +57,8 @@ async def async_setup_entry(
         ("microphone", "Microphone", "microphone", EntityCategory.CONFIG),
         ("speaker", "Speaker", "speaker", EntityCategory.CONFIG),
         ("audio_recording", "Audio Recording", "audioRecording", EntityCategory.CONFIG),
+        ("audio_recording", "Audio Recording", "audioRecording", EntityCategory.CONFIG),
+        ("sound_detection", "Sound Detection", "soundDetection", EntityCategory.CONFIG),
         ("light", "Light", "light", EntityCategory.CONFIG),
         ("rtsp_stream", "RTSP Stream", "rtspStream", EntityCategory.CONFIG),
     ]

@@ -382,6 +382,8 @@ class Device:
 
         self.callback = None
 
+        self.set_global_motion_sensor()
+
     def set_properties(self, properties: dict):
         self.properties = properties
         self.type_raw = get_child_value(self.properties, "type.value")
@@ -435,6 +437,26 @@ class Device:
 
     def set_streaming_status_callback(self, callback):
         self.callback = callback
+
+    def set_property(self, property_name, value):
+        self.state[property_name] = value
+        self.set_global_motion_sensor()
+        if property_name in STREAMING_EVENT_NAMES:
+            self.set_streaming_status()
+
+    def set_global_motion_sensor(self):
+        motion_detected = get_child_value(self.state, "motionDetected")
+        if motion_detected is None:
+            motion_detected = False
+        person_detected = get_child_value(self.state, "motionDetected")
+        if person_detected is None:
+            person_detected = False
+        pet_detected = get_child_value(self.state, "petDetected")
+        if pet_detected is None:
+            pet_detected = False
+        self.state["global_motion_sensor"] = (
+            motion_detected or person_detected or pet_detected
+        )
 
 
 class EufyConfig:
