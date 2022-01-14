@@ -212,14 +212,6 @@ async def async_setup_entry(
             EntityCategory.DIAGNOSTIC,
         ),
         (
-            "charging",
-            "Charging Status",
-            "state.chargingStatus",
-            None,
-            DEVICE_CLASS_BATTERY_CHARGING,
-            EntityCategory.DIAGNOSTIC,
-        ),
-        (
             "enabled",
             "Enabled",
             "state.enabled",
@@ -297,11 +289,6 @@ class EufySecurityBinarySensor(EufySecurityEntity):
     @property
     def is_on(self):
         value = get_child_value(self.device.__dict__, self.key)
-        if self._id == "charging_status":
-            if value == "1":
-                value = True
-            else:
-                value = False
         return bool(value)
 
     @property

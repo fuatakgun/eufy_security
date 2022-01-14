@@ -44,6 +44,7 @@ async def async_setup_entry(
             EntityCategory.CONFIG,
         ),
         ("rotation_speed", "Rotation Speed", "rotationSpeed", EntityCategory.CONFIG),
+        ("charging_status", "Charging Status", "chargingStatus", EntityCategory.CONFIG),
     ]
 
     entities = []
