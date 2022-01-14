@@ -322,6 +322,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         _LOGGER.debug(
             f"{DOMAIN} {self.name} - set_is_streaming - end - {self.device.is_rtsp_streaming} - {self.device.is_p2p_streaming} - {self.device.is_streaming}"
         )
+        
 
     async def initiate_turn_on(self):
         await self.coordinator.hass.async_add_executor_job(self.turn_on)
@@ -381,7 +382,6 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
                             f"{DOMAIN} {self.name} - camera_image -{current_picture_url} - {len(self.picture_bytes)}"
                         )
         return self.picture_bytes
-        
 
     def turn_on(self) -> None:
         asyncio.run_coroutine_threadsafe(
