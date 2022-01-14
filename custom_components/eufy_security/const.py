@@ -448,7 +448,7 @@ class Device:
         motion_detected = get_child_value(self.state, "motionDetected")
         if motion_detected is None:
             motion_detected = False
-        person_detected = get_child_value(self.state, "motionDetected")
+        person_detected = get_child_value(self.state, "personDetected")
         if person_detected is None:
             person_detected = False
         pet_detected = get_child_value(self.state, "petDetected")
