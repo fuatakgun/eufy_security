@@ -45,6 +45,12 @@ async def async_setup_entry(
         ),
         ("rotation_speed", "Rotation Speed", "rotationSpeed", EntityCategory.CONFIG),
         ("charging_status", "Charging Status", "chargingStatus", EntityCategory.CONFIG),
+        (
+            "chime_volume",
+            "Chime Volume",
+            "chimeHomebaseRingtoneVolume",
+            EntityCategory.CONFIG,
+        ),
     ]
 
     entities = []
@@ -83,11 +89,17 @@ class EufySelectEntity(EufySecurityEntity, SelectEntity):
         self._id = id
         self.description = description
         self.key = key
-        self.states = get_child_value(self.device.properties_metadata, self.key)
+        self.metadata = get_child_value(self.device.properties_metadata, self.key)
         _LOGGER.debug(
-            f"{DOMAIN} - {self.device.name} - {self.id} - select init - {self.states}"
+            f"{DOMAIN} - {self.device.name} - {self.id} - select init - {self.metadata}"
         )
-        self.values_to_states = self.states.get("states", {})
+        self.states = self.metadata.get("states", {})
+        if len(self.states) == 0:
+            min_value = self.metadata.get("min", 0)
+            max_value = self.metadata.get("max", 0)
+            self.states = {str(i): str(i) for i in range(min_value, max_value)}
+
+        self.values_to_states = self.states
         self.states_to_values = {v: k for k, v in self.values_to_states.items()}
         self._attr_options: list[str] = list(self.values_to_states.values())
         self._attr_entity_category = entity_category
@@ -98,9 +110,10 @@ class EufySelectEntity(EufySecurityEntity, SelectEntity):
 
         current_value = str(get_child_value(self.device.state, self.key))
         current_option = self.values_to_states.get(current_value, None)
-        _LOGGER.debug(
-            f"{DOMAIN} - {self.device.name} - {self.id} - select init missing value error - value: {current_value} - values_to_states: {self.values_to_states} - states_to_values: {self.states_to_values}"
-        )
+        if current_option is None:
+            _LOGGER.error(
+                f"{DOMAIN} - {self.device.name} - {self.id} - select init missing value error - value: {current_value} - values_to_states: {self.values_to_states} - states_to_values: {self.states_to_values}"
+            )
 
     async def async_select_option(self, option: str):
         await self.coordinator.async_set_property(
