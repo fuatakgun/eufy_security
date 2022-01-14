@@ -152,6 +152,17 @@ STATION_RESET_ALARM = {
     "command": "station.reset_alarm",
     "serialNumber": None,
 }
+CAMERA_TRIGGER_ALARM = {
+    "messageId": "trigger_alarm",
+    "command": "device.trigger_alarm",
+    "serialNumber": None,
+    "seconds": 10,
+}
+CAMERA_RESET_ALARM = {
+    "messageId": "reset_alarm",
+    "command": "device.reset_alarm",
+    "serialNumber": None,
+}
 SET_LOCK_MESSAGE = {
     "messageId": "lock_device",
     "command": "device.lock_device",

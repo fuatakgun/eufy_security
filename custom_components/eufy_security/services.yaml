@@ -18,102 +18,119 @@ start_p2p_livestream:
   target:
     entity:
       domain: camera
+      integration: eufy_security
 start_livestream:
   name: Start Live Stream over P2P - to be deprecated!!!
   description: Send start live stream command to camera - to be deprecated!!!
   target:
     entity:
       domain: camera
+      integration: eufy_security
 stop_p2p_livestream:
   name: Stop Live Stream over P2P
   description: Send stop live stream command to camera
   target:
     entity:
       domain: camera
+      integration: eufy_security
 stop_livestream:
   name: Stop Live Stream over P2P - to be deprecated!!!
   description: Send stop live stream command to camera - to be deprecated!!!
   target:
     entity:
       domain: camera
+      integration: eufy_security
 start_rtsp_livestream:
   name: Start Live Stream over RTSP
   description: Send start live stream command to camera
   target:
     entity:
       domain: camera
+      integration: eufy_security
 stop_rtsp_livestream:
   name: Stop Live Stream over RTSP
   description: Send stop live stream command to camera
   target:
     entity:
       domain: camera
+      integration: eufy_security
 enable_rtsp:
   name: Enable RTSP Configuration (not real stream)
   description: Enable RTSP Configuration
   target:
     entity:
       domain: camera
+      integration: eufy_security
 disable_rtsp:
   name: Disable RTSP Configuration (not real stream)
   description: Disable RTSP Configuration
   target:
     entity:
       domain: camera
+      integration: eufy_security
 enable:
   name: Enable
   description: Enable a device or station
   target:
     entity:
       domain: camera
+      integration: eufy_security
 disable:
   name: Disable
   description: Disable a device or station
   target:
     entity:
       domain: camera
+      integration: eufy_security
 alarm_guard_schedule:
   name: Change Mode to Schedule
   description: Change Mode to Schedule
   target:
     entity:
       domain: alarm_control_panel
+      integration: eufy_security
 alarm_guard_geo:
   name: Change Mode to Geo-Fencing
   description: Change Mode to Geo-Fencing
   target:
     entity:
       domain: alarm_control_panel
+      integration: eufy_security
 alarm_off:
   name: Change Mode to Off
   description: Change Mode to Off
   target:
     entity:
       domain: alarm_control_panel
+      integration: eufy_security
 alarm_arm_custom1:
   name: Change Mode to Custom 1
   description: Change Mode to Custom 1
   target:
     entity:
       domain: alarm_control_panel
+      integration: eufy_security
 alarm_arm_custom2:
   name: Change Mode to Custom 2
   description: Change Mode to Custom 2
   target:
     entity:
       domain: alarm_control_panel
+      integration: eufy_security
 alarm_arm_custom3:
   name: Change Mode to Custom 3
   description: Change Mode to Custom 3
   target:
     entity:
       domain: alarm_control_panel
+      integration: eufy_security
 alarm_trigger_with_duration:
   name: Trigger Alarm for a given duration (seconds)
-  description: Trigger Alarm for a given duration (seconds
+  description: Trigger Alarm for a given duration (seconds)
   target:
     entity:
       domain: alarm_control_panel
+      integration: eufy_security
   fields:
     duration:
       name: Duration
@@ -127,3 +144,25 @@ reset_alarm:
   target:
     entity:
       domain: alarm_control_panel
+      integration: eufy_security
+alarm_trigger_for_camera_with_duration:
+  name: Trigger Camera Alarm for a given duration (seconds)
+  description: Trigger Camera Alarm for a given duration (seconds)
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+  fields:
+    duration:
+      name: Duration
+      description: Duration (in seconds)
+      required: true
+      example: 10
+      default: 10
+reset_alarm_for_camera:
+  name: Reset Alarm for Camera
+  description: Enable
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security

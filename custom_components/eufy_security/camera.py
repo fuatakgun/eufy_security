@@ -6,6 +6,7 @@ import traceback
 
 from haffmpeg.camera import CameraMjpeg
 from haffmpeg.tools import ImageFrame
+import voluptuous as vol
 
 from homeassistant.components.camera import SUPPORT_ON_OFF, SUPPORT_STREAM, Camera
 from homeassistant.components.ffmpeg import DATA_FFMPEG
@@ -13,6 +14,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.event import async_call_later
 
 from .const import COORDINATOR, DEFAULT_CODEC, DOMAIN, NAME, Device, wait_for_value
@@ -61,6 +64,9 @@ FFMPEG_OPTIONS = (
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
+ALARM_TRIGGER_SCHEMA = make_entity_service_schema({vol.Required("duration"): cv.Number})
+
+
 async def async_setup_entry(
     hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
 ):
@@ -101,6 +107,14 @@ async def async_setup_entry(
     platform.async_register_entity_service("disable_rtsp", {}, "async_disable_rtsp")
     platform.async_register_entity_service("enable", {}, "async_enable")
     platform.async_register_entity_service("disable", {}, "async_disable")
+    platform.async_register_entity_service(
+        "alarm_trigger_for_camera_with_duration",
+        ALARM_TRIGGER_SCHEMA,
+        "async_alarm_trigger_with_duration",
+    )
+    platform.async_register_entity_service(
+        "reset_alarm_for_camera", {}, "async_reset_alarm"
+    )
 
 
 class EufySecurityCamera(EufySecurityEntity, Camera):
@@ -109,9 +123,9 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         coordinator: EufySecurityDataUpdateCoordinator,
         config_entry: ConfigEntry,
         device: Device,
-    ):
-        EufySecurityEntity.__init__(self, coordinator, config_entry, device)
+    ) -> None:
         Camera.__init__(self)
+        EufySecurityEntity.__init__(self, coordinator, config_entry, device)
 
         self.device.set_streaming_status_callback(self.set_is_streaming)
 
@@ -322,7 +336,6 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         _LOGGER.debug(
             f"{DOMAIN} {self.name} - set_is_streaming - end - {self.device.is_rtsp_streaming} - {self.device.is_p2p_streaming} - {self.device.is_streaming}"
         )
-        
 
     async def initiate_turn_on(self):
         await self.coordinator.hass.async_add_executor_job(self.turn_on)
@@ -460,10 +473,19 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
             self.device.serial_number
         )
 
-    async def async_get_p2p_livestream_status(self) -> None:
-        await self.coordinator.async_get_p2p_livestream_status(
-            self.device.serial_number
-        )
+    def async_reset_alarm(self) -> None:
+        asyncio.run_coroutine_threadsafe(
+            self.coordinator.async_reset_camera_alarm(self.device.serial_number),
+            self.coordinator.hass.loop,
+        ).result()
+
+    def async_alarm_trigger_with_duration(self, duration: int = 10) -> None:
+        asyncio.run_coroutine_threadsafe(
+            self.coordinator.async_trigger_camera_alarm(
+                self.device.serial_number, duration
+            ),
+            self.coordinator.hass.loop,
+        ).result()
 
     @property
     def id(self):

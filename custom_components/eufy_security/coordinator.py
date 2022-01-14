@@ -12,15 +12,17 @@ from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    CAMERA_RESET_ALARM,
+    CAMERA_TRIGGER_ALARM,
     DOMAIN,
     DRIVER_CONNECT_MESSAGE,
     EVENT_CONFIGURATION,
-    GET_P2P_LIVESTREAM_STATUS_MESSAGE,
     GET_DEVICE_PROPERTIES_MESSAGE,
     GET_DEVICE_PROPERTIES_METADATA_MESSAGE,
+    GET_P2P_LIVESTREAM_STATUS_MESSAGE,
+    GET_RTSP_LIVESTREAM_STATUS_MESSAGE,
     GET_STATION_PROPERTIES_MESSAGE,
     GET_STATION_PROPERTIES_METADATA_MESSAGE,
-    GET_RTSP_LIVESTREAM_STATUS_MESSAGE,
     MESSAGE_IDS_TO_PROCESS,
     MESSAGE_TYPES_TO_PROCESS,
     P2P_LIVESTREAM_STARTED,
@@ -482,6 +484,17 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_reset_alarm(self, serial_no: str):
         message = STATION_RESET_ALARM.copy()
+        message["serialNumber"] = serial_no
+        await self.async_send_message(json.dumps(message))
+
+    async def async_trigger_camera_alarm(self, serial_no: str, duration: int = 10):
+        message = CAMERA_TRIGGER_ALARM.copy()
+        message["serialNumber"] = serial_no
+        message["seconds"] = duration
+        await self.async_send_message(json.dumps(message))
+
+    async def async_reset_camera_alarm(self, serial_no: str):
+        message = CAMERA_RESET_ALARM.copy()
         message["serialNumber"] = serial_no
         await self.async_send_message(json.dumps(message))
 
