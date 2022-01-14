@@ -76,14 +76,24 @@ START_LISTENING_MESSAGE = {"messageId": "start_listening", "command": "start_lis
 POLL_REFRESH_MESSAGE = {"messageId": "poll_refresh", "command": "driver.poll_refresh"}
 GET_P2P_LIVESTREAM_STATUS_PLACEHOLDER = "get_p2p_livestream_status"
 GET_RTSP_LIVESTREAM_STATUS_PLACEHOLDER = "get_rtsp_livestream_status"
-GET_PROPERTIES_METADATA_MESSAGE = {
-    "messageId": "get_properties_metadata",
-    "command": "{0}.get_properties_metadata",
+GET_DEVICE_PROPERTIES_METADATA_MESSAGE = {
+    "messageId": "get_device_properties_metadata",
+    "command": "device.get_properties_metadata",
     "serialNumber": None,
 }
-GET_PROPERTIES_MESSAGE = {
-    "messageId": "get_properties",
-    "command": "{0}.get_properties",
+GET_DEVICE_PROPERTIES_MESSAGE = {
+    "messageId": "get_device_properties",
+    "command": "device.get_properties",
+    "serialNumber": None,
+}
+GET_STATION_PROPERTIES_METADATA_MESSAGE = {
+    "messageId": "get_station_properties_metadata",
+    "command": "station.get_properties_metadata",
+    "serialNumber": None,
+}
+GET_STATION_PROPERTIES_MESSAGE = {
+    "messageId": "get_station_properties",
+    "command": "station.get_properties",
     "serialNumber": None,
 }
 GET_RTSP_LIVESTREAM_STATUS_MESSAGE = {
@@ -152,8 +162,10 @@ SET_LOCK_MESSAGE = {
 
 MESSAGE_IDS_TO_PROCESS = [
     START_LISTENING_MESSAGE["messageId"],
-    GET_PROPERTIES_MESSAGE["messageId"],
-    GET_PROPERTIES_METADATA_MESSAGE["messageId"],
+    GET_DEVICE_PROPERTIES_MESSAGE["messageId"],
+    GET_DEVICE_PROPERTIES_METADATA_MESSAGE["messageId"],
+    GET_STATION_PROPERTIES_MESSAGE["messageId"],
+    GET_STATION_PROPERTIES_METADATA_MESSAGE["messageId"],
     GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"],
     GET_RTSP_LIVESTREAM_STATUS_MESSAGE["messageId"],
     DRIVER_CONNECT_MESSAGE["messageId"],
@@ -368,6 +380,11 @@ class Device:
 
     def set_properties_metadata(self, properties_metadata: dict):
         self.properties_metadata = properties_metadata
+
+    def is_base_station(self):
+        if self.category in ["STATION"]:
+            return True
+        return False
 
     def is_camera(self):
         if self.category in ["CAMERA", "DOORBELL"]:

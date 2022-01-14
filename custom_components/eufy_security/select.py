@@ -95,6 +95,12 @@ class EufySelectEntity(EufySecurityEntity, SelectEntity):
             f"{DOMAIN} - {self.device.name} - {self.id} - select init - {self.values_to_states} - {self.states_to_values}"
         )
 
+        current_value = str(get_child_value(self.device.state, self.key))
+        current_option = self.values_to_states.get(current_value, None)
+        _LOGGER.debug(
+            f"{DOMAIN} - {self.device.name} - {self.id} - select init missing value error - value: {current_value} - values_to_states: {self.values_to_states} - states_to_values: {self.states_to_values}"
+        )
+
     async def async_select_option(self, option: str):
         await self.coordinator.async_set_property(
             self.device.serial_number, self.key, self.states_to_values[option]
@@ -104,10 +110,6 @@ class EufySelectEntity(EufySecurityEntity, SelectEntity):
     def current_option(self) -> str:
         current_value = str(get_child_value(self.device.state, self.key))
         current_option = self.values_to_states.get(current_value, None)
-        if current_option is None:
-            _LOGGER.error(
-                f"{DOMAIN} - {self.device.name} - {self.id} - missing value - value: {current_value} - values_to_states: {self.values_to_states} - states_to_values: {self.states_to_values} - "
-            )
         return current_option
 
     @property

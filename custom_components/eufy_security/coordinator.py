@@ -16,8 +16,10 @@ from .const import (
     DRIVER_CONNECT_MESSAGE,
     EVENT_CONFIGURATION,
     GET_P2P_LIVESTREAM_STATUS_MESSAGE,
-    GET_PROPERTIES_MESSAGE,
-    GET_PROPERTIES_METADATA_MESSAGE,
+    GET_DEVICE_PROPERTIES_MESSAGE,
+    GET_DEVICE_PROPERTIES_METADATA_MESSAGE,
+    GET_STATION_PROPERTIES_MESSAGE,
+    GET_STATION_PROPERTIES_METADATA_MESSAGE,
     GET_RTSP_LIVESTREAM_STATUS_MESSAGE,
     MESSAGE_IDS_TO_PROCESS,
     MESSAGE_TYPES_TO_PROCESS,
@@ -181,6 +183,10 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             await self.async_get_properties_for_device(device.serial_number)
             await self.async_get_properties_metadata_for_device(device.serial_number)
 
+        for station in self.stations.values():
+            await self.async_get_properties_for_station(station.serial_number)
+            await self.async_get_properties_metadata_for_station(station.serial_number)
+
         _LOGGER.debug(f"{DOMAIN} - get_device_properties")
 
         for device in self.devices.values():
@@ -190,6 +196,17 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug(f"{DOMAIN} - get_device_properties_metadata - {device}")
             if (
                 await wait_for_value(device.__dict__, "properties_metadata", None)
+                is False
+            ):
+                return False
+
+        for station in self.stations.values():
+            _LOGGER.debug(f"{DOMAIN} - get_station_properties - {station}")
+            if await wait_for_value(station.__dict__, "properties", None) is False:
+                return False
+            _LOGGER.debug(f"{DOMAIN} - get_station_properties_metadata - {station}")
+            if (
+                await wait_for_value(station.__dict__, "properties_metadata", None)
                 is False
             ):
                 return False
@@ -221,20 +238,37 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         self.devices = self.data["devices"]
         self.stations = self.data["stations"]
 
-    async def process_get_properties_response(self, properties: dict):
-        device: Device = self.devices[get_child_value(properties, "serialNumber.value")]
+    async def process_get_device_properties_response(
+        self, serial_number, properties: dict
+    ):
+        device: Device = self.devices.get(serial_number, None)
         device.set_properties(properties)
         if device.is_camera() is True:
             await self.async_get_p2p_livestream_status(device.serial_number)
             await self.async_get_rtsp_livestream_status(device.serial_number)
 
-    async def process_get_properties_metadata_response(
+    async def process_get_device_properties_metadata_response(
         self, serial_number, properties_metadata: dict
     ):
         _LOGGER.debug(
             f"{DOMAIN} - process_get_properties_metadata_response - {serial_number} - {properties_metadata}"
         )
-        device: Device = self.devices[serial_number]
+        device: Device = self.devices.get(serial_number, None)
+        device.set_properties_metadata(properties_metadata)
+
+    async def process_get_station_properties_response(
+        self, serial_number, properties: dict
+    ):
+        device: Device = self.stations.get(serial_number, None)
+        device.set_properties(properties)
+
+    async def process_get_station_properties_metadata_response(
+        self, serial_number, properties_metadata: dict
+    ):
+        _LOGGER.debug(
+            f"{DOMAIN} - process_get_properties_metadata_response - {serial_number} - {properties_metadata}"
+        )
+        device: Device = self.stations.get(serial_number, None)
         device.set_properties_metadata(properties_metadata)
 
     async def on_message(self, message):
@@ -264,11 +298,23 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             if message_id == START_LISTENING_MESSAGE["messageId"]:
                 await self.process_start_listening_response(message["state"])
 
-            if message_id == GET_PROPERTIES_MESSAGE["messageId"]:
-                await self.process_get_properties_response(message["properties"])
+            if message_id == GET_DEVICE_PROPERTIES_MESSAGE["messageId"]:
+                await self.process_get_device_properties_response(
+                    message["serialNumber"], message["properties"]
+                )
 
-            if message_id == GET_PROPERTIES_METADATA_MESSAGE["messageId"]:
-                await self.process_get_properties_metadata_response(
+            if message_id == GET_DEVICE_PROPERTIES_METADATA_MESSAGE["messageId"]:
+                await self.process_get_device_properties_metadata_response(
+                    message["serialNumber"], message["properties"]
+                )
+
+            if message_id == GET_STATION_PROPERTIES_MESSAGE["messageId"]:
+                await self.process_get_station_properties_response(
+                    message["serialNumber"], message["properties"]
+                )
+
+            if message_id == GET_STATION_PROPERTIES_METADATA_MESSAGE["messageId"]:
+                await self.process_get_station_properties_metadata_response(
                     message["serialNumber"], message["properties"]
                 )
 
@@ -369,14 +415,22 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         await self.ws.send_message(message)
 
     async def async_get_properties_metadata_for_device(self, serial_no: str):
-        message = GET_PROPERTIES_METADATA_MESSAGE.copy()
-        message["command"] = message["command"].format("device")
+        message = GET_DEVICE_PROPERTIES_METADATA_MESSAGE.copy()
         message["serialNumber"] = serial_no
         await self.async_send_message(json.dumps(message))
 
     async def async_get_properties_for_device(self, serial_no: str):
-        message = GET_PROPERTIES_MESSAGE.copy()
-        message["command"] = message["command"].format("device")
+        message = GET_DEVICE_PROPERTIES_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        await self.async_send_message(json.dumps(message))
+
+    async def async_get_properties_metadata_for_station(self, serial_no: str):
+        message = GET_STATION_PROPERTIES_METADATA_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        await self.async_send_message(json.dumps(message))
+
+    async def async_get_properties_for_station(self, serial_no: str):
+        message = GET_STATION_PROPERTIES_MESSAGE.copy()
         message["serialNumber"] = serial_no
         await self.async_send_message(json.dumps(message))
 
