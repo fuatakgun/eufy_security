@@ -381,6 +381,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
                             f"{DOMAIN} {self.name} - camera_image -{current_picture_url} - {len(self.picture_bytes)}"
                         )
         return self.picture_bytes
+        
 
     def turn_on(self) -> None:
         asyncio.run_coroutine_threadsafe(
