@@ -30,7 +30,7 @@ async def async_setup_entry(
         (
             "global_motion_sensor",
             "Global Motion Sensor",
-            "state.motionDetected",
+            "state.global_motion_sensor",
             None,
             DEVICE_CLASS_MOTION,
             None,
