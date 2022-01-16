@@ -445,15 +445,9 @@ class Device:
             self.set_streaming_status()
 
     def set_global_motion_sensor(self):
-        motion_detected = get_child_value(self.state, "motionDetected")
-        if motion_detected is None:
-            motion_detected = False
-        person_detected = get_child_value(self.state, "personDetected")
-        if person_detected is None:
-            person_detected = False
-        pet_detected = get_child_value(self.state, "petDetected")
-        if pet_detected is None:
-            pet_detected = False
+        motion_detected = bool(get_child_value(self.state, "motionDetected"))
+        person_detected = bool(get_child_value(self.state, "personDetected"))
+        pet_detected = bool(get_child_value(self.state, "petDetected"))
         self.state["global_motion_sensor"] = (
             motion_detected or person_detected or pet_detected
         )
