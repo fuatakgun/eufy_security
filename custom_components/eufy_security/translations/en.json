@@ -6,7 +6,7 @@
         "description": "Enter ip address and port of Eufy Security Web Socket instance",
         "data": {
           "host": "Host IP Address (eg 192.168.178.22)",
-          "port": "Port (eg 3000)"
+          "port": "Port (eg 3001)"
         }
       },
       "reauth_confirm": {
