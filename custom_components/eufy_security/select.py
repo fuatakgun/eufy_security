@@ -97,7 +97,7 @@ class EufySelectEntity(EufySecurityEntity, SelectEntity):
         if len(self.states) == 0:
             min_value = self.metadata.get("min", 0)
             max_value = self.metadata.get("max", 0)
-            self.states = {str(i): str(i) for i in range(min_value, max_value)}
+            self.states = {str(i): str(i) for i in range(min_value, max_value+1)}
 
         self.values_to_states = self.states
         self.states_to_values = {v: k for k, v in self.values_to_states.items()}
