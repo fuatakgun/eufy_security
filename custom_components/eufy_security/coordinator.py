@@ -203,10 +203,8 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                 return False
 
         for station in self.stations.values():
-            _LOGGER.debug(f"{DOMAIN} - get_station_properties - {station}")
             if await wait_for_value(station.__dict__, "properties", None) is False:
                 return False
-            _LOGGER.debug(f"{DOMAIN} - get_station_properties_metadata - {station}")
             if (
                 await wait_for_value(station.__dict__, "properties_metadata", None)
                 is False
@@ -252,9 +250,6 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def process_get_device_properties_metadata_response(
         self, serial_number, properties_metadata: dict
     ):
-        _LOGGER.debug(
-            f"{DOMAIN} - process_get_properties_metadata_response - {serial_number} - {properties_metadata}"
-        )
         device: Device = self.devices.get(serial_number, None)
         device.set_properties_metadata(properties_metadata)
 
@@ -267,9 +262,6 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def process_get_station_properties_metadata_response(
         self, serial_number, properties_metadata: dict
     ):
-        _LOGGER.debug(
-            f"{DOMAIN} - process_get_properties_metadata_response - {serial_number} - {properties_metadata}"
-        )
         device: Device = self.stations.get(serial_number, None)
         device.set_properties_metadata(properties_metadata)
 

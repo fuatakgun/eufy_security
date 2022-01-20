@@ -9,6 +9,7 @@ from haffmpeg.tools import ImageFrame
 import voluptuous as vol
 
 from homeassistant.components.camera import SUPPORT_ON_OFF, SUPPORT_STREAM, Camera
+from homeassistant.components.camera.const import STREAM_TYPE_HLS
 from homeassistant.components.ffmpeg import DATA_FFMPEG
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -128,6 +129,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         EufySecurityEntity.__init__(self, coordinator, config_entry, device)
 
         self.device.set_streaming_status_callback(self.set_is_streaming)
+        self._attr_frontend_stream_type = STREAM_TYPE_HLS
 
         # camera image
         self.picture_bytes = None
@@ -336,6 +338,7 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
         _LOGGER.debug(
             f"{DOMAIN} {self.name} - set_is_streaming - end - {self.device.is_rtsp_streaming} - {self.device.is_p2p_streaming} - {self.device.is_streaming}"
         )
+        self._attr_is_streaming = self.device.is_streaming
 
     async def initiate_turn_on(self):
         await self.coordinator.hass.async_add_executor_job(self.turn_on)
