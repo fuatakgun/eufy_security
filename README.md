@@ -181,7 +181,6 @@ cards:
       tap_action:
         action: call-service
         service: camera.turn_on
-        service_data: {}
         target:
           entity_id: camera.front
   - type: conditional
@@ -200,7 +199,6 @@ cards:
           tap_action:
             action: call-service
             service: camera.turn_off
-            service_data: {}
             target:
               entity_id: camera.front
 columns: 1
