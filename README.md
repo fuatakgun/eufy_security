@@ -168,26 +168,42 @@ You can use WebRTC for light speed streaming inside Home Assistant.
 - When camera is streaming, you will get WebRTC card which has 1-2 seconds latency while streaming.
 
 ```
-- type: conditional
-  conditions:
-    - entity: binary_sensor.entrance_streaming_sensor
-      state: 'False'
-  card:
-    type: picture-entity
-    entity: camera.entrance_camera
-    tap_action:
-      action: call-service
-      service: camera.turn_on
-      service_data: {}
-      target:
-        entity_id: camera.entrance_camera
-- type: conditional
-  conditions:
-    - entity: binary_sensor.entrance_streaming_sensor
-      state: 'True'
-  card:
-    type: custom:webrtc-camera
-    entity: camera.entrance_camera
+type: grid
+square: false
+cards:
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.front_streaming_sensor
+        state: 'False'
+    card:
+      type: picture-entity
+      entity: camera.front
+      tap_action:
+        action: call-service
+        service: camera.turn_on
+        service_data: {}
+        target:
+          entity_id: camera.front
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.front_streaming_sensor
+        state: 'True'
+    card:
+      type: vertical-stack
+      cards:
+        - type: custom:webrtc-camera
+          entity: camera.front
+        - type: button
+          name: Stop Streaming
+          show_state: false
+          show_icon: false
+          tap_action:
+            action: call-service
+            service: camera.turn_off
+            service_data: {}
+            target:
+              entity_id: camera.front
+columns: 1
 ```
 
 RTSP Experience with WebRTC: https://drive.google.com/file/d/1qIYUx82C0CnpsTycP9dTS0NX6IEqeqHD/view?usp=drivesdk
