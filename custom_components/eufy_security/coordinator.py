@@ -164,6 +164,8 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug(
                 f"{DOMAIN} - connect - async_start_listening False - {self.config.__dict__}"
             )
+            # close down the websocket to fully retry the connection
+            await self.ws.ws.close()
             raise ConfigEntryNotReady(
                 "Start Listening was not completed in timely manner"
             )
@@ -181,6 +183,10 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         return await wait_for_value(self.__dict__, "devices", None)
 
     async def async_get_device_properties(self):
+        if self.devices is None:
+            _LOGGER.warn(f"{DOMAIN} - no devices available yet")
+            return False
+
         for device in self.devices.values():
             await self.async_get_properties_for_device(device.serial_number)
             await self.async_get_properties_metadata_for_device(device.serial_number)
