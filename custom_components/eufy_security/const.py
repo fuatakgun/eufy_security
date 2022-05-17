@@ -386,7 +386,7 @@ class Device:
 
     def set_properties(self, properties: dict):
         self.properties = properties
-        self.type_raw = get_child_value(self.properties, "type.value")
+        self.type_raw = get_child_value(self.properties, "type")
         type = DEVICE_TYPE(self.type_raw)
         self.type = str(type)
         self.category = DEVICE_CATEGORY.get(type, "UNKNOWN")
