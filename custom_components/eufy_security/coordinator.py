@@ -290,7 +290,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                 return
 
             if message_id == DRIVER_CONNECT_MESSAGE["messageId"]:
-                await self.process_driver_connect_response(message["connected"])
+                await self.process_driver_connect_response(message["result"])
 
             if message_id == SET_CAPTCHA_MESSAGE["messageId"]:
                 self.captcha_config.result = message["result"]
