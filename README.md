@@ -10,7 +10,7 @@ Under the hood, it is using `eufy-security-ws` (https://github.com/bropat/eufy-s
 - start_livesteam / start_p2p_livestream / stop_livestream / stop_p2p_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming for your HA instance.
 - turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
 - enable_rtsp / disable_rtsp: to enable RTSP option in cameras, you can use this services, but I rather prefer you to enable it using the mobile app because enabling rtsp configuration also triggers a new stream to start which causes issues for integration.
-- enable / disable: enable and disable respective device
+- enable / disable: enable and disable respective device.
 
 ## 1.2 Station Services ##
 ![image](https://user-images.githubusercontent.com/11085566/127906780-ba18d5a0-03c3-407a-922a-dc519e59dfe8.png)
