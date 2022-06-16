@@ -86,6 +86,11 @@ GET_DEVICE_PROPERTIES_MESSAGE = {
     "command": "device.get_properties",
     "serialNumber": None,
 }
+GET_DEVICE_VOICES_MESSAGE = {
+    "messageId": "get_voices",
+    "command": "device.get_voices",
+    "serialNumber": None,
+}
 GET_STATION_PROPERTIES_METADATA_MESSAGE = {
     "messageId": "get_station_properties_metadata",
     "command": "station.get_properties_metadata",
@@ -105,6 +110,13 @@ GET_P2P_LIVESTREAM_STATUS_MESSAGE = {
     "messageId": "get_p2p_livestream_status",
     "command": "device.is_livestreaming",
     "serialNumber": None,
+}
+QUICK_RESPONSE_MESSAGE = {
+    "messageId": "quick_response",
+    "command": "device.quick_response",
+    "serialNumber": None,
+    "voiceId": None,
+    "value": True,
 }
 SET_RTSP_STREAM_MESSAGE = {
     "messageId": "set_rtsp_stream_on",
@@ -175,6 +187,7 @@ MESSAGE_IDS_TO_PROCESS = [
     START_LISTENING_MESSAGE["messageId"],
     GET_DEVICE_PROPERTIES_MESSAGE["messageId"],
     GET_DEVICE_PROPERTIES_METADATA_MESSAGE["messageId"],
+    GET_DEVICE_VOICES_MESSAGE["messageId"],
     GET_STATION_PROPERTIES_MESSAGE["messageId"],
     GET_STATION_PROPERTIES_METADATA_MESSAGE["messageId"],
     GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"],
@@ -366,6 +379,7 @@ class Device:
 
         self.properties: dict = None
         self.properties_metadata: dict = None
+        self.voices: dict = None
         self.type_raw: str = None
         self.type: str = None
         self.category: str = None
@@ -394,6 +408,9 @@ class Device:
     def set_properties_metadata(self, properties_metadata: dict):
         self.properties_metadata = properties_metadata
 
+    def set_voices(self, voices):
+        self.voices = voices
+
     def is_base_station(self):
         if self.category in ["STATION"]:
             return True
@@ -401,6 +418,11 @@ class Device:
 
     def is_camera(self):
         if self.category in ["CAMERA", "DOORBELL"]:
+            return True
+        return False
+
+    def is_doorbell(self):
+        if self.category in ["DOORBELL"]:
             return True
         return False
 
