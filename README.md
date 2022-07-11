@@ -163,7 +163,7 @@ You can use WebRTC for light speed streaming inside Home Assistant.
 
 ![image](https://user-images.githubusercontent.com/11085566/136706616-7ba09fec-f75b-4010-b58e-bf0f8f2d47da.png)
 
-3- Setup two conditional cards for each camera as below, do not forget to put correct camera entity names (replace `front` with your camera name)
+3- Setup two conditional cards for each camera as below, do not forget to put correct camera entity names (replace `front` with your camera name). If your camera name is "living_room", change: `binary_sensor.front_streaming_sensor` to `binary_sensor.living_room_streaming_sensor`, `camera.front` to `camera.living_room`
 - So, when camera is not streaming, you will get latest captured image and when you click on image, it will start streaming (camera.turn_on service call).
 - When camera is streaming, you will get WebRTC card which has 1-2 seconds latency while streaming.
 
