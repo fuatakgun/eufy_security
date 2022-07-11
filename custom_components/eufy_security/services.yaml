@@ -6,6 +6,8 @@ send_message:
       name: Message
       description: Raw message in JSON format
       required: true
+      selector:
+        text:
 force_sync:
   name: Force Sync
   description: Pull latest data from cloud and update internal state
@@ -138,6 +140,12 @@ alarm_trigger_with_duration:
       required: true
       example: 10
       default: 10
+      selector:
+        number:
+          min: 1
+          max: 2147483648
+          step: 1
+          unit_of_measurement: seconds
 reset_alarm:
   name: Reset Alarm for Panel
   description: Enable
@@ -159,6 +167,12 @@ alarm_trigger_for_camera_with_duration:
       required: true
       example: 10
       default: 10
+      selector:
+        number:
+          min: 1
+          max: 2147483648
+          step: 1
+          unit_of_measurement: seconds
 reset_alarm_for_camera:
   name: Reset Alarm for Camera
   description: Enable
@@ -166,3 +180,22 @@ reset_alarm_for_camera:
     entity:
       domain: camera
       integration: eufy_security
+quick_response:
+  name: Quick Response
+  description: Play Quick Response
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+  fields:
+    voice_id:
+      name: Voice ID
+      description: Quick Response Voice ID
+      required: true
+      example: 3
+      selector:
+        number:
+          min: 1
+          max: 2147483648
+          step: 1
+          mode: box

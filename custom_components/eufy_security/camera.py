@@ -13,6 +13,7 @@ from homeassistant.components.camera.const import STREAM_TYPE_HLS
 from homeassistant.components.ffmpeg import DATA_FFMPEG
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
@@ -68,6 +69,11 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 ALARM_TRIGGER_SCHEMA = make_entity_service_schema({vol.Required("duration"): cv.Number})
 
 
+QUICK_RESPONSE_SCHEMA = make_entity_service_schema(
+    {vol.Required("voice_id"): cv.Number}
+)
+
+
 async def async_setup_entry(
     hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
 ):
@@ -115,6 +121,9 @@ async def async_setup_entry(
     )
     platform.async_register_entity_service(
         "reset_alarm_for_camera", {}, "async_reset_alarm"
+    )
+    platform.async_register_entity_service(
+        "quick_response", QUICK_RESPONSE_SCHEMA, "async_quick_response"
     )
 
 
@@ -476,6 +485,16 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
             self.device.serial_number
         )
 
+    async def async_quick_response(self, voice_id) -> None:
+        if self.device.is_doorbell() is False:
+            _LOGGER.warn(
+                f"{DOMAIN} {self.name} - quick_response is only supported for doorbells"
+            )
+            raise HomeAssistantError(
+                f"{self.name} - quick_response is only supported for doorbells"
+            )
+        await self.coordinator.async_quick_response(self.device.serial_number, voice_id)
+
     def async_reset_alarm(self) -> None:
         asyncio.run_coroutine_threadsafe(
             self.coordinator.async_reset_camera_alarm(self.device.serial_number),
@@ -520,16 +539,19 @@ class EufySecurityCamera(EufySecurityEntity, Camera):
 
     @property
     def state_attributes(self):
+        custom_attributes = {
+            "is_streaming": self.device.is_streaming,
+            "stream_source_type": self.device.stream_source_type,
+            "stream_source_address": self.device.stream_source_address,
+            "codec": self.device.codec,
+            "is_rtsp_streaming": self.device.is_rtsp_streaming,
+            "is_p2p_streaming": self.device.is_p2p_streaming,
+        }
+        if self.device.voices:
+            custom_attributes["voices"] = self.device.voices
         return {
             "inherited": super().state_attributes,
-            "custom": {
-                "is_streaming": self.device.is_streaming,
-                "stream_source_type": self.device.stream_source_type,
-                "stream_source_address": self.device.stream_source_address,
-                "codec": self.device.codec,
-                "is_rtsp_streaming": self.device.is_rtsp_streaming,
-                "is_p2p_streaming": self.device.is_p2p_streaming,
-            },
+            "custom": custom_attributes,
         }
 
     @property

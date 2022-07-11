@@ -19,6 +19,7 @@ from .const import (
     EVENT_CONFIGURATION,
     GET_DEVICE_PROPERTIES_MESSAGE,
     GET_DEVICE_PROPERTIES_METADATA_MESSAGE,
+    GET_DEVICE_VOICES_MESSAGE,
     GET_P2P_LIVESTREAM_STATUS_MESSAGE,
     GET_RTSP_LIVESTREAM_STATUS_MESSAGE,
     GET_STATION_PROPERTIES_MESSAGE,
@@ -30,6 +31,7 @@ from .const import (
     POLL_REFRESH_MESSAGE,
     RTSP_LIVESTREAM_STARTED,
     RTSP_LIVESTREAMING_STATUS,
+    QUICK_RESPONSE_MESSAGE,
     SET_API_SCHEMA,
     SET_CAPTCHA_MESSAGE,
     SET_DEVICE_STATE_MESSAGE,
@@ -190,6 +192,8 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         for device in self.devices.values():
             await self.async_get_properties_for_device(device.serial_number)
             await self.async_get_properties_metadata_for_device(device.serial_number)
+            if device.is_doorbell() is True:
+                await self.async_get_device_voices(device.serial_number)
 
         for station in self.stations.values():
             await self.async_get_properties_for_station(station.serial_number)
@@ -259,6 +263,10 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         device: Device = self.devices.get(serial_number, None)
         device.set_properties_metadata(properties_metadata)
 
+    async def process_get_device_voices_response(self, serial_number, voices: dict):
+        device: Device = self.devices.get(serial_number, None)
+        device.set_voices(voices)
+
     async def process_get_station_properties_response(
         self, serial_number, properties: dict
     ):
@@ -306,6 +314,11 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             if message_id == GET_DEVICE_PROPERTIES_METADATA_MESSAGE["messageId"]:
                 await self.process_get_device_properties_metadata_response(
                     message["serialNumber"], message["properties"]
+                )
+
+            if message_id == GET_DEVICE_VOICES_MESSAGE["messageId"]:
+                await self.process_get_device_voices_response(
+                    message["serialNumber"], message["voices"]
                 )
 
             if message_id == GET_STATION_PROPERTIES_MESSAGE["messageId"]:
@@ -422,6 +435,11 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         message["serialNumber"] = serial_no
         await self.async_send_message(json.dumps(message))
 
+    async def async_get_device_voices(self, serial_no: str):
+        message = GET_DEVICE_VOICES_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        await self.async_send_message(json.dumps(message))
+
     async def async_get_properties_metadata_for_station(self, serial_no: str):
         message = GET_STATION_PROPERTIES_METADATA_MESSAGE.copy()
         message["serialNumber"] = serial_no
@@ -440,6 +458,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def async_get_p2p_livestream_status(self, serial_no: str):
         message = GET_P2P_LIVESTREAM_STATUS_MESSAGE.copy()
         message["serialNumber"] = serial_no
+        await self.async_send_message(json.dumps(message))
+
+    async def async_quick_response(self, serial_no: str, voice_id: str):
+        message = QUICK_RESPONSE_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        message["voiceId"] = voice_id
         await self.async_send_message(json.dumps(message))
 
     async def async_set_rtsp(self, serial_no: str, value: bool):
