@@ -32,6 +32,16 @@ Supported devices: https://github.com/bropat/eufy-security-client#known-working-
 # 3. Troubleshooting
 1- **Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account (preferably with adming rights), enable motion notifications with full picture and enable push notifications. This integration depends on push notifications to catch any updates.**
 
+Please log-in using your new account in respective mobile app to validate that new account has full access to all shared devices. If the issue still persists, creating a new account also solved it many times. If you still have the issue, please create an issue over here: https://github.com/bropat/eufy-security-client
+
+Moreover, if you are having issues related to home base states, please double check if you see a message in add on logs regarding to these changes as below examples, if you are not receiving, you have a problem with push notifications or device sharing, I cannot help.
+```
+2022-07-11 14:06:35.442  INFO  Alarm mode for station T8010N2320460480 changed to: AWAY 
+2022-07-11 14:06:36.562  INFO  Received push notification for changing guard mode 
+2022-07-11 14:17:17.904  INFO  Alarm mode for station T8010N2320460480 changed to: HOME 
+2022-07-11 14:17:18.466  INFO  Received push notification for changing guard mode 
+```
+
 2- RTSP - As of now, live stream is limited to 3 minutes and this is a hard limitation by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but **home assistant will not be notified on this**. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442 
 
 3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality (**please always set STREAMING QUALITY, CODEC and COMPRESSION to LOW**) this could change between 1 to 5 seconds. I am able to stream more than 15 minutes for my 2C cameras using P2P. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
