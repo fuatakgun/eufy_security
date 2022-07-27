@@ -379,10 +379,6 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                 )
 
             if event_data_type == "event":
-                # with open("data.txt", "a") as file_object:
-                # file_object.write(json.dumps(message))
-                # file_object.write("\n")
-                # _LOGGER.debug(f"{DOMAIN} - video_bytes - {len(json.dumps(event_value))}")
                 self.devices[serial_number].set_codec(
                     message["metadata"]["videoCodec"].lower()
                 )

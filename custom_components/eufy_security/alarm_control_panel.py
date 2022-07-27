@@ -38,6 +38,7 @@ from .const import (
     STATE_ALARM_CUSTOM1,
     STATE_ALARM_CUSTOM2,
     STATE_ALARM_CUSTOM3,
+    STATE_ALARM_DELAYED,
     STATE_GUARD_GEO,
     STATE_GUARD_OFF,
     STATE_GUARD_SCHEDULE,
@@ -224,6 +225,9 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
         if not self.device.state.get("alarmEvent", None) is None:
             self.device.state["alarmEvent"] = None
             return STATE_ALARM_TRIGGERED
+        if not self.device.state.get("alarmDelayEvent", None) is None:
+            self.device.state["alarmDelayEvent"] = None
+            return STATE_ALARM_DELAYED
         current_mode = self.device.state.get("currentMode")
         if current_mode in CUSTOM_CODES:
             position = CUSTOM_CODES.index(current_mode)

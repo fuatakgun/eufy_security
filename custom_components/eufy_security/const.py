@@ -257,11 +257,17 @@ EVENT_CONFIGURATION: dict = {
         "value": "alarmEvent",
         "type": "state",
     },
+    "alarm delay event": {
+        "name": "alarmDelayEvent",
+        "value": "alarmDelayEvent",
+        "type": "state",
+    },
 }
 
 STATE_ALARM_CUSTOM1 = "custom1"
 STATE_ALARM_CUSTOM2 = "custom2"
 STATE_ALARM_CUSTOM3 = "custom3"
+STATE_ALARM_DELAYED = "delayed"
 STATE_GUARD_SCHEDULE = "schedule"
 STATE_GUARD_GEO = "geo"
 STATE_GUARD_OFF = "off"
@@ -302,6 +308,7 @@ class DEVICE_TYPE(Enum):
     SOLO_CAMERA_SPOTLIGHT_2K = 61
     SOLO_CAMERA_SPOTLIGHT_SOLAR = 62
     DOORBELL_DUAL = 91
+    BATTERY_DOORBELL_DUAL = 93
 
 
 DEVICE_CATEGORY = {
