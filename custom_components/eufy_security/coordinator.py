@@ -173,10 +173,13 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             )
 
     async def async_driver_connect(self):
-        await self.async_send_message(json.dumps(SET_API_SCHEMA))
         await self.async_send_message(json.dumps(START_LISTENING_MESSAGE))
-        self.driver_connected = None
+        # await asyncio.sleep(5)
+        await self.async_send_message(json.dumps(SET_API_SCHEMA))
+        # await asyncio.sleep(5)
         await self.async_send_message(json.dumps(DRIVER_CONNECT_MESSAGE))
+        # await asyncio.sleep(5)
+        self.driver_connected = None
         # check if driver_connected response had received independent of result, could be True or False
         return await wait_for_value(self.__dict__, "driver_connected", None)
 
@@ -223,13 +226,14 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         return True
 
     async def process_driver_connect_response(self, connected: bool):
-        self.driver_connected = connected
+        pass
+        # self.driver_connected = connected
 
     async def process_start_listening_response(self, states: dict):
-        if (
-            states["driver"]["connected"] is False
-            or states["driver"]["pushConnected"] is False
-        ):
+        self.driver_connected = (states["driver"]["connected"] is True) or (
+            states["driver"]["pushConnected"] is True
+        )
+        if self.driver_connected is False:
             return
 
         self.data["devices"] = {}
@@ -285,71 +289,70 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         # _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
         if message_type not in MESSAGE_TYPES_TO_PROCESS:
             return
-        try:
-            message = payload[message_type]
-        except Exception as ex:
-            return
 
         if message_type == "result":
             message_id = payload["messageId"]
+            message_success = payload["success"]
+            message_result = payload[message_type]
             _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
 
             if message_id not in MESSAGE_IDS_TO_PROCESS:
                 return
 
             if message_id == DRIVER_CONNECT_MESSAGE["messageId"]:
-                await self.process_driver_connect_response(message["result"])
+                await self.process_driver_connect_response(message_success)
 
             if message_id == SET_CAPTCHA_MESSAGE["messageId"]:
-                self.captcha_config.result = message["result"]
+                self.captcha_config.result = message_success
 
             if message_id == START_LISTENING_MESSAGE["messageId"]:
-                await self.process_start_listening_response(message["state"])
+                await self.process_start_listening_response(message_result["state"])
 
             if message_id == GET_DEVICE_PROPERTIES_MESSAGE["messageId"]:
                 await self.process_get_device_properties_response(
-                    message["serialNumber"], message["properties"]
+                    message_result["serialNumber"], message_result["properties"]
                 )
 
             if message_id == GET_DEVICE_PROPERTIES_METADATA_MESSAGE["messageId"]:
                 await self.process_get_device_properties_metadata_response(
-                    message["serialNumber"], message["properties"]
+                    message_result["serialNumber"], message_result["properties"]
                 )
 
             if message_id == GET_DEVICE_VOICES_MESSAGE["messageId"]:
                 await self.process_get_device_voices_response(
-                    message["serialNumber"], message["voices"]
+                    message_result["serialNumber"], message_result["voices"]
                 )
 
             if message_id == GET_STATION_PROPERTIES_MESSAGE["messageId"]:
                 await self.process_get_station_properties_response(
-                    message["serialNumber"], message["properties"]
+                    message_result["serialNumber"], message_result["properties"]
                 )
 
             if message_id == GET_STATION_PROPERTIES_METADATA_MESSAGE["messageId"]:
                 await self.process_get_station_properties_metadata_response(
-                    message["serialNumber"], message["properties"]
+                    message_result["serialNumber"], message_result["properties"]
                 )
 
             if message_id == GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"]:
-                if message["livestreaming"] is True:
+                if message_result["livestreaming"] is True:
                     self.set_value_for_property(
                         "device",
-                        message["serialNumber"],
+                        message_result["serialNumber"],
                         P2P_LIVESTREAMING_STATUS,
                         P2P_LIVESTREAM_STARTED,
                     )
 
             if message_id == GET_RTSP_LIVESTREAM_STATUS_MESSAGE["messageId"]:
-                if message["livestreaming"] is True:
+                if message_result["livestreaming"] is True:
                     self.set_value_for_property(
                         "device",
-                        message["serialNumber"],
+                        message_result["serialNumber"],
                         RTSP_LIVESTREAMING_STATUS,
                         RTSP_LIVESTREAM_STARTED,
                     )
 
         if message_type == "event":
+            message = payload[message_type]
             event_type = message["event"]
             # _LOGGER.debug(f"{DOMAIN} - on_message - {payload}")
             if event_type not in EVENT_CONFIGURATION.keys():

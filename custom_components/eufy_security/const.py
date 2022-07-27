@@ -37,10 +37,10 @@ CONF_SYNC_INTERVAL: str = "sync_interval"
 CONF_AUTO_START_STREAM: str = "auto_start_stream"
 CONF_FIX_BINARY_SENSOR_STATE: str = "fix_binary_sensor_state"
 CONF_MAP_EXTRA_ALARM_MODES: str = "map_extra_alarm_modes"
-CONF_NAME_FOR_CUSTOM1: str  = "name_for_custom1"
-CONF_NAME_FOR_CUSTOM2: str  = "name_for_custom2"
-CONF_NAME_FOR_CUSTOM3: str  = "name_for_custom3"
-CONF_GENERATE_FFMPEG_LOGS: str  = "generate_ffmpeg_logs"
+CONF_NAME_FOR_CUSTOM1: str = "name_for_custom1"
+CONF_NAME_FOR_CUSTOM2: str = "name_for_custom2"
+CONF_NAME_FOR_CUSTOM3: str = "name_for_custom3"
+CONF_GENERATE_FFMPEG_LOGS: str = "generate_ffmpeg_logs"
 
 DEFAULT_HOST: str = "0.0.0.0"
 DEFAULT_PORT: int = 3000
@@ -65,7 +65,7 @@ LATEST_CODEC = "latest codec"
 SET_API_SCHEMA = {
     "messageId": "set_api_schema",
     "command": "set_api_schema",
-    "schemaVersion": 7,
+    "schemaVersion": 11,
 }
 DRIVER_CONNECT_MESSAGE = {"messageId": "driver_connect", "command": "driver.connect"}
 SET_CAPTCHA_MESSAGE = {

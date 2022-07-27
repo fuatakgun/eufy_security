@@ -335,7 +335,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             _LOGGER.debug(f"{DOMAIN} {self.name} - set_is_streaming - some streaming")
             if self.device.is_rtsp_streaming is True:
                 self.device.stream_source_type = STREAMING_SOURCE_RTSP
-                self.device.stream_source_address = self.device.state["rtspStreamUrl"]
+                self.device.stream_source_address = self.device.properties[
+                    "rtspStreamUrl"
+                ]
                 self.device.is_streaming = True
                 _LOGGER.debug(
                     f"{DOMAIN} {self.name} - set_is_streaming - is_rtsp_streaming"
