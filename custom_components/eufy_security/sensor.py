@@ -143,6 +143,7 @@ class EufySecuritySensor(EufySecurityEntity):
         if self._id == "stream_queue_size":
             return self.device.queue.qsize()
         return get_child_value(self.device.__dict__, self.key)
+        
 
     @property
     def unit_of_measurement(self):
