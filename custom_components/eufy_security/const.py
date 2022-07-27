@@ -37,9 +37,10 @@ CONF_SYNC_INTERVAL: str = "sync_interval"
 CONF_AUTO_START_STREAM: str = "auto_start_stream"
 CONF_FIX_BINARY_SENSOR_STATE: str = "fix_binary_sensor_state"
 CONF_MAP_EXTRA_ALARM_MODES: str = "map_extra_alarm_modes"
-CONF_NAME_FOR_CUSTOM1 = "name_for_custom1"
-CONF_NAME_FOR_CUSTOM2 = "name_for_custom2"
-CONF_NAME_FOR_CUSTOM3 = "name_for_custom3"
+CONF_NAME_FOR_CUSTOM1: str  = "name_for_custom1"
+CONF_NAME_FOR_CUSTOM2: str  = "name_for_custom2"
+CONF_NAME_FOR_CUSTOM3: str  = "name_for_custom3"
+CONF_GENERATE_FFMPEG_LOGS: str  = "generate_ffmpeg_logs"
 
 DEFAULT_HOST: str = "0.0.0.0"
 DEFAULT_PORT: int = 3000
@@ -54,6 +55,7 @@ DEFAULT_MAP_EXTRA_ALARM_MODES: bool = False
 DEFAULT_NAME_FOR_CUSTOM1: str = "Custom 1"
 DEFAULT_NAME_FOR_CUSTOM2: str = "Custom 2"
 DEFAULT_NAME_FOR_CUSTOM3: str = "Custom 3"
+DEFAULT_GENERATE_FFMPEG_LOGS: bool = False
 
 
 P2P_LIVESTREAMING_STATUS = "p2pLiveStreamingStatus"
@@ -520,6 +522,9 @@ class EufyConfig:
         )
         self.name_for_custom3: str = config_entry.options.get(
             CONF_NAME_FOR_CUSTOM3, DEFAULT_NAME_FOR_CUSTOM3
+        )
+        self.generate_ffmpeg_logs: bool = config_entry.options.get(
+            CONF_GENERATE_FFMPEG_LOGS, DEFAULT_GENERATE_FFMPEG_LOGS
         )
 
         _LOGGER.debug(f"{DOMAIN} - config class initialized")

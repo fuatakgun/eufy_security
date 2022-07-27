@@ -39,7 +39,8 @@
           "map_extra_alarm_modes": "Mapeie os modos de guarda personalizados em Bypass, Night e Vacation (em ordem)",
           "name_for_custom1": "Nome de substituição para o modo de guarda personalizado 1",
           "name_for_custom2": "Nome de substituição para o modo de guarda personalizado 2",
-          "name_for_custom3": "Nome de substituição para o modo de guarda personalizado 3"
+          "name_for_custom3": "Nome de substituição para o modo de guarda personalizado 3",
+          "generate_ffmpeg_logs": "Gerar registros FFMPEG"
         }
       }
     }

@@ -23,6 +23,7 @@ from .const import (
     CONF_RTSP_SERVER_PORT,
     CONF_SYNC_INTERVAL,
     CONF_USE_RTSP_SERVER_ADDON,
+    CONF_GENERATE_FFMPEG_LOGS,
     COORDINATOR,
     DEFAULT_AUTO_START_STREAM,
     DEFAULT_FFMPEG_ANALYZE_DURATION,
@@ -36,6 +37,7 @@ from .const import (
     DEFAULT_RTSP_SERVER_PORT,
     DEFAULT_SYNC_INTERVAL,
     DEFAULT_USE_RTSP_SERVER_ADDON,
+    DEFAULT_GENERATE_FFMPEG_LOGS,
     DOMAIN,
 )
 from .coordinator import EufySecurityDataUpdateCoordinator
@@ -116,6 +118,12 @@ class EufySecurityOptionFlowHandler(config_entries.OptionsFlow):
                         CONF_NAME_FOR_CUSTOM3, DEFAULT_NAME_FOR_CUSTOM3
                     ),
                 ): str,
+                vol.Optional(
+                    CONF_GENERATE_FFMPEG_LOGS,
+                    default=self.config_entry.options.get(
+                        CONF_GENERATE_FFMPEG_LOGS, DEFAULT_GENERATE_FFMPEG_LOGS
+                    ),
+                ): bool,
             }
         )
 

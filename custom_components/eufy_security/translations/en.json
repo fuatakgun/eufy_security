@@ -39,7 +39,8 @@
           "map_extra_alarm_modes": "Map Custom Guard Modes into Bypass, Night and Vacation (in order)",
           "name_for_custom1": "Override Name for Custom1 Guard Mode",
           "name_for_custom2": "Override Name for Custom2 Guard Mode",
-          "name_for_custom3": "Override Name for Custom3 Guard Mode"
+          "name_for_custom3": "Override Name for Custom3 Guard Mode",
+          "generate_ffmpeg_logs": "Generate FFMPEG logs"
         }
       }
     }

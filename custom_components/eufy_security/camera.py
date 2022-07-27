@@ -74,7 +74,6 @@ FFMPEG_OPTIONS = (
     " -sc_threshold 0"
     " -fflags genpts+nobuffer+flush_packets"
     " -loglevel debug"
-    " -report"
 )
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -260,10 +259,15 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         _LOGGER.debug(
             f"{DOMAIN} {self.name} - start_ffmpeg 2 - ffmpeg_command_instance {ffmpeg_command_instance}"
         )
+
+        ffmpeg_options_instance = FFMPEG_OPTIONS
+        if self.coordinator.config.generate_ffmpeg_logs == True:
+            ffmpeg_options_instance = ffmpeg_options_instance + " -report"
+
         result = await self.ffmpeg.open(
             cmd=ffmpeg_command_instance,
             input_source=None,
-            extra_cmd=FFMPEG_OPTIONS,
+            extra_cmd=ffmpeg_options_instance,
             output=self.ffmpeg_output,
             stderr_pipe=False,
             stdout_pipe=False,
