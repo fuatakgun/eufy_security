@@ -1,5 +1,6 @@
 import logging
 
+from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     DEVICE_CLASS_BATTERY,
@@ -133,33 +134,20 @@ class EufySecuritySensor(EufySecurityEntity):
         self._id = id
         self.description = description
         self.key = key
-        self.unit = unit
-        self._icon = icon
-        self._device_class = device_class
+        self._attr_unit_of_measurement = unit
+        self._attr_name = f"{self.device.name} {self.description}"
+        self._attr_icon = icon
+        self._attr_device_class = device_class
         self._attr_entity_category = entity_category
+        self._attr_state_class = None
+        if self._attr_device_class == DEVICE_CLASS_BATTERY:
+            self._attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
     def state(self):
         if self._id == "stream_queue_size":
             return self.device.queue.qsize()
         return get_child_value(self.device.__dict__, self.key)
-        
-
-    @property
-    def unit_of_measurement(self):
-        return self.unit
-
-    @property
-    def icon(self):
-        return self._icon
-
-    @property
-    def device_class(self):
-        return self._device_class
-
-    @property
-    def name(self):
-        return f"{self.device.name} {self.description}"
 
     @property
     def id(self):
