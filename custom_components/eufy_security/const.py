@@ -301,8 +301,6 @@ class DEVICE_TYPE(Enum):
     SOLO_CAMERA_SPOTLIGHT_1080 = 60
     SOLO_CAMERA_SPOTLIGHT_2K = 61
     SOLO_CAMERA_SPOTLIGHT_SOLAR = 62
-    DOORBELL_DUAL = 91
-    BATTERY_DOORBELL_DUAL = 93
 
 
 DEVICE_CATEGORY = {
@@ -339,8 +337,6 @@ DEVICE_CATEGORY = {
     DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_1080: "CAMERA",
     DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_2K: "CAMERA",
     DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_SOLAR: "CAMERA",
-    DEVICE_TYPE.BATTERY_DOORBELL_DUAL: "DOORBELL",
-    DEVICE_TYPE.DOORBELL_DUAL: "DOORBELL",
 }
 
 
@@ -349,13 +345,12 @@ async def wait_for_value(
 ):
     _LOGGER.debug(f"{DOMAIN} - wait start - {ref_key}")
     for counter in range(max_counter):
-        _LOGGER.debug(
-            f"{DOMAIN} - wait - {counter} - {ref_key} {ref_dict.get(ref_key)}"
-        )
         if ref_dict.get(ref_key, value) == value:
             await asyncio.sleep(interval)
         else:
+            _LOGGER.debug(f"{DOMAIN} - wait finish - {ref_key} - return True")
             return True
+    _LOGGER.debug(f"{DOMAIN} - wait finish - {ref_key} - return False")
     return False
 
 

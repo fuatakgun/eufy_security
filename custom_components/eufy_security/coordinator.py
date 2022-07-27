@@ -386,9 +386,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
                 self.devices[serial_number].set_codec(
                     message["metadata"]["videoCodec"].lower()
                 )
-                self.hass.bus.fire(
-                    f"{DOMAIN}_{serial_number}_event_received", event_value
-                )
+                self.devices[serial_number].queue.put(event_value)
 
     def set_value_for_property(
         self, source: str, serial_number: str, property_name: str, value: str

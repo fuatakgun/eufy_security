@@ -1,14 +1,24 @@
+from aiohttp import web
+import aiohttp
 import asyncio
 import logging
+from contextlib import suppress
 import threading
 from time import sleep
+import socket
 import traceback
 
 from haffmpeg.camera import CameraMjpeg
 from haffmpeg.tools import ImageFrame
 import voluptuous as vol
+import async_timeout
 
-from homeassistant.components.camera import SUPPORT_ON_OFF, SUPPORT_STREAM, Camera, CameraEntityFeature
+from homeassistant.components.camera import (
+    SUPPORT_ON_OFF,
+    SUPPORT_STREAM,
+    Camera,
+    CameraEntityFeature,
+)
 from homeassistant.components.camera.const import STREAM_TYPE_HLS
 from homeassistant.components.ffmpeg import DATA_FFMPEG
 from homeassistant.config_entries import ConfigEntry
@@ -36,7 +46,7 @@ STREAMING_SOURCE_RTSP = "rtsp"
 STREAMING_SOURCE_P2P = "p2p"
 
 FFMPEG_COMMAND = [
-    "-re",
+    # "-re",
     "-y",
     "-analyzeduration",
     "{analyze_duration}",
@@ -45,18 +55,19 @@ FFMPEG_COMMAND = [
     "-f",
     "{video_codec}",
     "-i",
-    "-",
+    # "-",
+    "tcp://localhost:{port}",
     "-vcodec",
     "copy",
     "-protocol_whitelist",
     "pipe,file,tcp,udp,rtsp,rtp",
 ]
 FFMPEG_OPTIONS = (
-    " -hls_init_time 1"
+    " -hls_init_time 0"
     " -hls_time 1"
     " -hls_segment_type mpegts"
     " -hls_playlist_type event "
-    " -hls_list_size 2"
+    " -hls_list_size 0"
     " -preset ultrafast"
     " -tune zerolatency"
     " -g 15"
@@ -68,9 +79,7 @@ FFMPEG_OPTIONS = (
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-
 ALARM_TRIGGER_SCHEMA = make_entity_service_schema({vol.Required("duration"): cv.Number})
-
 
 QUICK_RESPONSE_SCHEMA = make_entity_service_schema(
     {vol.Required("voice_id"): cv.Number}
@@ -152,6 +161,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         # camera image
         self.picture_bytes = None
         self.picture_url = None
+        self.no_picture_counter = 0
 
         # p2p streaming
         self.start_stream_function = self.async_start_p2p_livestream
@@ -159,7 +169,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
         # video generation using ffmpeg for p2p
         self.ffmpeg_binary = self.coordinator.hass.data[DATA_FFMPEG].binary
-        self.ffmpeg_content_type = self.coordinator.hass.data[DATA_FFMPEG].ffmpeg_stream_content_type
+        self.ffmpeg_content_type = self.coordinator.hass.data[
+            DATA_FFMPEG
+        ].ffmpeg_stream_content_type
         self.ffmpeg = CameraMjpeg(self.ffmpeg_binary)
         self.default_codec = DEFAULT_CODEC
         self.is_ffmpeg_running = False
@@ -168,12 +180,13 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         if self.device.is_p2p_streaming is True:
             async_call_later(self.coordinator.hass, 0, self.async_start_p2p_livestream)
 
-        if self.coordinator.config.use_rtsp_server_addon is True:
-            self.p2p_url = f"rtsp://{self.coordinator.config.rtsp_server_address}:{self.coordinator.config.rtsp_server_port}/{self.device.serial_number}"
-            self.ffmpeg_output = f"-f rtsp -rtsp_transport tcp {self.p2p_url}"
-        else:
-            self.ffmpeg_output = f"{DOMAIN}-{self.device.serial_number}.m3u8"
-            self.p2p_url = self.ffmpeg_output
+        self.p2p_url = f"rtsp://{self.coordinator.config.rtsp_server_address}:{self.coordinator.config.rtsp_server_port}/{self.device.serial_number}"
+        self.p2p_port = 0
+        self.p2p_thread = threading.Thread(
+            target=self.handle_queue_threaded, daemon=True
+        )
+        self.p2p_thread.start()
+        self.ffmpeg_output = f"-f rtsp -rtsp_transport tcp {self.p2p_url}"
 
         # for rtsp streaming
         if self.device.state.get("rtspStream", None) is not None:
@@ -182,63 +195,53 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
         self.set_is_streaming()
 
-    async def async_added_to_hass(self):
-        await super().async_added_to_hass()
-        self.coordinator.hass.bus.async_listen(
-            f"{DOMAIN}_{self.device.serial_number}_event_received",
-            self.handle_incoming_video_data,
-        )
-
-    async def check_and_set_codec(self):
-        if self.device.codec != self.default_codec:
-            _LOGGER.debug(
-                f"{DOMAIN} {self.name} - set codec - default {self.default_codec} - incoming {self.device.codec}"
-            )
-            self.default_codec = self.device.codec
-            await self.coordinator.hass.async_add_executor_job(self.stop_ffmpeg)
-            await self.start_ffmpeg()
-
-    async def handle_incoming_video_data(self, event):
-        await self.check_and_set_codec()
-        self.device.queue.put(event.data)
-
     def handle_queue_threaded(self):
-        sleep_duration = 0.1
-        _LOGGER.debug(
-            f"{DOMAIN} {self.name} - handle_queue_threaded - start - {self.device.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}"
-        )
-        for i in range(0, 10):
-            if self.ffmpeg.is_running is False:
-                sleep(sleep_duration)
-
-        while self.ffmpeg.is_running is True and self.device.is_streaming is True:
-            _LOGGER.debug(
-                f"{DOMAIN} {self.name} - handle_queue_threaded - while - {self.device.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}"
-            )
-            while not self.device.queue.empty():
-                self.write_bytes_to_ffmeg(bytearray(self.device.queue.get()["data"]))
-            sleep(sleep_duration)
-        _LOGGER.debug(
-            f"{DOMAIN} {self.name} - handle_queue_threaded - finish - {self.device.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}"
-        )
-
-    def write_bytes_to_ffmeg(self, frame_bytes):
-        if self.ffmpeg.is_running is True:
+        codec_checked = False
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             try:
-                self.ffmpeg.process.stdin.write(frame_bytes)
-            except Exception as ex:
-                _LOGGER.error(
-                    f"{DOMAIN} {self.name} video_thread exception: {ex}- traceback: {traceback.format_exc()}"
-                )
-                _, ffmpeg_error = self.ffmpeg.process.communicate()
-                if ffmpeg_error is not None:
-                    ffmpeg_error = ffmpeg_error.decode()
-                    _LOGGER.debug(
-                        f"{DOMAIN} {self.name} - video ffmpeg error - {ffmpeg_error}"
-                    )
-        else:
-            _LOGGER.error(
-                f"{DOMAIN} {self.name} - video ffmpeg error - ffmpeg is not running"
+                _LOGGER.debug("start socket for tcp")
+                sock.bind(("localhost", 0))
+                self.p2p_port = sock.getsockname()[1]
+            except Exception as err:
+                _LOGGER.error("Unable to connect to host: %s", err)
+                return
+
+            while True:
+                sock.listen()
+                client_socket, client_address = sock.accept()
+                _LOGGER.debug("client connected")
+
+                with client_socket:
+                    while self.device.is_streaming is True:
+                        while not self.device.queue.empty():
+                            if (
+                                codec_checked is False
+                                and self.device.codec != self.default_codec
+                            ):
+                                self.default_codec = self.device.codec
+                                self.stop_ffmpeg()
+                                async_call_later(
+                                    self.coordinator.hass, 0, self.start_ffmpeg
+                                )
+                                codec_checked = True
+                                _LOGGER.debug(
+                                    f"{DOMAIN} {self.name} - handle_queue_threaded - fix codec"
+                                )
+                                sleep(2)
+                                break
+
+                            try:
+                                client_socket.sendall(
+                                    bytearray(self.device.queue.get()["data"])
+                                )
+                            except OSError as err:
+                                _LOGGER.error("Unable to send payload : %s", err)
+
+                        sleep(0.1)
+                client_socket.close()
+            sock.close()
+            _LOGGER.debug(
+                f"{DOMAIN} {self.name} - handle_queue_threaded - finish - {self.device.queue.qsize()} - {self.ffmpeg.is_running} - {self.device.is_streaming}"
             )
 
     async def start_ffmpeg(self, executed_at=None):
@@ -251,6 +254,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         ffmpeg_command_instance[input_index - 5] = str(
             int(self.coordinator.config.ffmpeg_analyze_duration) * 1000000
         )
+        ffmpeg_command_instance[input_index + 1] = ffmpeg_command_instance[
+            input_index + 1
+        ].replace("{port}", str(self.p2p_port))
         _LOGGER.debug(
             f"{DOMAIN} {self.name} - start_ffmpeg 2 - ffmpeg_command_instance {ffmpeg_command_instance}"
         )
@@ -288,13 +294,8 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             )
             self.stop_ffmpeg()
         _LOGGER.debug(f"{DOMAIN} {self.name} - start_p2p - 2")
-        async_call_later(self.coordinator.hass, 0, self.start_ffmpeg)
-        # asyncio.run_coroutine_threadsafe(wait_for_value(self.__dict__, "is_ffmpeg_running", False), self.coordinator.hass.loop).result()
         _LOGGER.debug(f"{DOMAIN} {self.name} - start_p2p - 3")
-        self.p2p_thread = threading.Thread(
-            target=self.handle_queue_threaded, daemon=True
-        )
-        self.p2p_thread.start()
+        async_call_later(self.coordinator.hass, 1, self.start_ffmpeg)
 
     def stop_p2p(self):
         self.device.queue.queue.clear()
@@ -303,13 +304,12 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             self.stream = None
         if self.ffmpeg.is_running is True:
             self.stop_ffmpeg()
-        self.p2p_thread = None
         self.empty_queue_counter = 0
 
     @property
     def state(self) -> str:
         if self.device.is_streaming is True:
-            return f"{STATE_STREAMING} - {self.device.stream_source_type}"
+            return f"{STATE_STREAMING}"
         elif self.device.state.get("motionDetected", False):
             return STATE_MOTION_DETECTED
         elif self.device.state.get("personDetected", False):
@@ -337,9 +337,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
                     f"{DOMAIN} {self.name} - set_is_streaming - is_rtsp_streaming"
                 )
             if self.device.is_p2p_streaming is True:
+                self.start_p2p()
                 self.device.stream_source_type = STREAMING_SOURCE_P2P
                 self.device.stream_source_address = self.p2p_url
-                self.start_p2p()
                 self.device.is_streaming = True
                 _LOGGER.debug(
                     f"{DOMAIN} {self.name} - set_is_streaming - is_p2p_streaming"
@@ -399,13 +399,20 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
                 )
                 self.picture_bytes = image_frame_bytes
                 self.picture_url = None
+                self.no_picture_counter = 0
             else:
-                if self.device.is_p2p_streaming is True:
-                    await self.async_stop_p2p_livestream()
-                if self.device.is_rtsp_streaming is True:
-                    await self.async_stop_rtsp_livestream()
+                if self.no_picture_counter > 0:
+                    _LOGGER.debug(
+                        f"{DOMAIN} {self.name} - camera_image - no image - stop"
+                    )
+                    if self.device.is_p2p_streaming is True:
+                        await self.async_stop_p2p_livestream()
+                    if self.device.is_rtsp_streaming is True:
+                        await self.async_stop_rtsp_livestream()
+                self.no_picture_counter = self.no_picture_counter + 1
         else:
             current_picture_url = self.device.state.get("pictureUrl", "")
+            self.no_picture_counter = 0
             if self.picture_url != current_picture_url:
                 async with async_get_clientsession(self.coordinator.hass).get(
                     current_picture_url
@@ -419,24 +426,18 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         return self.picture_bytes
 
     async def handle_async_mjpeg_stream(self, request):
-        _LOGGER.debug(f"{DOMAIN} handle_async_mjpeg_stream {request}")
-        try:
-            stream = CameraMjpeg(self.ffmpeg_binary)
-            stream_source_url = await self.stream_source()
-            await stream.open_camera(stream_source_url)
-            try:
-                stream_reader = await stream.get_reader()
-                return await async_aiohttp_proxy_stream(
-                    self.hass,
-                    request,
-                    stream_reader,
-                    self.ffmpeg_content_type,
-                )
-            finally:
-                await stream.close()
-        except Exception as ex:
-            _LOGGER.debug(f"{DOMAIN} {self.name} stream exception: {ex}- traceback: {traceback.format_exc()}")
+        stream = CameraMjpeg(self.ffmpeg_binary)
+        await stream.open_camera(await self.stream_source())
 
+        try:
+            return await async_aiohttp_proxy_stream(
+                self.hass,
+                request,
+                await stream.get_reader(),
+                self.ffmpeg_content_type,
+            )
+        finally:
+            await stream.close()
 
     def turn_on(self) -> None:
         asyncio.run_coroutine_threadsafe(
