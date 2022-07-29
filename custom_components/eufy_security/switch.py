@@ -1,13 +1,13 @@
 import logging
 
-from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 
-from .const import COORDINATOR, DOMAIN, Device, get_child_value
-from .coordinator import EufySecurityDataUpdateCoordinator
+from .const import COORDINATOR, DOMAIN, Device
+from .const import get_child_value
 from .entity import EufySecurityEntity
+from .coordinator import EufySecurityDataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -18,54 +18,28 @@ async def async_setup_entry(
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
 
     INSTRUMENTS = [
-        ("enabled", "Enabled", "enabled", EntityCategory.CONFIG),
-        (
-            "motion_detection",
-            "Motion Detection",
-            "motionDetection",
-            EntityCategory.CONFIG,
-        ),
-        ("motion_tracking", "Motion Tracking", "motionTracking", EntityCategory.CONFIG),
-        (
-            "person_detection",
-            "Person Detection",
-            "personDetection",
-            EntityCategory.CONFIG,
-        ),
-        ("pet_detection", "Pet Detection", "petDetection", EntityCategory.CONFIG),
-        (
-            "crying_detection",
-            "Crying Detection",
-            "cryingDetection",
-            EntityCategory.CONFIG,
-        ),
-        ("indoor_chime", "Indoor Chime", "chimeIndoor", EntityCategory.CONFIG),
-        ("status_led", "Status Led", "statusLed", EntityCategory.CONFIG),
-        (
-            "anti_theft_detection",
-            "Anti Theft Detection",
-            "antitheftDetection",
-            EntityCategory.CONFIG,
-        ),
-        (
-            "auto_night_vision",
-            "Auto Night Vision",
-            "autoNightvision",
-            EntityCategory.CONFIG,
-        ),
-        ("night_vision", "Night Vision", "nightvision", EntityCategory.CONFIG),
-        ("microphone", "Microphone", "microphone", EntityCategory.CONFIG),
-        ("speaker", "Speaker", "speaker", EntityCategory.CONFIG),
-        ("audio_recording", "Audio Recording", "audioRecording", EntityCategory.CONFIG),
-        ("sound_detection", "Sound Detection", "soundDetection", EntityCategory.CONFIG),
-        ("light", "Light", "light", EntityCategory.CONFIG),
-        ("rtsp_stream", "RTSP Stream", "rtspStream", EntityCategory.CONFIG),
+        ("enabled", "Enabled", "enabled"),
+        ("motion_detection", "Motion Detection", "motionDetection"),
+        ("motion_tracking", "Motion Tracking", "motionTracking"),
+        ("person_detection", "Person Detection", "personDetection"),
+        ("pet_detection", "Pet Detection", "petDetection"),
+        ("crying_detection", "Crying Detection", "cryingDetection"),
+        ("indoor_chime", "Indoor Chime", "chimeIndoor"),
+        ("status_led", "Status Led", "statusLed"),
+        ("anti_theft_detection", "Anti Theft Detection", "antitheftDetection"),
+        ("auto_night_vision", "Auto Night Vision", "autoNightvision"),
+        ("night_vision", "Night Vision", "nightvision"),
+        ("microphone", "Microphone", "microphone"),
+        ("speaker", "Speaker", "speaker"),
+        ("audio_recording", "Audio Recording", "audioRecording"),
+        ("light", "Light", "light"),
+        ("rtsp_stream", "RTSP Stream", "rtspStream"),
     ]
 
     entities = []
     for device in coordinator.devices.values():
         instruments = INSTRUMENTS
-        for id, description, key, entity_category in instruments:
+        for id, description, key in instruments:
             if not get_child_value(device.state, key) is None:
                 entities.append(
                     EufySwitchEntity(
@@ -77,7 +51,6 @@ async def async_setup_entry(
                         key,
                         "False",
                         "True",
-                        entity_category,
                     )
                 )
 
@@ -95,7 +68,6 @@ class EufySwitchEntity(EufySecurityEntity, SwitchEntity):
         key: str,
         off_value: str,
         on_value: str,
-        entity_category: str,
     ):
         EufySecurityEntity.__init__(self, coordinator, config_entry, device)
         SwitchEntity.__init__(self)
@@ -104,7 +76,6 @@ class EufySwitchEntity(EufySecurityEntity, SwitchEntity):
         self.key = key
         self.off_value = str(off_value)
         self.on_value = str(on_value)
-        self._attr_entity_category = entity_category
 
     @property
     def is_on(self):
