@@ -33,7 +33,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.event import async_call_later
 
-from .const import COORDINATOR, DEFAULT_CODEC, DOMAIN, NAME, Device, wait_for_value
+from .const import COORDINATOR, DEFAULT_CODEC, DOMAIN, NAME, Device, wait_for_value, PTZ
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
 
@@ -125,6 +125,10 @@ async def async_setup_entry(
     platform.async_register_entity_service("disable_rtsp", {}, "async_disable_rtsp")
     platform.async_register_entity_service("enable", {}, "async_enable")
     platform.async_register_entity_service("disable", {}, "async_disable")
+    platform.async_register_entity_service("ptz_up", {}, "async_ptz_up")
+    platform.async_register_entity_service("ptz_down", {}, "async_ptz_down")
+    platform.async_register_entity_service("ptz_left", {}, "async_ptz_left")
+    platform.async_register_entity_service("ptz_right", {}, "async_ptz_right")
     platform.async_register_entity_service(
         "alarm_trigger_for_camera_with_duration",
         ALARM_TRIGGER_SCHEMA,
@@ -208,8 +212,11 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             while True:
                 sock.listen()
                 client_socket, client_address = sock.accept()
-                _LOGGER.debug("client connected")
-
+                client_socket.setblocking(False)
+                _LOGGER.debug(
+                    f"{DOMAIN} {self.name} - handle_queue_threaded - client connected"
+                )
+                client_errored = False
                 with client_socket:
                     while self.device.is_streaming is True:
                         while not self.device.queue.empty():
@@ -234,7 +241,13 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
                                     bytearray(self.device.queue.get()["data"])
                                 )
                             except OSError as err:
-                                _LOGGER.error("Unable to send payload : %s", err)
+                                _LOGGER.error(
+                                    f"{DOMAIN} {self.name} - handle_queue_threaded - Unable to send payload - {err}"
+                                )
+                                client_errored = True
+                                break
+                        if client_errored is True:
+                            break
 
                         sleep(0.1)
                 client_socket.close()
@@ -289,7 +302,11 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         _LOGGER.debug(f"{DOMAIN} {self.name} - stop_ffmpeg - done")
 
     def start_p2p(self):
-        _LOGGER.debug(f"{DOMAIN} {self.name} - start_p2p - 1")
+        if self.p2p_thread.is_alive() is False:
+            _LOGGER.debug(
+                f"{DOMAIN} {self.name} - start_p2p - thread is dead, restarting"
+            )
+            self.p2p_thread.start()
         self.device.queue.queue.clear()
         self.empty_queue_counter = 0
         if self.ffmpeg.is_running is True:
@@ -297,8 +314,6 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
                 f"{DOMAIN} {self.name} - start_p2p - ffmeg - running - stop it"
             )
             self.stop_ffmpeg()
-        _LOGGER.debug(f"{DOMAIN} {self.name} - start_p2p - 2")
-        _LOGGER.debug(f"{DOMAIN} {self.name} - start_p2p - 3")
         async_call_later(self.coordinator.hass, 1, self.start_ffmpeg)
 
     def stop_p2p(self):
@@ -516,6 +531,21 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def async_disable(self) -> None:
         await self.coordinator.async_set_device_state(self.device.serial_number, False)
+
+    async def async_ptz_up(self) -> None:
+        await self.coordinator.async_set_ptz(self.device.serial_number, PTZ.UP.value)
+
+    async def async_ptz_down(self) -> None:
+        await self.coordinator.async_set_ptz(self.device.serial_number, PTZ.DOWN.value)
+
+    async def async_ptz_left(self) -> None:
+        await self.coordinator.async_set_ptz(self.device.serial_number, PTZ.LEFT.value)
+
+    async def async_ptz_right(self) -> None:
+        await self.coordinator.async_set_ptz(self.device.serial_number, PTZ.RIGHT.value)
+
+    async def async_ptz_rotate_360(self) -> None:
+        await self.coordinator.async_set_ptz(self.device.serial_number, PTZ.ROTATE360.value)
 
     async def async_get_rtsp_livestream_status(self) -> None:
         await self.coordinator.async_get_rtsp_livestream_status(

@@ -183,6 +183,12 @@ SET_LOCK_MESSAGE = {
     "serialNumber": None,
     "value": None,
 }
+SET_PTZ_MESSAGE = {
+    "messageId": "device_set_ptz",
+    "command": "device.pan_and_tilt",
+    "serialNumber": None,
+    "direction": None,
+}
 
 
 MESSAGE_IDS_TO_PROCESS = [
@@ -274,6 +280,12 @@ STATE_GUARD_SCHEDULE = "schedule"
 STATE_GUARD_GEO = "geo"
 STATE_GUARD_OFF = "off"
 
+class PTZ(Enum):
+    ROTATE360 = 0
+    LEFT = 1
+    RIGHT = 2
+    UP = 3
+    DOWN = 4
 
 class DEVICE_TYPE(Enum):
     STATION = 0

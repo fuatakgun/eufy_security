@@ -39,6 +39,7 @@ from .const import (
     SET_LOCK_MESSAGE,
     SET_P2P_LIVESTREAM_MESSAGE,
     SET_PROPERTY_MESSAGE,
+    SET_PTZ_MESSAGE,
     SET_RTSP_LIVESTREAM_MESSAGE,
     SET_RTSP_STREAM_MESSAGE,
     START_LISTENING_MESSAGE,
@@ -520,6 +521,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         message["serialNumber"] = serial_no
         message["name"] = name
         message["value"] = value
+        await self.async_send_message(json.dumps(message))
+
+    async def async_set_ptz(self, serial_no: str, direction: int):
+        message = SET_PTZ_MESSAGE.copy()
+        message["serialNumber"] = serial_no
+        message["direction"] = direction
         await self.async_send_message(json.dumps(message))
 
     async def async_set_lock(self, serial_no: str, value: bool):
