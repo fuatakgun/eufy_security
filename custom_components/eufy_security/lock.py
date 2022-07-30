@@ -44,7 +44,7 @@ class Lock(EufySecurityEntity, LockEntity):
 
     @property
     def is_locked(self):
-        return self.device.state.get("lockStatus")
+        return self.device.state.get("locked")
 
     async def async_lock(self):
         await self.coordinator.async_set_lock(self.device.serial_number, True)
