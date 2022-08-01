@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Eufy Security: Instellen",
+        "description": "Voer het ip adres en de port van de Eufy Security Web Socket-instantie in",
+        "data": {
+          "host": "Host IP Address (bijv. 192.168.178.22)",
+          "port": "Poort (bijv. 3000)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Eufy Security: Captcha",
+        "description": "{captcha_image}",
+        "data": {
+          "captcha": "Captcha"
+        }
+      }
+    },
+    "error": {
+      "auth": "Host/Poort klop niet."
+    },
+    "abort": {
+      "single_instance_allowed": "Slechts één exemplaar is toegestaan."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Eufy Security: Configuratie",
+        "data": {
+          "sync_interval": "Cloudscan-interval in seconden [1 tot 9999]",
+          "use_rtsp_server_addon": "Gebruik RTSP-extensie (P2P)",
+          "rtsp_server_address": "Host IP-adres voor RTSP-add-on (P2P)",
+          "rtsp_server_port": "TCP Poort voor de RTSP-extensie (P2P)",
+          "ffmpeg_analyze_duration": "Video-analyseduur in seconden [1 tot 5] (P2P)",
+          "auto_start_stream": "Stream automatisch starten bij klikken",
+          "fix_binary_sensor_state": "Binaire sensorstatussen repareren (True/False naar On/Off)",
+          "map_extra_alarm_modes": "Wijs aangepaste bewakingsmodi toe aan bypass, nacht en vakantie (in volgorde)",
+          "name_for_custom1": "Naam negeren voor Custom1 Beveiligings-modus",
+          "name_for_custom2": "Naam negeren voor Custom2 Beveiligings-modus",
+          "name_for_custom3": "Naam negeren voor Custom4 Beveiligings-modus",
+          "generate_ffmpeg_logs": "Genereer FFMPEG logboeken"
+        }
+      }
+    }
+  }
+}
