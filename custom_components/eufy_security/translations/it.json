@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Eufy Security: Configurazione",
+        "description": "Immettere l'indirizzo IP e la porta dell'istanza di Eufy Security Web Socket",
+        "data": {
+          "host": "Indirizzo IP host (es. 192.168.178.22)",
+          "port": "Porto (es. 3000)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Eufy Security: Captcha",
+        "description": "{captcha_image}",
+        "data": {
+          "captcha": "Captcha"
+        }
+      }
+    },
+    "error": {
+      "auth": "L'host/porta è sbagliato."
+    },
+    "abort": {
+      "single_instance_allowed": "È consentita una sola istanza."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Eufy Security: Configurazione",
+        "data": {
+          "sync_interval": "Intervallo scansione cloud in secondi [da 1 a 9999]",
+          "use_rtsp_server_addon": "Usa componente aggiuntivo RTSP (P2P)",
+          "rtsp_server_address": "Indirizzo IP host per aggiunta RTSP (P2P)",
+          "rtsp_server_port": "Porta TCP per aggiunta RTSP (P2P)",
+          "ffmpeg_analyze_duration": "Durata analisi video in secondi [da 1 a 5] (P2P)",
+          "auto_start_stream": "Avvia automaticamente lo streaming al clic",
+          "fix_binary_sensor_state": "Correggi gli stati del sensore binario (da Vero/Falso a On/Off)",
+          "map_extra_alarm_modes": "Mappa le modalità di guardia personalizzate in Bypass, Night e Vacation (in ordine)",
+          "name_for_custom1": "Sostituisci il nome per la modalità di protezione Personalizzata1",
+          "name_for_custom2": "Sostituisci il nome per la modalità di protezione Personalizzata2",
+          "name_for_custom3": "Sostituisci il nome per la modalità di protezione Personalizzata3",
+          "generate_ffmpeg_logs": "Genera log FFMPEG"
+        }
+      }
+    }
+  }
+}

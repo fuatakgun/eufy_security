@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Eufy Security: Configuration",
+        "description": "Entrez l'adresse IP et le port de l'instance Eufy Security Web Socket",
+        "data": {
+          "host": "Adresse IP de l'hôte (par exemple 192.168.178.22)",
+          "port": "Port (par exemple 3000)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Eufy Sécurité: Captcha",
+        "description": "{captcha_image}",
+        "data": {
+          "captcha": "Captcha"
+        }
+      }
+    },
+    "error": {
+      "auth": "L'hôte/le port est incorrect."
+    },
+    "abort": {
+      "single_instance_allowed": "Une seule instance est autorisée."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Eufy Security: Configuration",
+        "data": {
+          "sync_interval": "Cloud Scan Intervalle en secondes [1 à 9999]",
+          "use_rtsp_server_addon": "Utiliser le module complémentaire RTSP (P2P)",
+          "rtsp_server_address": "Adresse IP de l'hôte pour le module complémentaire RTSP (P2P)",
+          "rtsp_server_port": "Port TCP pour module complémentaire RTSP (P2P)",
+          "ffmpeg_analyze_duration": "Durée de l'analyse vidéo en secondes [1 à 5] (P2P)",
+          "auto_start_stream": "Démarrage automatique du flux au clic",
+          "fix_binary_sensor_state": "Corriger les états binaires des capteurs (vrai/faux à activé/désactivé)",
+          "map_extra_alarm_modes": "Mapper les modes de garde personnalisés en contournement, nuit et vacances (dans l'ordre)",
+          "name_for_custom1": "Remplacer le nom pour le mode de garde Personnalisé1",
+          "name_for_custom2": "Remplacer le nom pour le mode de garde Personnalisé2",
+          "name_for_custom3": "Remplacer le nom pour le mode de garde Personnalisé3",
+          "generate_ffmpeg_logs": "Générer des journaux FFMPEG"
+        }
+      }
+    }
+  }
+}
