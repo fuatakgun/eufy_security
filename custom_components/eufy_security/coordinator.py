@@ -403,7 +403,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             device.set_property(property_name, value)
         except Exception as ex:
             _LOGGER.error(
-                f"{DOMAIN} - Event received but device is missing, maybe not connected"
+                f"{DOMAIN} - Event received but device is missing, maybe not connected - {ex}"
             )
         _LOGGER.debug(
             f"{DOMAIN} - set_event_for_entity - {source} / {serial_number} / {property_name} / {value}"

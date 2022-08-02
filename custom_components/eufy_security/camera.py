@@ -350,9 +350,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             _LOGGER.debug(f"{DOMAIN} {self.name} - set_is_streaming - some streaming")
             if self.device.is_rtsp_streaming is True:
                 self.device.stream_source_type = STREAMING_SOURCE_RTSP
-                self.device.stream_source_address = self.device.properties[
-                    "rtspStreamUrl"
-                ]
+                self.device.stream_source_address = self.device.state["rtspStreamUrl"]
                 self.device.is_streaming = True
                 _LOGGER.debug(
                     f"{DOMAIN} {self.name} - set_is_streaming - is_rtsp_streaming"
@@ -545,7 +543,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         await self.coordinator.async_set_ptz(self.device.serial_number, PTZ.RIGHT.value)
 
     async def async_ptz_rotate_360(self) -> None:
-        await self.coordinator.async_set_ptz(self.device.serial_number, PTZ.ROTATE360.value)
+        await self.coordinator.async_set_ptz(
+            self.device.serial_number, PTZ.ROTATE360.value
+        )
 
     async def async_get_rtsp_livestream_status(self) -> None:
         await self.coordinator.async_get_rtsp_livestream_status(

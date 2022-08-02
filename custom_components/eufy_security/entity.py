@@ -61,7 +61,6 @@ class EufySecurityEntity(CoordinatorEntity):
                 "type": self.device.type,
                 "category": self.device.category,
                 "state": self.device.state,
-                "properties": self.device.properties,
                 "properties_metadata": self.device.properties_metadata,
             }
 

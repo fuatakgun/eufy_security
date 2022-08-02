@@ -424,11 +424,13 @@ class Device:
         self.set_global_motion_sensor()
 
     def set_properties(self, properties: dict):
-        self.properties = properties
-        self.type_raw = get_child_value(self.properties, "type")
+        self.state.update(properties)
+
+        self.type_raw = get_child_value(self.state, "type")
         type = DEVICE_TYPE(self.type_raw)
         self.type = str(type)
         self.category = DEVICE_CATEGORY.get(type, "UNKNOWN")
+        self.properties = {}
 
     def set_properties_metadata(self, properties_metadata: dict):
         self.properties_metadata = properties_metadata
@@ -486,11 +488,7 @@ class Device:
         self.callback = callback
 
     def set_property(self, property_name, value):
-        if self.state.get(property_name, None) is not None:
-            self.state[property_name] = value
-
-        if self.properties.get(property_name, None) is not None:
-            self.properties[property_name] = value
+        self.state[property_name] = value
 
         self.set_global_motion_sensor()
         if property_name in STREAMING_EVENT_NAMES:
