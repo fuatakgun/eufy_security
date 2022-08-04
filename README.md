@@ -58,13 +58,23 @@ Moreover, if you are having issues related to home base states, please double ch
 - If you are located in EU, use my account: `fuatakgun@gmail.com`
 - If you are located in US, use shared test account: `eufydeveloper@gmail.com`
 
-6- If you have any other issue, please create it an issue on github repository, give information about your home assistant hardware, camera model, streaming type (rtsp or p2p), steps required to generate the issue. Enable excessive logging and share your logs from integration and related add ons.
+7- Locks state is not updating.
+
+The integration depends on push notifications.  Ensure you have the "Eufy Security Add-On" running in Home Assistant (HA) under an account specifically for HA.  Then using your primary Eufy account from your mobile devices' 'Eufy Security app', enable all notifications.
+
+You should now see the locked state update consistently regardless of what initiated the lock device (HA, mobile app, or manually)
+
+8- If you have any other issue, please create it an issue on github repository, give information about your home assistant hardware, camera model, streaming type (rtsp or p2p), steps required to generate the issue. Enable excessive logging and share your logs from integration and related add ons.
+
+Note: TODO - which integrations specifically will take this logger @fuatakgun?  It doesn't work for "Eufy Security Add-On"
 
 ```
 logger:
   logs:
     custom_components.eufy_security: debug
 ```
+
+
 
 # 6. Installation
 ***Warning, there is an existing integration (https://github.com/nonsleepr/ha-eufy-security) and I have used the same internal name with this integration, unintentinally. You can not keep both integrations and trying to install might cause issues. You can backup old one if you want to test this, just rename `custom_components/eufy_security` into something else (eg `eufy_security_nonsleepr`)***
@@ -90,6 +100,8 @@ Please follow screenshots below. In summary;
 ![3-add-on-visible](https://user-images.githubusercontent.com/11085566/126563911-ec5e0e52-312b-4e65-a25b-54a02a348752.PNG)
 
 4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and **country code (2 letter)**, save the configs and start the add-on. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
+
+Note: EVENT_DURATION_SECONDS - please explain what it is/does and why 10 seconds is the default?  @fuatakgun
 
 ![4-add-on-configure](https://user-images.githubusercontent.com/11085566/126563919-273e413b-f2ac-49c4-8342-dfd5c5887ccf.PNG)
 
