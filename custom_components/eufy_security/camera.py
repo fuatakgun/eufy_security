@@ -153,7 +153,6 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         EufySecurityEntity.__init__(self, coordinator, config_entry, device)
 
         self.device.set_streaming_status_callback(self.set_is_streaming)
-        self._attr_frontend_stream_type = STREAM_TYPE_HLS
         self._attr_supported_features = CameraEntityFeature.STREAM
         self._attr_name = self.device.name
         self._attr_id = f"{DOMAIN}_{self.device.serial_number}_camera"
