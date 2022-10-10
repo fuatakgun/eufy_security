@@ -196,8 +196,6 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         for device in self.devices.values():
             await self.async_get_properties_for_device(device.serial_number)
             await self.async_get_properties_metadata_for_device(device.serial_number)
-            if device.is_doorbell() is True:
-                await self.async_get_device_voices(device.serial_number)
 
         for station in self.stations.values():
             await self.async_get_properties_for_station(station.serial_number)
@@ -261,6 +259,8 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         if device.is_camera() is True:
             await self.async_get_p2p_livestream_status(device.serial_number)
             await self.async_get_rtsp_livestream_status(device.serial_number)
+        if device.is_doorbell() is True:
+            await self.async_get_device_voices(device.serial_number)
 
     async def process_get_device_properties_metadata_response(
         self, serial_number, properties_metadata: dict
