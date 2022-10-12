@@ -3,9 +3,9 @@
     "step": {
       "user": {
         "title": "Eufy Security: Instellen",
-        "description": "Voer het ip adres en de port van de Eufy Security Web Socket-instantie in",
+        "description": "Voer het IP adres en de poort van de Eufy Security Web Socket-instantie in",
         "data": {
-          "host": "Host IP Address (bijv. 192.168.178.22)",
+          "host": "Host IP adres (bijv. 192.168.178.22)",
           "port": "Poort (bijv. 3000)"
         }
       },
