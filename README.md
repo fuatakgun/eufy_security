@@ -75,6 +75,46 @@ Please follow screenshots below. In summary;
 - When you are done with HASS Add On, you will install integration via HACS, downloading files over UI, restarting home assistant and setting up integration.
 - Double check if your `configuration.yaml` includes `ffmpeg` integration. If not, please do like this; https://www.home-assistant.io/integrations/ffmpeg/#configuration . This integration relies on `ffmpeg` to be setup to live stream via P2P and capture images from live RTSP/P2P streams.
 
+***docker compose.yaml example***
+```
+version: '3'
+services:
+  eufysecurityws:
+    image: bropat/eufy-security-ws:X.Y.Z #To find out correct values for X.Y.Z, please check here https://github.com/fuatakgun/eufy_security_addon/blob/main/config.json#L3
+    container_name: eufy-security-ws
+    hostname: eufy-security-ws
+    environment:
+      - TZ=Europe/Amsterdam
+      - USERNAME=                               #Eufy Account Username (required)
+      - PASSWORD=                               #Eufy Account Password (required)
+      #- COUNTRY=                               #ISO 3166-1 Alpha-2 country code (default: US)
+      #- EVENT_DURATION_SECONDS=                #Duration in seconds before an event is reset E.g. motion event (default: 10 sec.)
+      #- LANGUAGE=                              #LANGUAGE 	ISO 639 language code (default: en)
+      #- P2P_CONNECTION_SETUP=                  #P2P connection setup (default: 2 ; Quickest connection)
+      #- POLLING_INTERVAL_MINUTES=              #Polling intervall for data refresh from Eufy Cloud (default: 10 min.)
+      #- TRUSTED_DEVICE_NAME=                   #Label of the trusted devices (viewable with 2fa activated in Eufy App; default: eufyclient)
+      #- ACCEPT_INVITATIONS=                    #Automatically accept device invitations (default: false)
+      #- DEBUG=set                              #When the variable is set, debug mode is activated (default: unset)
+    volumes:
+      - /UPDATEPATH:/data:rw
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    
+  rtsp-simple-server:
+    image: aler9/rtsp-simple-server:latest
+    container_name: rtsp-simple-server
+    hostname: rtsp-simple-server
+    environment:
+      - TZ=Europe/Amsterdam
+      - RTSP_PROTOCOLS=tcp
+    ports:
+      - 8554:8554
+      - 1935:1935
+    restart: unless-stopped
+
+```
+
 ## 6.1 Installing Eufy Security Add On - Required
 1- Go to Add-On Store page and select `Repositories`
 
