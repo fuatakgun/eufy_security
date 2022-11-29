@@ -87,11 +87,21 @@ Please follow screenshots below. In summary;
 
 3- Confirm that you can see `Eufy Security WS Addon`
 
-![3-add-on-visible](https://user-images.githubusercontent.com/11085566/126563911-ec5e0e52-312b-4e65-a25b-54a02a348752.PNG)
+![3-add-on-visible](https://user-images.githubusercontent.com/35895513/204499094-00384e20-2013-4359-8b74-65b16a2bbce1.png)
 
-4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and **country code (2 letter)**, save the configs and start the add-on. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
 
-![4-add-on-configure](https://user-images.githubusercontent.com/11085566/126563919-273e413b-f2ac-49c4-8342-dfd5c5887ccf.PNG)
+4- Click on `Eufy Security Add-on`, install add-on and switch to `Configuration` page, fill this informations:
+
+        1- Username: (use the one created in earlier on section 3-1)
+        2- Password: password (use the one created in earlier on section 3-1)
+        3- Country code (**2 letters**) (Example: US, FR, CN, ... )
+        4- Event Duration (Seconds): 10 (DEFAULT)
+        5- Trusted Device Name: Put anything here (Ex: HomeAssistant) (since Home Assistant 2022.11.x it's now needed you can reffer to issues:   [#551](https://github.com/fuatakgun/eufy_security/issues/551) #[525](https://github.com/fuatakgun/eufy_security/issues/525) )
+
+Save the configs and start the add-on. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
+
+![4-add-on-configure](https://user-images.githubusercontent.com/35895513/204500301-d5127b0b-16b8-47d6-a72f-6c0200927024.png)
+
 
 5-Validate that you are connected checking logs page.
 
