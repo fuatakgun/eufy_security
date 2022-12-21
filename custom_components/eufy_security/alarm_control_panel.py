@@ -222,10 +222,10 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
 
     @property
     def state(self):
-        if not self.device.state.get("alarmEvent", None) is None:
+        if self.device.state.get("alarmEvent", None) is not None:
             self.device.state["alarmEvent"] = None
             return STATE_ALARM_TRIGGERED
-        if not self.device.state.get("alarmDelayEvent", None) is None:
+        if self.device.state.get("alarmDelayEvent", None) is not None:
             self.device.state["alarmDelayEvent"] = None
             return STATE_ALARM_DELAYED
         current_mode = self.device.state.get("currentMode")
