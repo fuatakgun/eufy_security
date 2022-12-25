@@ -323,6 +323,10 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         if self.ffmpeg.is_running is True:
             self.stop_ffmpeg()
         self.empty_queue_counter = 0
+        
+    @property
+    def available(self) -> bool:
+        return True
 
     @property
     def state(self) -> str:
