@@ -3,7 +3,7 @@ import logging
 from queue import Queue
 import threading
 
-from .const import MessageField, StreamProvider, StreamStatus
+from .const import MessageField, StreamProvider, StreamStatus, PTZCommand
 from .event import Event
 from .exceptions import CameraRTSPStreamNotEnabled, CameraRTSPStreamNotSupported
 from .p2p_stream_handler import P2PStreamHandler
@@ -133,3 +133,23 @@ class Camera(Device):
             url = url.replace("{server_port}", str(self.config.rtsp_server_port))
             self.stream_url = url
         _LOGGER.debug(f"url - {self.stream_provider} - {self.stream_url}")
+
+    async def ptz_up(self):
+        """Look up"""
+        await self.api.pan_and_tilt(self, PTZCommand.UP.value)
+
+    async def ptz_down(self):
+        """Look down"""
+        await self.api.pan_and_tilt(self, PTZCommand.DOWN.value)
+
+    async def ptz_left(self):
+        """Look left"""
+        await self.api.pan_and_tilt(self, PTZCommand.LEFT.value)
+
+    async def ptz_right(self):
+        """Look right"""
+        await self.api.pan_and_tilt(self, PTZCommand.RIGHT.value)
+
+    async def ptz_360(self):
+        """Look around 360 degrees"""
+        await self.api.pan_and_tilt(self, PTZCommand.ROTATE360.value)

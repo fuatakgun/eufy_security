@@ -116,6 +116,14 @@ class ApiClient:
             response[serial_no] = product
         return response
 
+    async def pan_and_tilt(self, product: Product, direction: int):
+        """Process start pan tilt rotate zoom"""
+        command_type = OutgoingMessageType.pan_and_tilt
+        command = product.product_type.name + "." + command_type.name
+        await self._send_message_get_response(
+            OutgoingMessage(command_type, command=command, serial_no=product.serial_no, direction=direction)
+        )
+
     async def start_rtsp_livestream(self, product: Product):
         """Process start rtsp livestream call"""
         command_type = OutgoingMessageType.start_rtsp_livestream

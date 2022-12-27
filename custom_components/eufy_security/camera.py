@@ -45,11 +45,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("stop_p2p_livestream", {}, "stop_p2p_livestream")
     platform.async_register_entity_service("start_rtsp_livestream", {}, "start_rtsp_livestream")
     platform.async_register_entity_service("stop_rtsp_livestream", {}, "stop_rtsp_livestream")
-    # platform.async_register_entity_service("ptz_up", {}, "async_ptz_up")
-    # platform.async_register_entity_service("ptz_down", {}, "async_ptz_down")
-    # platform.async_register_entity_service("ptz_left", {}, "async_ptz_left")
-    # platform.async_register_entity_service("ptz_right", {}, "async_ptz_right")
-    # platform.async_register_entity_service("ptz_360", {}, "async_ptz_right")
+    platform.async_register_entity_service("ptz_up", {}, "_async_ptz_up")
+    platform.async_register_entity_service("ptz_down", {}, "_async_ptz_down")
+    platform.async_register_entity_service("ptz_left", {}, "_async_ptz_left")
+    platform.async_register_entity_service("ptz_right", {}, "_async_ptz_right")
+    platform.async_register_entity_service("ptz_360", {}, "_async_ptz_360")
     platform.async_register_entity_service("trigger_alarm", {}, "async_alarm_trigger")
     platform.async_register_entity_service("reset_alarm", {}, "async_reset_alarm")
     # platform.async_register_entity_service("quick_response", QUICK_RESPONSE_SCHEMA, "async_quick_response")
@@ -160,3 +160,18 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             await self.stop_rtsp_livestream()
         else:
             await self.stop_p2p_livestream()
+
+    async def _async_ptz_up(self) -> None:
+        await self.product.ptz_up()
+
+    async def _async_ptz_down(self) -> None:
+        await self.product.ptz_down()
+
+    async def _async_ptz_left(self) -> None:
+        await self.product.ptz_left()
+
+    async def _async_ptz_right(self) -> None:
+        await self.product.ptz_right()
+
+    async def _async_ptz_360(self) -> None:
+        await self.product.ptz_360()

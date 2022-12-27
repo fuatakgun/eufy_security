@@ -163,13 +163,3 @@ class CurrentModeToStateValue(Enum):
     DISARMED = STATE_ALARM_DISARMED
     TRIGGERED = STATE_ALARM_TRIGGERED
     ALARM_DELAYED = "Alarm delayed"
-
-
-class PTZCommand(Enum):
-    """Pan Tilt Zoom Camera Commands"""
-
-    ROTATE360 = 0
-    LEFT = 1
-    RIGHT = 2
-    UP = 3
-    DOWN = 4

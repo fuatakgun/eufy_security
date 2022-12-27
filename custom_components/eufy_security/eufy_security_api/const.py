@@ -63,6 +63,7 @@ class MessageField(Enum):
 
     # camera specific
     PICTURE_URL = "pictureUrl"
+    DIRECTION = "direction"
 
 
 class OutgoingMessageToParameter(Enum):
@@ -75,6 +76,7 @@ class OutgoingMessageToParameter(Enum):
     seconds = "seconds"
     captchaId = "captcha_id"
     captcha = "captcha_input"
+    direction = "direction"
 
 
 class OutgoingMessageType(Enum):
@@ -97,23 +99,16 @@ class OutgoingMessageType(Enum):
         MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
         MessageField.SECONDS.value: MessageField.BIND_AT_RUNTIME,
     }
+    pan_and_tilt = {
+        MessageField.COMMAND.value: auto(),
+        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
+        MessageField.DIRECTION.value: MessageField.BIND_AT_RUNTIME,
+    }
     reset_alarm = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    start_rtsp_livestream = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-    }
-    stop_rtsp_livestream = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-    }
-    start_livestream = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-    }
-    stop_livestream = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-    }
+    start_rtsp_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
+    stop_rtsp_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
+    start_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
+    stop_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
     set_captcha = {
         MessageField.COMMAND.value: auto(),
         MessageField.CAPTCHA_ID.value: MessageField.BIND_AT_RUNTIME,
@@ -174,3 +169,13 @@ class StreamProvider(Enum):
 
     RTSP = "{rtsp_stream_url}"  # replace with rtsp url from device
     P2P = "rtsp://{server_address}:{server_port}/{serial_no}"  # replace with stream name
+
+
+class PTZCommand(Enum):
+    """Pan Tilt Zoom Camera Commands"""
+
+    ROTATE360 = 0
+    LEFT = 1
+    RIGHT = 2
+    UP = 3
+    DOWN = 4
