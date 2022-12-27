@@ -1,3 +1,55 @@
+force_sync:
+  name: Force Sync
+  description: Pull latest data from cloud and update internal state
+
+ptz_360:
+  name: Rotate 360 degrees
+  description: Rotate 360 degrees for supported PTZ cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+
+ptz_down:
+  name: Look down
+  description: Look down for supported PTZ cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+
+ptz_up:
+  name: Look up
+  description: Look up for supported PTZ cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+
+ptz_right:
+  name: Look right
+  description: Look right for supported PTZ cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+
+ptz_left:
+  name: Look left
+  description: Look left for supported PTZ cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+
+reset_alarm:
+  name: Reset Alarm for Alarm Panel
+  description: Reset Alarm for Alarm Panel
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
 send_message:
   name: Send Message
   description: Send a JSON message to Web Socket
@@ -8,12 +60,7 @@ send_message:
       required: true
       selector:
         text:
-force_sync:
-  name: Force Sync
-  description: Pull latest data from cloud and update internal state
-driver_connect:
-  name: Connect To Driver
-  description: Connect to Add-On Driver
+
 start_p2p_livestream:
   name: Start Live Stream over P2P
   description: Send start live stream command to camera
@@ -21,27 +68,7 @@ start_p2p_livestream:
     entity:
       domain: camera
       integration: eufy_security
-start_livestream:
-  name: Start Live Stream over P2P - to be deprecated!!!
-  description: Send start live stream command to camera - to be deprecated!!!
-  target:
-    entity:
-      domain: camera
-      integration: eufy_security
-stop_p2p_livestream:
-  name: Stop Live Stream over P2P
-  description: Send stop live stream command to camera
-  target:
-    entity:
-      domain: camera
-      integration: eufy_security
-stop_livestream:
-  name: Stop Live Stream over P2P - to be deprecated!!!
-  description: Send stop live stream command to camera - to be deprecated!!!
-  target:
-    entity:
-      domain: camera
-      integration: eufy_security
+
 start_rtsp_livestream:
   name: Start Live Stream over RTSP
   description: Send start live stream command to camera
@@ -49,6 +76,15 @@ start_rtsp_livestream:
     entity:
       domain: camera
       integration: eufy_security
+
+stop_p2p_livestream:
+  name: Stop Live Stream over P2P
+  description: Send stop live stream command to camera
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+
 stop_rtsp_livestream:
   name: Stop Live Stream over RTSP
   description: Send stop live stream command to camera
@@ -56,146 +92,11 @@ stop_rtsp_livestream:
     entity:
       domain: camera
       integration: eufy_security
-enable_rtsp:
-  name: Enable RTSP Configuration (not real stream)
-  description: Enable RTSP Configuration
+
+trigger_alarm:
+  name: Trigger Alarm for Camera
+  description: Trigger Alarm for Camera
   target:
     entity:
       domain: camera
       integration: eufy_security
-disable_rtsp:
-  name: Disable RTSP Configuration (not real stream)
-  description: Disable RTSP Configuration
-  target:
-    entity:
-      domain: camera
-      integration: eufy_security
-enable:
-  name: Enable
-  description: Enable a device or station
-  target:
-    entity:
-      domain: camera
-      integration: eufy_security
-disable:
-  name: Disable
-  description: Disable a device or station
-  target:
-    entity:
-      domain: camera
-      integration: eufy_security
-alarm_guard_schedule:
-  name: Change Mode to Schedule
-  description: Change Mode to Schedule
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-alarm_guard_geo:
-  name: Change Mode to Geo-Fencing
-  description: Change Mode to Geo-Fencing
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-alarm_off:
-  name: Change Mode to Off
-  description: Change Mode to Off
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-alarm_arm_custom1:
-  name: Change Mode to Custom 1
-  description: Change Mode to Custom 1
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-alarm_arm_custom2:
-  name: Change Mode to Custom 2
-  description: Change Mode to Custom 2
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-alarm_arm_custom3:
-  name: Change Mode to Custom 3
-  description: Change Mode to Custom 3
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-alarm_trigger_with_duration:
-  name: Trigger Alarm for a given duration (seconds)
-  description: Trigger Alarm for a given duration (seconds)
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-  fields:
-    duration:
-      name: Duration
-      description: Duration (in seconds)
-      required: true
-      example: 10
-      default: 10
-      selector:
-        number:
-          min: 1
-          max: 2147483648
-          step: 1
-          unit_of_measurement: seconds
-reset_alarm:
-  name: Reset Alarm for Panel
-  description: Enable
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-alarm_trigger_for_camera_with_duration:
-  name: Trigger Camera Alarm for a given duration (seconds)
-  description: Trigger Camera Alarm for a given duration (seconds)
-  target:
-    entity:
-      domain: camera
-      integration: eufy_security
-  fields:
-    duration:
-      name: Duration
-      description: Duration (in seconds)
-      required: true
-      example: 10
-      default: 10
-      selector:
-        number:
-          min: 1
-          max: 2147483648
-          step: 1
-          unit_of_measurement: seconds
-reset_alarm_for_camera:
-  name: Reset Alarm for Camera
-  description: Enable
-  target:
-    entity:
-      domain: camera
-      integration: eufy_security
-quick_response:
-  name: Quick Response
-  description: Play Quick Response
-  target:
-    entity:
-      domain: camera
-      integration: eufy_security
-  fields:
-    voice_id:
-      name: Voice ID
-      description: Quick Response Voice ID
-      required: true
-      example: 3
-      selector:
-        number:
-          min: 1
-          max: 2147483648
-          step: 1
-          mode: box

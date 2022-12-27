@@ -51,8 +51,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("ptz_left", {}, "_async_ptz_left")
     platform.async_register_entity_service("ptz_right", {}, "_async_ptz_right")
     platform.async_register_entity_service("ptz_360", {}, "_async_ptz_360")
-    platform.async_register_entity_service("trigger_alarm", {}, "async_alarm_trigger")
-    platform.async_register_entity_service("reset_alarm", {}, "async_reset_alarm")
+    platform.async_register_entity_service("trigger_alarm", {}, "_async_alarm_trigger")
+    platform.async_register_entity_service("reset_alarm", {}, "_async_reset_alarm")
     # platform.async_register_entity_service("quick_response", QUICK_RESPONSE_SCHEMA, "async_quick_response")
 
 
