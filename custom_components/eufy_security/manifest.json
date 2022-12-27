@@ -3,7 +3,7 @@
   "name": "Eufy Security",
   "documentation": "https://github.com/fuatakgun/eufy_security",
   "issue_tracker": "https://github.com/fuatakgun/eufy_security/issues",
-  "dependencies": ["ffmpeg", "http"],
+  "dependencies": ["ffmpeg", "stream"],
   "config_flow": true,
   "version": "5.0.2",
   "codeowners": ["@fuatakgun"],

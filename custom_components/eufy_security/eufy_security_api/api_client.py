@@ -56,9 +56,12 @@ class ApiClient:
         self.captcha_future: asyncio.Future[dict] = self.get_new_future()
         self.mfa_future: asyncio.Future[dict] = self.get_new_future()
 
+    async def ws_connect(self):
+        await self.client.connect()
+
     async def connect(self):
         """Set up web socket connection and set products"""
-        await self.client.connect()
+        await self.ws_connect()
         await self._set_schema(SCHEMA_VERSION)
         await self._set_products()
 
