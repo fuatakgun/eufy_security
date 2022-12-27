@@ -12,6 +12,8 @@ from .const import DOMAIN
 from .eufy_security_api.api_client import ApiClient
 from .eufy_security_api.exceptions import (
     CaptchaRequiredException,
+    DriverNotConnectedError,
+    MultiFactorCodeRequiredException,
     WebSocketConnectionError,
 )
 from .model import Config
@@ -38,9 +40,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         except CaptchaRequiredException as exc:
             self.config.captcha_id = exc.captcha_id
             self.config.captcha_img = exc.captcha_img
-            raise ConfigEntryAuthFailed(
-                "Warning: Captcha required - Go to Configurations page and enter captcha code for Eufy Security Integration"
-            ) from exc
+            raise ConfigEntryAuthFailed() from exc
+        except MultiFactorCodeRequiredException as exc:
+            self.config.mfa_required = True
+            raise ConfigEntryAuthFailed() from exc
+        except DriverNotConnectedError as exc:
+            raise ConfigEntryNotReady() from exc
         except WebSocketConnectionError as exc:
             raise ConfigEntryNotReady() from exc
 

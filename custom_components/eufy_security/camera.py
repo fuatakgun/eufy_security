@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from haffmpeg.camera import CameraMjpeg
@@ -41,10 +42,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     # register entity level services
     platform = entity_platform.async_get_current_platform()
-    platform.async_register_entity_service("start_p2p_livestream", {}, "start_p2p_livestream")
-    platform.async_register_entity_service("stop_p2p_livestream", {}, "stop_p2p_livestream")
-    platform.async_register_entity_service("start_rtsp_livestream", {}, "start_rtsp_livestream")
-    platform.async_register_entity_service("stop_rtsp_livestream", {}, "stop_rtsp_livestream")
+    platform.async_register_entity_service("start_p2p_livestream", {}, "_start_p2p_livestream")
+    platform.async_register_entity_service("stop_p2p_livestream", {}, "_stop_p2p_livestream")
+    platform.async_register_entity_service("start_rtsp_livestream", {}, "_start_rtsp_livestream")
+    platform.async_register_entity_service("stop_rtsp_livestream", {}, "_stop_rtsp_livestream")
     platform.async_register_entity_service("ptz_up", {}, "_async_ptz_up")
     platform.async_register_entity_service("ptz_down", {}, "_async_ptz_down")
     platform.async_register_entity_service("ptz_left", {}, "_async_ptz_left")
@@ -63,7 +64,6 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         EufySecurityEntity.__init__(self, coordinator, metadata)
         self._attr_supported_features = CameraEntityFeature.STREAM
         self._attr_name = f"{self.product.name}"
-        self._attr_frontend_stream_type = StreamType.HLS
 
         # camera image
         self._last_url = None
@@ -91,10 +91,16 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def _start_streaming(self):
         await wait_for_value_to_equal(self.product.__dict__, "stream_status", StreamStatus.STREAMING)
+        await asyncio.sleep(3)
         await self.async_create_stream()
-        self.stream.add_provider("hls")
         await self.stream.start()
+        asyncio.ensure_future(self._check_stream_availability())
         await self.async_camera_image()
+
+    async def _check_stream_availability(self):
+        if self.is_streaming is True and self.stream is not None and self.stream.available is False:
+            await self.async_turn_off()
+            # await self._stop_streaming()
 
     async def _stop_streaming(self):
         if self.stream is not None:
@@ -106,29 +112,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         """Return true if the device is recording."""
         return self.product.stream_status == StreamStatus.STREAMING
 
-    async def start_p2p_livestream(self) -> None:
-        """start byte based livestream on camera"""
-        await self.product.start_p2p_livestream(CameraMjpeg(self.ffmpeg.binary))
-        await self._start_streaming()
-
-    async def stop_p2p_livestream(self) -> None:
-        """stop byte based livestream on camera"""
-        await self._stop_streaming()
-        await self.product.stop_p2p_livestream()
-
-    async def start_rtsp_livestream(self) -> None:
-        """start rtsp based livestream on camera"""
-        await self.product.start_rtsp_livestream()
-        await self._start_streaming()
-
-    async def stop_rtsp_livestream(self) -> None:
-        """stop rtsp based livestream on camera"""
-        await self._stop_streaming()
-        await self.product.stop_rtsp_livestream()
-
     async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
         if self.is_streaming is True and self.stream is not None:
-            self._last_image = await self.stream.async_get_image()
+            self._last_image = await self.stream.async_get_image(width, height)
             self._last_url = None
         else:
             current_url = get_child_value(self.product.properties, self.metadata.name)
@@ -139,27 +125,47 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
                         self._last_url = current_url
         return self._last_image
 
-    async def async_alarm_trigger(self, code: str | None = None) -> None:
+    async def _start_p2p_livestream(self) -> None:
+        """start byte based livestream on camera"""
+        await self.product.start_p2p_livestream(CameraMjpeg(self.ffmpeg.binary))
+        await self._start_streaming()
+
+    async def _stop_p2p_livestream(self) -> None:
+        """stop byte based livestream on camera"""
+        await self._stop_streaming()
+        await self.product.stop_p2p_livestream()
+
+    async def _start_rtsp_livestream(self) -> None:
+        """start rtsp based livestream on camera"""
+        await self.product.start_rtsp_livestream()
+        await self._start_streaming()
+
+    async def _stop_rtsp_livestream(self) -> None:
+        """stop rtsp based livestream on camera"""
+        await self._stop_streaming()
+        await self.product.stop_rtsp_livestream()
+
+    async def _async_alarm_trigger(self, code: str | None = None) -> None:
         """trigger alarm for a duration on camera"""
         await self.product.trigger_alarm(self.metadata)
 
-    async def async_reset_alarm(self) -> None:
+    async def _async_reset_alarm(self) -> None:
         """reset ongoing alarm"""
         await self.product.reset_alarm(self.metadata)
 
     async def async_turn_on(self) -> None:
         """Turn off camera."""
         if self.product.stream_provider == StreamProvider.RTSP:
-            await self.start_rtsp_livestream()
+            await self._start_rtsp_livestream()
         else:
-            await self.start_p2p_livestream()
+            await self._start_p2p_livestream()
 
     async def async_turn_off(self) -> None:
         """Turn off camera."""
         if self.product.stream_provider == StreamProvider.RTSP:
-            await self.stop_rtsp_livestream()
+            await self._stop_rtsp_livestream()
         else:
-            await self.stop_p2p_livestream()
+            await self._stop_p2p_livestream()
 
     async def _async_ptz_up(self) -> None:
         await self.product.ptz_up()

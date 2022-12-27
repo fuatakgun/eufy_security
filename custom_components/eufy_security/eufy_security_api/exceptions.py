@@ -12,6 +12,10 @@ class WebSocketConnectionError(BaseEufySecurityException):
     """Websocket connection exception"""
 
 
+class DriverNotConnectedError(BaseEufySecurityException):
+    """Driver connection exception"""
+
+
 class FailedCommandException(BaseEufySecurityException):
     """Failed command exception."""
 
@@ -67,9 +71,16 @@ class CaptchaRequiredException(BaseEufySecurityException):
     """Captcha information required"""
 
     def __init__(self, captcha_id: str, captcha_img: str) -> None:
-        super().__init__("Captcha required, please revalidate on Integrations page")
+        super().__init__("Captcha code is required, please revalidate on Integrations page")
         self.captcha_id = captcha_id
         self.captcha_img = captcha_img
+
+
+class MultiFactorCodeRequiredException(BaseEufySecurityException):
+    """Multi factor code required"""
+
+    def __init__(self) -> None:
+        super().__init__("Multi factor code is required, please revalidate on Integrations page")
 
 
 class DeviceNotInitializedYetException(BaseEufySecurityException):

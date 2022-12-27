@@ -25,8 +25,10 @@ from .event import Event
 from .exceptions import (
     CaptchaRequiredException,
     DeviceNotInitializedYetException,
+    DriverNotConnectedError,
     FailedCommandException,
     IncompatibleVersionException,
+    MultiFactorCodeRequiredException,
     UnexpectedMessageTypeException,
     UnknownEventSourceException,
     WebSocketConnectionErrorException,
@@ -51,7 +53,8 @@ class ApiClient:
         self.result_futures: dict[str, asyncio.Future] = {}
         self.devices: dict = None
         self.stations: dict = None
-        self.captcha_future: asyncio.Future[dict] = self.loop.create_future()
+        self.captcha_future: asyncio.Future[dict] = self.get_new_future()
+        self.mfa_future: asyncio.Future[dict] = self.get_new_future()
 
     async def connect(self):
         """Set up web socket connection and set products"""
@@ -65,6 +68,15 @@ class ApiClient:
         await asyncio.sleep(10)
         await self._set_products()
 
+    async def set_mfa_and_connect(self, mfa_input: str):
+        """Set captcha set products"""
+        await self._set_mfa_code(mfa_input)
+        await asyncio.sleep(10)
+        await self._set_products()
+
+    def get_new_future(self):
+        return self.loop.create_future()
+
     async def _set_captcha(self, captcha_id: str, captcha_input: str) -> None:
         command_type = OutgoingMessageType.set_captcha
         command = EventSourceType.driver.name + "." + command_type.name
@@ -72,14 +84,14 @@ class ApiClient:
             OutgoingMessage(command_type, command=command, captcha_id=captcha_id, captcha_input=captcha_input)
         )
 
-    async def disconnect(self):
-        """Disconnect the web socket and destroy it"""
-        await self.client.disconnect()
-
-    async def poll_refresh(self) -> None:
-        """Poll cloud data for latest changes"""
-        command_type = OutgoingMessageType.poll_refresh
+    async def _set_mfa_code(self, mfa_input: str) -> None:
+        command_type = OutgoingMessageType.set_verify_code
         command = EventSourceType.driver.name + "." + command_type.name
+        await self._send_message_get_response(OutgoingMessage(command_type, command=command, verify_code=mfa_input))
+
+    async def _connect_driver(self) -> None:
+        command_type = OutgoingMessageType.driver_connect
+        command = EventSourceType.driver.name + "." + "connect"
         await self._send_message_get_response(OutgoingMessage(command_type, command=command))
 
     async def _set_schema(self, schema_version: int) -> None:
@@ -88,8 +100,22 @@ class ApiClient:
     async def _set_products(self) -> None:
         result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_listening))
         if result[MessageField.STATE.value][EventSourceType.driver.name][MessageField.CONNECTED.value] is False:
-            event = await self.captcha_future
-            raise CaptchaRequiredException(event.data[MessageField.CAPTCHA_ID.value], event.data[MessageField.CAPTCHA_IMG.value])
+            try:
+                await asyncio.wait_for(self.captcha_future, timeout=5)
+                event = self.captcha_future.result()
+                raise CaptchaRequiredException(event.data[MessageField.CAPTCHA_ID.value], event.data[MessageField.CAPTCHA_IMG.value])
+            except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError):
+                pass
+
+            # driver is not connected and there is no captcha event, so it is probably mfa
+            # reconnect driver to get mfa event
+            try:
+                await asyncio.wait_for(self.mfa_future, timeout=5)
+                event = self.mfa_future.result()
+                raise MultiFactorCodeRequiredException()
+            except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError):
+                await self._connect_driver()
+                raise DriverNotConnectedError() from exc
 
         self.devices = await self._get_product(ProductType.device, result[MessageField.STATE.value]["devices"])
         self.stations = await self._get_product(ProductType.station, result[MessageField.STATE.value]["stations"])
@@ -236,6 +262,8 @@ class ApiClient:
         """Process driver level events"""
         if event.type == EventNameToHandler.captcha_request.value:
             self.captcha_future.set_result(event)
+        if event.type == EventNameToHandler.verify_code.value:
+            self.mfa_future.set_result(event)
 
     async def _on_open(self) -> None:
         _LOGGER.debug("on_open - executed")
@@ -260,3 +288,13 @@ class ApiClient:
         """send message to websocket api"""
         _LOGGER.debug(f"send_message - {message}")
         await self.client.send_message(json.dumps(message))
+
+    async def poll_refresh(self) -> None:
+        """Poll cloud data for latest changes"""
+        command_type = OutgoingMessageType.poll_refresh
+        command = EventSourceType.driver.name + "." + command_type.name
+        await self._send_message_get_response(OutgoingMessage(command_type, command=command))
+
+    async def disconnect(self):
+        """Disconnect the web socket and destroy it"""
+        await self.client.disconnect()

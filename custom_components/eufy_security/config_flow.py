@@ -68,12 +68,15 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         if self.source == SOURCE_REAUTH:
             coordinator = self.hass.data[DOMAIN][COORDINATOR]
-            captcha_id = coordinator.config.captcha_id
-            captcha_input = user_input[ConfigField.captcha_input.name]
-            coordinator.config.captcha_id = None
-            coordinator.config.captcha_img = None
-
-            await coordinator.api.set_captcha_and_connect(captcha_id, captcha_input)
+            if coordinator.config.mfa_required is True:
+                mfa_input = user_input[ConfigField.mfa_input.name]
+                await coordinator.api.set_mfa_and_connect(mfa_input)
+            else:
+                captcha_id = coordinator.config.captcha_id
+                captcha_input = user_input[ConfigField.captcha_input.name]
+                coordinator.config.captcha_id = None
+                coordinator.config.captcha_img = None
+                await coordinator.api.set_captcha_and_connect(captcha_id, captcha_input)
 
             if self._async_current_entries():
                 await self.hass.config_entries.async_reload(self.context["entry_id"])
@@ -119,19 +122,32 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reauth(self, user_input=None):
         """initialize captcha flow"""
         _LOGGER.debug(f"{DOMAIN} async_step_reauth - {user_input}")
-        return await self._async_step_reauth_confirm()
+        return await self.async_step_reauth_confirm()
 
-    async def _async_step_reauth_confirm(self, user_input=None):
+    async def async_step_reauth_confirm(self, user_input=None):
+        """Re-authenticate via captcha or mfa code"""
         coordinator = self.hass.data[DOMAIN][COORDINATOR]
-        _LOGGER.debug(f"{DOMAIN} async_step_reauth_confirm - {coordinator.config.captcha_img}")
+        _LOGGER.debug(f"{DOMAIN} async_step_reauth_confirm - {coordinator.config}")
         if user_input is None:
-            return self.async_show_form(
-                step_id="reauth_confirm",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required(ConfigField.captcha_input.name): str,
-                    }
-                ),
-                description_placeholders={"captcha_img": '<img id="eufy_security_captcha" src="' + coordinator.config.captcha_img + '"/>'},
-            )
+            if coordinator.config.mfa_required is True:
+                return self.async_show_form(
+                    step_id="reauth_confirm",
+                    data_schema=vol.Schema(
+                        {
+                            vol.Required(ConfigField.mfa_input.name): str,
+                        }
+                    ),
+                )
+            else:
+                return self.async_show_form(
+                    step_id="reauth_confirm",
+                    data_schema=vol.Schema(
+                        {
+                            vol.Required(ConfigField.captcha_input.name): str,
+                        }
+                    ),
+                    description_placeholders={
+                        "captcha_img": '<img id="eufy_security_captcha" src="' + coordinator.config.captcha_img + '"/>'
+                    },
+                )
         return await self.async_step_user(user_input)

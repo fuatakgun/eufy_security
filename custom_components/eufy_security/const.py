@@ -36,6 +36,7 @@ PLATFORMS: list[str] = [
     Platform.ALARM_CONTROL_PANEL,
     Platform.NUMBER,
     Platform.CAMERA,
+    # Platform.BUTTON,
 ]
 
 

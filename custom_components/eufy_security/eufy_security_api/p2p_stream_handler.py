@@ -51,11 +51,11 @@ class P2PStreamHandler:
         command = FFMPEG_COMMAND.copy()
         input_index = command.index("-i")
         command[input_index - 3] = str(duration)
-        command[input_index - 1] = self.camera.codec
+        codec = "hevc" if self.camera.codec == "h265" else self.camera.codec
+        command[input_index - 1] = codec
         command[input_index + 1] = command[input_index + 1].replace("{port}", str(self.port))
         options = FFMPEG_OPTIONS + " -report"
         stream_url = f"-f rtsp -rtsp_transport tcp {self.camera.stream_url}"
-        _LOGGER.debug(f"start_ffmpeg 3 - stream_url {stream_url} command {command} options {options}")
         await self.ffmpeg.open(
             cmd=command,
             input_source=None,
@@ -64,7 +64,7 @@ class P2PStreamHandler:
             stderr_pipe=False,
             stdout_pipe=False,
         )
-        _LOGGER.debug(f"start_ffmpeg 3 - stream_url {stream_url} command {command} options {options}")
+        _LOGGER.debug(f"start_ffmpeg - stream_url {stream_url} command {command} options {options}")
 
     @property
     def ffmpeg_available(self) -> bool:
@@ -89,7 +89,7 @@ class P2PStreamHandler:
             try:
                 with client_socket:
                     while empty_queue_counter < 10 and self.ffmpeg_available:
-                        _LOGGER.debug(f"p2p 5 - size: {self.camera.video_queue.qsize()} - empty{empty_queue_counter} - {client_socket}")
+                        _LOGGER.debug(f"p2p 5 - q size: {self.camera.video_queue.qsize()} - empty {empty_queue_counter}")
                         if self.camera.video_queue.empty():
                             empty_queue_counter = empty_queue_counter + 1
                         else:

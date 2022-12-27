@@ -49,6 +49,9 @@ class MessageField(Enum):
     CAPTCHA_ID = "captchaId"
     CAPTCHA_IMG = "captcha"
 
+    # mfa
+    VERIFY_CODE = "verifyCode"
+
     # streaming specific
     RTSP_STREAM = "rtspStream"
     RTSP_STREAM_URL = "rtspStreamUrl"
@@ -77,11 +80,13 @@ class OutgoingMessageToParameter(Enum):
     captchaId = "captcha_id"
     captcha = "captcha_input"
     direction = "direction"
+    verifyCode = "verify_code"
 
 
 class OutgoingMessageType(Enum):
     """Outgoing message types"""
 
+    driver_connect = {MessageField.COMMAND.value: auto()}
     set_api_schema = {MessageField.COMMAND.value: auto(), MessageField.SCHEMA_VERSION.value: MessageField.BIND_AT_RUNTIME}
     start_listening = {MessageField.COMMAND.value: auto()}
     get_properties_metadata = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
@@ -113,6 +118,10 @@ class OutgoingMessageType(Enum):
         MessageField.COMMAND.value: auto(),
         MessageField.CAPTCHA_ID.value: MessageField.BIND_AT_RUNTIME,
         MessageField.CAPTCHA_IMG.value: MessageField.BIND_AT_RUNTIME,
+    }
+    set_verify_code = {
+        MessageField.COMMAND.value: auto(),
+        MessageField.VERIFY_CODE.value: MessageField.BIND_AT_RUNTIME,
     }
 
 
@@ -179,3 +188,7 @@ class PTZCommand(Enum):
     RIGHT = 2
     UP = 3
     DOWN = 4
+
+
+class ProductCommand(Enum):
+    start_livestream = "Start P2P Livestream"

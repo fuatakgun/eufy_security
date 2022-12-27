@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
+
 from homeassistant.backports.enum import StrEnum
 from homeassistant.config_entries import ConfigEntry
 
@@ -33,6 +34,8 @@ class ConfigField(Enum):
     captcha_id = auto()
     captcha_img = auto()
     captcha_input = auto()
+    mfa_required = auto()
+    mfa_input = auto()
 
 
 @dataclass
@@ -53,6 +56,8 @@ class Config:
     captcha_id: str = None
     captcha_img: str = None
     captcha_input: str = None
+    mfa_required: bool = False
+    mfa_input: str = None
 
     @classmethod
     def parse(cls, config_entry: ConfigEntry):

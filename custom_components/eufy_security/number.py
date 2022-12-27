@@ -45,13 +45,13 @@ class EufyNumberEntity(NumberEntity, EufySecurityEntity):
     @property
     def native_value(self) -> float:
         """Return number value."""
+        value = None
         try:
             value = int(get_child_value(self.product.properties, self.metadata.name))
         except TypeError:
             pass
             # _LOGGER.info(f"Exception handled - {ValueNotSetException(self.metadata)}")
-
-        return int(value)
+        return value
 
     async def async_set_native_value(self, value: float) -> None:
         """Set new value."""
