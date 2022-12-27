@@ -42,13 +42,12 @@ from .web_socket_client import WebSocketClient
 class ApiClient:
     """Client to communicate with eufy-security-ws over websocket connection"""
 
-    def __init__(self, host: str, port: int, session: aiohttp.ClientSession) -> None:
-        self.host: str = host
-        self.port: int = port
+    def __init__(self, config, session: aiohttp.ClientSession) -> None:
+        self.config = config
         self.session: aiohttp.ClientSession = session
         self.loop = asyncio.get_event_loop()
         self.client: WebSocketClient = WebSocketClient(
-            self.host, self.port, self.session, self._on_open, self._on_message, self._on_close, self._on_error
+            self.config.host, self.config.port, self.session, self._on_open, self._on_message, self._on_close, self._on_error
         )
         self.result_futures: dict[str, asyncio.Future] = {}
         self.devices: dict = None
@@ -138,7 +137,7 @@ class ApiClient:
                 if metadata.get(MessageField.PICTURE_URL.value, None) is None:
                     product = Device(self, serial_no, properties, metadata, commands)
                 else:
-                    product = Camera(self, serial_no, properties, metadata, commands)
+                    product = Camera(self, serial_no, properties, metadata, commands, self.config)
             else:
                 product = Station(self, serial_no, properties, metadata, commands)
 

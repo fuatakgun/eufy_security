@@ -71,7 +71,6 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
         # ffmpeg entities
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]
-        self.product.set_config(self.coordinator.config)
 
     async def stream_source(self) -> str:
         _LOGGER.debug(f"stream_source - {self.product.stream_url}")

@@ -31,7 +31,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         )
         self._platforms = []
         self.data = {}
-        self.api = ApiClient(self.config.host, self.config.port, aiohttp_client.async_get_clientsession(self.hass))
+        self.api = ApiClient(self.config, aiohttp_client.async_get_clientsession(self.hass))
 
     async def initialize(self):
         """Initialize the integration"""

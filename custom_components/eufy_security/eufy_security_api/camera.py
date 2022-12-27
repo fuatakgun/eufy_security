@@ -16,7 +16,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 class Camera(Device):
     """Device as Camera"""
 
-    def __init__(self, api, serial_no: str, properties: dict, metadata: dict, commands: []) -> None:
+    def __init__(self, api, serial_no: str, properties: dict, metadata: dict, commands: [], config) -> None:
         super().__init__(api, serial_no, properties, metadata, commands)
 
         self.stream_status: StreamStatus = StreamStatus.IDLE
@@ -24,7 +24,7 @@ class Camera(Device):
         self.stream_url: str = None
         self.codec: str = None
         self.video_queue: Queue = Queue()
-        self.config = None
+        self.config = config
 
         self.p2p_stream_handler = P2PStreamHandler(self)
         self.p2p_stream_thread = None
@@ -33,10 +33,6 @@ class Camera(Device):
             self.set_stream_prodiver(StreamProvider.RTSP)
         else:
             self.set_stream_prodiver(StreamProvider.P2P)
-
-    def set_config(self, config):
-        """set integration configuration to read streaming attributes"""
-        self.config = config
 
     async def _handle_livestream_started(self, event: Event):
         # automatically find this function for respective event

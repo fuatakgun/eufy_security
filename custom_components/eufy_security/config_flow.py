@@ -2,6 +2,7 @@ import logging
 import traceback
 
 import voluptuous as vol
+
 from homeassistant import config_entries
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntry
 from homeassistant.core import callback
@@ -9,9 +10,10 @@ from homeassistant.helpers import aiohttp_client
 import homeassistant.helpers.config_validation as cv
 
 from .const import COORDINATOR, DOMAIN
-from .model import Config, ConfigField
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .eufy_security_api.api_client import ApiClient
+from .eufy_security_api.exceptions import WebSocketConnectionError
+from .model import Config, ConfigField
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -107,16 +109,13 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _test_credentials(self, host, port):  # pylint: disable=unused-argument
         try:
-            api_client: ApiClient = ApiClient(host, port, aiohttp_client.async_get_clientsession(self.hass))
+            config = Config(host=host, port=port)
+            api_client: ApiClient = ApiClient(config, aiohttp_client.async_get_clientsession(self.hass))
             await api_client.ws_connect()
             await api_client.disconnect()
             return True
-        except Exception as ex:  # pylint: disable=broad-except
-            _LOGGER.error(
-                f"{DOMAIN} Exception in login : %s - traceback: %s",
-                ex,
-                traceback.format_exc(),
-            )
+        except WebSocketConnectionError as ex:  # pylint: disable=broad-except
+            _LOGGER.error(f"{DOMAIN} Exception in login : %s - traceback: %s", ex, traceback.format_exc())
         return False
 
     async def async_step_reauth(self, user_input=None):
