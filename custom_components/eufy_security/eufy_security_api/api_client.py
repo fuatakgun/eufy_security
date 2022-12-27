@@ -107,11 +107,11 @@ class ApiClient:
 
             if product_type == ProductType.device:
                 if metadata.get(MessageField.PICTURE_URL.value, None) is None:
-                    product = Device(self, serial_no, properties, metadata)
+                    product = Device(self, serial_no, properties, metadata, commands)
                 else:
                     product = Camera(self, serial_no, properties, metadata, commands)
             else:
-                product = Station(self, serial_no, properties, metadata)
+                product = Station(self, serial_no, properties, metadata, commands)
 
             response[serial_no] = product
         return response

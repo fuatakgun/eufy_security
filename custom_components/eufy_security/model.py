@@ -57,8 +57,13 @@ class Config:
     @classmethod
     def parse(cls, config_entry: ConfigEntry):
         """Generate config instance from config entry"""
+        data_keys = ["host", "port"]
         config = cls()
         for key in config.__dict__:
-            if config_entry.data.get(key, None) is not None:
-                config.__dict__[key] = config_entry.data.get(key)
+            if key in data_keys:
+                if config_entry.data.get(key, None) is not None:
+                    config.__dict__[key] = config_entry.data.get(key)
+            else:
+                if config_entry.options.get(key, None) is not None:
+                    config.__dict__[key] = config_entry.options.get(key)
         return config

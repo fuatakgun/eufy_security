@@ -17,14 +17,14 @@ class Camera(Device):
     """Device as Camera"""
 
     def __init__(self, api, serial_no: str, properties: dict, metadata: dict, commands: []) -> None:
-        super().__init__(api, serial_no, properties, metadata)
-        self.commands = commands
+        super().__init__(api, serial_no, properties, metadata, commands)
 
         self.stream_status: StreamStatus = StreamStatus.IDLE
         self.stream_provider: StreamProvider = None
         self.stream_url: str = None
         self.codec: str = None
         self.video_queue: Queue = Queue()
+        self.config = None
 
         self.p2p_stream_handler = P2PStreamHandler(self)
         self.p2p_stream_thread = None
@@ -33,6 +33,10 @@ class Camera(Device):
             self.set_stream_prodiver(StreamProvider.RTSP)
         else:
             self.set_stream_prodiver(StreamProvider.P2P)
+
+    def set_config(self, config):
+        """set integration configuration to read streaming attributes"""
+        self.config = config
 
     async def _handle_livestream_started(self, event: Event):
         # automatically find this function for respective event
@@ -59,9 +63,12 @@ class Camera(Device):
         # automatically find this function for respective event
         if self.codec is None:
             self.codec = event.data["metadata"]["videoCodec"].lower()
-            await self.p2p_stream_handler.start_ffmpeg()
+            await self._start_ffmpeg()
 
         self.video_queue.put(bytearray(event.data["buffer"]["data"]))
+
+    async def _start_ffmpeg(self):
+        await self.p2p_stream_handler.start_ffmpeg(self.config.ffmpeg_analyze_duration)
 
     async def start_p2p_livestream(self, ffmpeg):
         """Process start p2p livestream call"""
@@ -74,7 +81,7 @@ class Camera(Device):
         await port_ready_future
         # await wait_for_value(self.p2p_stream_handler.__dict__, "port", None)
         if self.codec is not None:
-            await self.p2p_stream_handler.start_ffmpeg()
+            await self._start_ffmpeg()
 
     async def stop_p2p_livestream(self):
         """Process stop p2p livestream call"""
@@ -109,9 +116,7 @@ class Camera(Device):
     def set_stream_prodiver(self, stream_provider: StreamProvider) -> None:
         """Set stream provider for camera instance"""
         self.stream_provider = stream_provider
-        self._set_stream_url()
 
-    def _set_stream_url(self):
         if self.stream_provider == StreamProvider.RTSP:
             url = self.stream_provider.value
             if self.is_rtsp_enabled is True:
@@ -124,5 +129,7 @@ class Camera(Device):
             url = self.stream_provider.value
             _LOGGER.debug(f"{self.p2p_stream_handler.port}")
             url = url.replace("{serial_no}", str(self.serial_no))
+            url = url.replace("{server_address}", str(self.config.rtsp_server_address))
+            url = url.replace("{server_port}", str(self.config.rtsp_server_port))
             self.stream_url = url
         _LOGGER.debug(f"url - {self.stream_provider} - {self.stream_url}")

@@ -4,11 +4,7 @@ import logging
 
 from haffmpeg.camera import CameraMjpeg
 
-from homeassistant.components.camera import (
-    Camera,
-    CameraEntityFeature,
-    StreamType,
-)
+from homeassistant.components.camera import Camera, CameraEntityFeature, StreamType
 from homeassistant.components.ffmpeg import DATA_FFMPEG
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -25,7 +21,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import COORDINATOR, DOMAIN
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
-from .eufy_security_api.const import StreamStatus
+from .eufy_security_api.const import StreamProvider, StreamStatus
 from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.util import get_child_value, wait_for_value_to_equal
 
@@ -75,6 +71,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
         # ffmpeg entities
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]
+        self.product.set_config(self.coordinator.config)
 
     async def stream_source(self) -> str:
         _LOGGER.debug(f"stream_source - {self.product.stream_url}")
@@ -149,3 +146,17 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def async_reset_alarm(self) -> None:
         """reset ongoing alarm"""
         await self.product.reset_alarm(self.metadata)
+
+    async def async_turn_on(self) -> None:
+        """Turn off camera."""
+        if self.product.stream_provider == StreamProvider.RTSP:
+            await self.start_rtsp_livestream()
+        else:
+            await self.start_p2p_livestream()
+
+    async def async_turn_off(self) -> None:
+        """Turn off camera."""
+        if self.product.stream_provider == StreamProvider.RTSP:
+            await self.stop_rtsp_livestream()
+        else:
+            await self.stop_p2p_livestream()

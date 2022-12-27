@@ -173,4 +173,4 @@ class StreamProvider(Enum):
     """Stream provider"""
 
     RTSP = "{rtsp_stream_url}"  # replace with rtsp url from device
-    P2P = "rtsp://192.168.178.119:8554/{serial_no}"  # replace with stream name
+    P2P = "rtsp://{server_address}:{server_port}/{serial_no}"  # replace with stream name

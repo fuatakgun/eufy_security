@@ -11,9 +11,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 FFMPEG_COMMAND = [
     "-analyzeduration",
-    "100000",
-    "-probesize",
-    "10000",
+    "{duration}",
     "-f",
     "{video_codec}",
     "-i",
@@ -43,16 +41,16 @@ class P2PStreamHandler:
     def __init__(self, camera) -> None:
         self.camera = camera
 
-        self.ip = "localhost"
         self.port = None
         self.loop = None
         self.ffmpeg = None
 
-    async def start_ffmpeg(self):
+    async def start_ffmpeg(self, duration):
         """start ffmpeg process"""
         self.loop = asyncio.get_running_loop()
         command = FFMPEG_COMMAND.copy()
         input_index = command.index("-i")
+        command[input_index - 3] = str(duration)
         command[input_index - 1] = self.camera.codec
         command[input_index + 1] = command[input_index + 1].replace("{port}", str(self.port))
         options = FFMPEG_OPTIONS + " -report"
@@ -79,7 +77,7 @@ class P2PStreamHandler:
         self.port = None
         empty_queue_counter = 0
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.bind((self.ip, 0))
+            sock.bind(("localhost", 0))
             self.port = sock.getsockname()[1]
             port_ready_future.set_result(True)
             # self._set_remote_config()

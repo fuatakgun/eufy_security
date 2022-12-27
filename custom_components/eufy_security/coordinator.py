@@ -49,10 +49,6 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialized platforms list"""
         return self._platforms
 
-    @platforms.setter
-    def platforms(self, value):
-        self._platforms = value
-
     async def _update_local(self):
         # try:
         await self.api.poll_refresh()

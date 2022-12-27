@@ -6,6 +6,7 @@ from .const import DOMAIN, NAME, PropertyToEntityDescription
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.product import Product
+from .util import get_device_info
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -13,11 +14,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 class EufySecurityEntity(CoordinatorEntity):
     """Base entity for integration"""
 
-    def __init__(
-        self,
-        coordinator: EufySecurityDataUpdateCoordinator,
-        metadata: Metadata,
-    ) -> None:
+    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, metadata: Metadata) -> None:
         super().__init__(coordinator)
         self.metadata: Metadata = metadata
         self.product.set_state_update_listener(coordinator.async_update_listeners)
@@ -41,11 +38,4 @@ class EufySecurityEntity(CoordinatorEntity):
 
     @property
     def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self.product.serial_no)},
-            "name": self.product.name,
-            "model": self.product.model,
-            "hardware": self.product.hardware_version,
-            "software": self.product.software_version,
-            "manufacturer": NAME,
-        }
+        return get_device_info(self.product)

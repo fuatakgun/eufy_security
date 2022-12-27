@@ -1,7 +1,7 @@
 """Util functions for integration"""
 import logging
 
-from .const import MetadataFilter, PropertyToEntityDescription
+from .const import MetadataFilter, PropertyToEntityDescription, DOMAIN, NAME
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -52,3 +52,15 @@ def get_product_properties_by_filter(lists: [], filtering: MetadataFilter):
             for value in metadatas.values():
                 product_properties.append(value)
     return product_properties
+
+
+def get_device_info(product):
+    """generate device info dict"""
+    return {
+        "identifiers": {(DOMAIN, product.serial_no)},
+        "name": product.name,
+        "model": product.model,
+        "hardware": product.hardware_version,
+        "software": product.software_version,
+        "manufacturer": NAME,
+    }

@@ -12,7 +12,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 class Product:
     """Product"""
 
-    def __init__(self, api, product_type: ProductType, serial_no: str, properties: dict, metadata: dict) -> None:
+    def __init__(self, api, product_type: ProductType, serial_no: str, properties: dict, metadata: dict, commands: []) -> None:
         self.api = api
         self.product_type = product_type
         self.serial_no = serial_no
@@ -24,6 +24,8 @@ class Product:
 
         self.properties: dict = None
         self.metadata: dict = None
+        self.metadata_org= metadata
+        self.commands = commands
 
         self.state_update_listener: Callable = None
 
@@ -86,12 +88,12 @@ class Product:
 class Device(Product):
     """Device as Physical Product"""
 
-    def __init__(self, api, serial_no: str, properties: dict, metadata: dict) -> None:
-        super().__init__(api, ProductType.device, serial_no, properties, metadata)
+    def __init__(self, api, serial_no: str, properties: dict, metadata: dict, commands: []) -> None:
+        super().__init__(api, ProductType.device, serial_no, properties, metadata, commands)
 
 
 class Station(Product):
     """Station as Physical Product"""
 
-    def __init__(self, api, serial_no: str, properties: dict, metadata: dict) -> None:
-        super().__init__(api, ProductType.station, serial_no, properties, metadata)
+    def __init__(self, api, serial_no: str, properties: dict, metadata: dict, commands: []) -> None:
+        super().__init__(api, ProductType.station, serial_no, properties, metadata, commands)
