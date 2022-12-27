@@ -1,54 +1,47 @@
 import logging
+from typing import Any
+
 from homeassistant.components.lock import LockEntity
-
-from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import COORDINATOR, DOMAIN, Device
-from .entity import EufySecurityEntity
+from .const import COORDINATOR, DOMAIN
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
+from .eufy_security_api.metadata import Metadata
+from .eufy_security_api.const import MessageField
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
-):
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    """Setup lock entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
-    for device in coordinator.devices.values():
-        if device.is_lock() is True:
-            async_add_devices([Lock(coordinator, config_entry, device)], True)
+    product_properties = []
+    for product in coordinator.api.devices.values():
+        if product.has(MessageField.LOCKED.value) is True:
+            product.properties.append(product.metadata[MessageField.LOCKED.value])
+
+    entities = [EufySecurityLock(coordinator, metadata) for metadata in product_properties]
+    async_add_entities(entities)
 
 
-class Lock(EufySecurityEntity, LockEntity):
-    def __init__(
-        self,
-        coordinator: EufySecurityDataUpdateCoordinator,
-        config_entry: ConfigEntry,
-        device: Device,
-    ):
-        EufySecurityEntity.__init__(self, coordinator, config_entry, device)
-        LockEntity.__init__(self)
+class EufySecurityLock(LockEntity, EufySecurityEntity):
+    """Base lock entity for integration"""
 
-    @property
-    def name(self):
-        return f"{self.device.name}"
-
-    @property
-    def id(self):
-        return f"{DOMAIN}_{self.device.serial_number}_lock"
-
-    @property
-    def unique_id(self):
-        return self.id
+    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, metadata: Metadata) -> None:
+        super().__init__(coordinator, metadata)
+        self._attr_name = f"{self.product.name}"
 
     @property
     def is_locked(self):
-        return self.device.state.get("locked")
+        return self.product.state.get(self.metadata.name)
 
-    async def async_lock(self):
-        await self.coordinator.async_set_lock(self.device.serial_number, True)
+    async def async_lock(self, **kwargs: Any) -> None:
+        """Initiate lock call"""
+        await self.product.set_property(self.metadata, True)
 
-    async def async_unlock(self):
-        await self.coordinator.async_set_lock(self.device.serial_number, False)
+    async def async_unlock(self, **kwargs: Any) -> None:
+        """Initiate unlock call"""
+        await self.product.set_property(self.metadata, False)

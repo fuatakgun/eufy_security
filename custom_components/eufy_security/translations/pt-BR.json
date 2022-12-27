@@ -11,7 +11,7 @@
       },
       "reauth_confirm": {
         "title": "Eufy Security: Captcha",
-        "description": "{captcha_image}",
+        "description": "{captcha_img}",
         "data": {
           "captcha": "Captcha"
         }
@@ -30,12 +30,9 @@
         "title": "Eufy Security: Configuração",
         "data": {
           "sync_interval": "Intervalo de escaneamento na nuvem em segundos [1 to 9999]",
-          "use_rtsp_server_addon": "Usar add-on RTSP (P2P)",
           "rtsp_server_address": "Endereço IP do host para add-on RTSP(P2P)",
           "rtsp_server_port": "Porta TCP para add-on RTSP (P2P)",
           "ffmpeg_analyze_duration": "Duração da análise de vídeo em segundos [1 a 5] (P2P)",
-          "auto_start_stream": "Iniciar transmissão automática ao clicar",
-          "fix_binary_sensor_state": "Corrigir os estados do sensor binário (verdadeiro/falso para ligado/desligado)",
           "map_extra_alarm_modes": "Mapeie os modos de guarda personalizados em Bypass, Night e Vacation (em ordem)",
           "name_for_custom1": "Nome de substituição para o modo de guarda personalizado 1",
           "name_for_custom2": "Nome de substituição para o modo de guarda personalizado 2",

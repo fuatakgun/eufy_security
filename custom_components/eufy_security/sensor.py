@@ -1,158 +1,61 @@
 import logging
 
-from homeassistant.components.sensor import SensorStateClass
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    DEVICE_CLASS_BATTERY,
-    DEVICE_CLASS_SIGNAL_STRENGTH,
-    PERCENTAGE,
-)
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import COORDINATOR, DOMAIN, Device, get_child_value
+
+from .const import COORDINATOR, DOMAIN, Platform, PlatformToPropertyType, CameraSensor
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
+from .eufy_security_api.metadata import Metadata
+from .eufy_security_api.util import get_child_value
+from .util import get_product_properties_by_filter
+from .eufy_security_api.camera import Camera
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
-):
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    """Setup sensor entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
-
-    INSTRUMENTS = [
-        (
-            "battery",
-            "Battery",
-            "state.battery",
-            PERCENTAGE,
-            None,
-            DEVICE_CLASS_BATTERY,
-            EntityCategory.DIAGNOSTIC,
-        ),
-        (
-            "wifiRSSI",
-            "Wifi RSSI",
-            "state.wifiRSSI",
-            None,
-            None,
-            DEVICE_CLASS_SIGNAL_STRENGTH,
-            EntityCategory.DIAGNOSTIC,
-        ),
-        (
-            "detected_person_name",
-            "Detected Person Name",
-            "state.personName",
-            None,
-            None,
-            None,
-            None,
-        ),
-    ]
-
-    CAMERA_INSTRUMENTS = [
-        (
-            "stream_source_type",
-            "Streaming Source Type",
-            "stream_source_type",
-            None,
-            None,
-            None,
-            EntityCategory.DIAGNOSTIC,
-        ),
-        (
-            "stream_source_address",
-            "Streaming Source Address",
-            "stream_source_address",
-            None,
-            None,
-            None,
-            EntityCategory.DIAGNOSTIC,
-        ),
-        ("codec", "Codec", "codec", None, None, None, EntityCategory.DIAGNOSTIC),
-        (
-            "stream_queue_size",
-            "Stream Queue Size",
-            "queue",
-            None,
-            None,
-            None,
-            EntityCategory.DIAGNOSTIC,
-        ),
-    ]
-
-    entities = []
-    for device in coordinator.devices.values():
-        instruments = INSTRUMENTS
-        if device.is_camera() is True:
-            instruments = instruments + CAMERA_INSTRUMENTS
-        for (
-            id,
-            description,
-            key,
-            unit,
-            icon,
-            device_class,
-            entity_category,
-        ) in instruments:
-            if not get_child_value(device.__dict__, key) is None:
-                entities.append(
-                    EufySecuritySensor(
-                        coordinator,
-                        config_entry,
-                        device,
-                        id,
-                        description,
-                        key,
-                        unit,
-                        icon,
-                        device_class,
-                        entity_category,
-                    )
-                )
-
-    async_add_devices(entities, True)
+    product_properties = get_product_properties_by_filter(
+        [coordinator.api.devices.values(), coordinator.api.stations.values()], PlatformToPropertyType[Platform.SENSOR.name].value
+    )
+    for camera in coordinator.api.devices.values():
+        if isinstance(camera, Camera) is True:
+            for metadata in CameraSensor:
+                product_properties.append(Metadata.parse(camera, {"name": metadata.name, "label": metadata.value}))
+    entities = [EufySecuritySensor(coordinator, metadata) for metadata in product_properties]
+    async_add_entities(entities)
 
 
-class EufySecuritySensor(EufySecurityEntity):
-    def __init__(
-        self,
-        coordinator: EufySecurityDataUpdateCoordinator,
-        config_entry: ConfigEntry,
-        device: Device,
-        id: str,
-        description: str,
-        key: str,
-        unit: str,
-        icon: str,
-        device_class: str,
-        entity_category: str,
-    ):
-        super().__init__(coordinator, config_entry, device)
-        self._id = id
-        self.description = description
-        self.key = key
-        self._attr_unit_of_measurement = unit
-        self._attr_name = f"{self.device.name} {self.description}"
-        self._attr_icon = icon
-        self._attr_device_class = device_class
-        self._attr_entity_category = entity_category
-        self._attr_state_class = None
-        if self._attr_device_class == DEVICE_CLASS_BATTERY:
-            self._attr_state_class = SensorStateClass.MEASUREMENT
+class EufySecuritySensor(SensorEntity, EufySecurityEntity):
+    """Base sensor entity for integration"""
+
+    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, metadata: Metadata) -> None:
+        super().__init__(coordinator, metadata)
+        self._attr_state_class = self.description.state_class
+        self._attr_native_unit_of_measurement = self.description.unit if self.description.unit else metadata.unit
 
     @property
-    def state(self):
-        if self._id == "stream_queue_size":
-            return self.device.queue.qsize()
-        return get_child_value(self.device.__dict__, self.key)
+    def native_value(self):
+        """Return the value reported by the sensor."""
+        if self.metadata.name in CameraSensor.__members__:
+            if self.metadata.name == "video_queue_size":
+                return self.product.video_queue.qsize()
+            if self.metadata.name == "stream_provider":
+                return self.product.stream_provider.name
+            return get_child_value(self.product.__dict__, self.metadata.name)
 
-    @property
-    def id(self):
-        return f"{DOMAIN}_{self.device.serial_number}_{self._id}_sensor"
+        value = get_child_value(self.product.properties, self.metadata.name)
+        if self.metadata.states is not None:
+            try:
+                return self.metadata.states[str(value)]
+            except KeyError:
+                # _LOGGER.info(f"Exception handled - {ValueNotSetException(self.metadata)}")
+                pass
 
-    @property
-    def unique_id(self):
-        return self.id
+        return value
