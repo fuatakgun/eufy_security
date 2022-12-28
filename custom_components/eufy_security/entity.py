@@ -19,7 +19,7 @@ class EufySecurityEntity(CoordinatorEntity):
         self.metadata: Metadata = metadata
         self.product.set_state_update_listener(coordinator.async_update_listeners)
 
-        self._attr_unique_id = f"{DOMAIN}_{self.product.serial_no}_{metadata.name}"
+        self._attr_unique_id = f"{DOMAIN}_{self.product.serial_no}_{self.product.product_type.value}_{metadata.name}"
         self._attr_should_poll = False
         self._attr_icon = self.description.icon
         self._attr_name = f"{self.product.name} {metadata.label}"

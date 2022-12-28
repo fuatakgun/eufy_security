@@ -18,12 +18,12 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Setup lock entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
-    product_properties = []
+    properties = []
     for product in coordinator.api.devices.values():
         if product.has(MessageField.LOCKED.value) is True:
-            product.properties.append(product.metadata[MessageField.LOCKED.value])
+            properties.append(product.metadata[MessageField.LOCKED.value])
 
-    entities = [EufySecurityLock(coordinator, metadata) for metadata in product_properties]
+    entities = [EufySecurityLock(coordinator, metadata) for metadata in properties]
     async_add_entities(entities)
 
 

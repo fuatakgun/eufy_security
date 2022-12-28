@@ -48,7 +48,10 @@ class EufySecuritySensor(SensorEntity, EufySecurityEntity):
                 return self.product.video_queue.qsize()
             if self.metadata.name == "stream_provider":
                 return self.product.stream_provider.name
-            return get_child_value(self.product.__dict__, self.metadata.name)
+            value = get_child_value(self.product.__dict__, self.metadata.name)
+            if len(str(value)) > 250:
+                value = str(value)[-250:]
+            return value
 
         value = get_child_value(self.product.properties, self.metadata.name)
         if self.metadata.states is not None:
