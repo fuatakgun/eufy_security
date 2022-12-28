@@ -1,21 +1,20 @@
 from __future__ import annotations
 
 import asyncio
+from enum import Enum, auto
 import logging
-
-import voluptuous as vol
 
 from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntity,
     AlarmControlPanelEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_ALARM_ARMED_AWAY, STATE_ALARM_ARMED_HOME, STATE_ALARM_DISARMED, STATE_ALARM_TRIGGERED
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import COORDINATOR, DOMAIN, CurrentModeToState, CurrentModeToStateValue
+from .const import COORDINATOR, DOMAIN, Schema
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
 from .eufy_security_api.const import MessageField
@@ -23,6 +22,34 @@ from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.util import get_child_value
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
+
+class CurrentModeToState(Enum):
+    """Alarm Entity Mode to State"""
+
+    NONE = -1
+    AWAY = 0
+    HOME = 1
+    CUSTOM_BYPASS = 3
+    NIGHT = 4
+    VACATION = 5
+    DISARMED = 63
+
+
+class CurrentModeToStateValue(Enum):
+    """Alarm Entity Mode to State Value"""
+
+    NONE = "Unknown"
+    AWAY = STATE_ALARM_ARMED_AWAY
+    HOME = STATE_ALARM_ARMED_HOME
+    CUSTOM_BYPASS = auto()
+    NIGHT = auto()
+    VACATION = auto()
+    DISARMED = STATE_ALARM_DISARMED
+    TRIGGERED = STATE_ALARM_TRIGGERED
+    ALARM_DELAYED = "Alarm delayed"
+
+
 CUSTOM_CODES = [3, 4, 5]
 
 
@@ -38,6 +65,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async_add_entities(entities)
     # register entity level services
     platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        "trigger_alarm_with_duration", Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value, "async_alarm_trigger_with_duration"
+    )
     platform.async_register_entity_service("reset_alarm", {}, "async_reset_alarm")
 
 
@@ -88,11 +118,15 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
 
     async def async_alarm_trigger(self, code: str | None = None) -> None:
         """trigger alarm for a duration on alarm control panel but there is no change in current mode"""
-        await self.product.trigger_alarm(self.metadata)
+        await self.product.trigger_alarm()
+
+    async def async_alarm_trigger_with_duration(self, duration: int = 10) -> None:
+        """trigger alarm for a duration on alarm control panel but there is no change in current mode"""
+        await self.product.trigger_alarm(duration)
 
     async def async_reset_alarm(self) -> None:
         """reset ongoing alarm but there is no change in current mode"""
-        await self.product.reset_alarm(self.metadata)
+        await self.product.reset_alarm()
 
     @property
     def state(self):
@@ -102,7 +136,7 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         triggered = get_child_value(self.product.properties, "alarm")
         if triggered is True:
             return CurrentModeToStateValue.TRIGGERED.value
-        current_mode = get_child_value(self.product.properties, self.metadata.name)
+        current_mode = get_child_value(self.product.properties, self.metadata.name, -1)
         if current_mode in CUSTOM_CODES:
             position = CUSTOM_CODES.index(current_mode)
             if position == 0:
@@ -111,6 +145,4 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
                 return self.coordinator.config.name_for_custom2
             if position == 2:
                 return self.coordinator.config.name_for_custom3
-        if current_mode is None:
-            current_mode = -1
         return CurrentModeToStateValue[CurrentModeToState(current_mode).name].value

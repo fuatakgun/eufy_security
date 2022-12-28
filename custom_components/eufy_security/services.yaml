@@ -93,10 +93,31 @@ stop_rtsp_livestream:
       domain: camera
       integration: eufy_security
 
-trigger_alarm:
-  name: Trigger Alarm for Camera
-  description: Trigger Alarm for Camera
+trigger_alarm_with_duration:
+  name: Trigger Alarm for a Duration
+  description: Trigger Alarm for a Duration
+  target:
+    entity:
+      integration: eufy_security
+  fields:
+    duration:
+      name: Duration
+      description: Duration in seconds
+      required: true
+      example: 10
+      default: 10
+
+quick_response:
+  name: Send quick response
+  description: Send quick response
   target:
     entity:
       domain: camera
       integration: eufy_security
+  fields:
+    voice_id:
+      name: Voice Id
+      description: Voice ID stored in attributes
+      required: true
+      example: 419
+      default: 419

@@ -2,7 +2,7 @@ from collections.abc import Callable
 import logging
 from typing import Any
 
-from .const import EventNameToHandler, MessageField, ProductType
+from .const import EventNameToHandler, MessageField, ProductType, ProductCommand
 from .event import Event
 from .metadata import Metadata
 
@@ -24,7 +24,7 @@ class Product:
 
         self.properties: dict = None
         self.metadata: dict = None
-        self.metadata_org= metadata
+        self.metadata_org = metadata
         self.commands = commands
 
         self.state_update_listener: Callable = None
@@ -50,15 +50,15 @@ class Product:
 
     async def set_property(self, metadata, value: Any):
         """Process set property call"""
-        await self.api.set_property(metadata, value)
+        await self.api.set_property(self.product_type, self.serial_no, metadata.name, value)
 
-    async def trigger_alarm(self, metadata):
+    async def trigger_alarm(self, duration: int = 10):
         """Process trigger alarm call"""
-        await self.api.trigger_alarm(metadata)
+        await self.api.trigger_alarm(self.product_type, self.serial_no, duration)
 
-    async def reset_alarm(self, metadata):
+    async def reset_alarm(self):
         """Process reset alarm call"""
-        await self.api.reset_alarm(metadata)
+        await self.api.reset_alarm(self.product_type, self.serial_no)
 
     def has(self, property_name: str) -> bool:
         """Checks if product has required property"""
@@ -67,6 +67,7 @@ class Product:
     async def process_event(self, event: Event):
         """Act on received event"""
         handler_func = None
+
         try:
             handler = EventNameToHandler(event.type)
             handler_func = getattr(self, f"_handle_{handler.name}", None)
@@ -83,6 +84,11 @@ class Product:
 
     async def _handle_property_changed(self, event: Event):
         self.properties[event.data[MessageField.NAME.value]] = event.data[MessageField.VALUE.value]
+
+    @property
+    def is_camera(self):
+        """checks if Product is camera"""
+        return True if ProductCommand.start_livestream.name in self.commands else False
 
 
 class Device(Product):

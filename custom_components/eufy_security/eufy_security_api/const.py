@@ -1,18 +1,10 @@
 """Define all constants for module."""
-from enum import Enum, auto
+from enum import Enum
 import logging
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 SCHEMA_VERSION = 15
-
-
-class IncomingMessageType(Enum):
-    """Incoming message types"""
-
-    version = "version"
-    result = "result"
-    event = "event"
 
 
 class MessageField(Enum):
@@ -67,62 +59,9 @@ class MessageField(Enum):
     # camera specific
     PICTURE_URL = "pictureUrl"
     DIRECTION = "direction"
-
-
-class OutgoingMessageToParameter(Enum):
-    """Outgoing message fields to runtime parameters"""
-
-    schemaVersion = "schema_version"
-    serialNumber = "serial_no"
-    name = "name"
-    value = "value"
-    seconds = "seconds"
-    captchaId = "captcha_id"
-    captcha = "captcha_input"
-    direction = "direction"
-    verifyCode = "verify_code"
-
-
-class OutgoingMessageType(Enum):
-    """Outgoing message types"""
-
-    driver_connect = {MessageField.COMMAND.value: auto()}
-    set_api_schema = {MessageField.COMMAND.value: auto(), MessageField.SCHEMA_VERSION.value: MessageField.BIND_AT_RUNTIME}
-    start_listening = {MessageField.COMMAND.value: auto()}
-    get_properties_metadata = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    get_properties = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    get_commands = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    poll_refresh = {MessageField.COMMAND.value: auto()}
-    set_property = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.NAME.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.VALUE.value: MessageField.BIND_AT_RUNTIME,
-    }
-    trigger_alarm = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.SECONDS.value: MessageField.BIND_AT_RUNTIME,
-    }
-    pan_and_tilt = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.DIRECTION.value: MessageField.BIND_AT_RUNTIME,
-    }
-    reset_alarm = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    start_rtsp_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    stop_rtsp_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    start_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    stop_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    set_captcha = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.CAPTCHA_ID.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.CAPTCHA_IMG.value: MessageField.BIND_AT_RUNTIME,
-    }
-    set_verify_code = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.VERIFY_CODE.value: MessageField.BIND_AT_RUNTIME,
-    }
+    LIVE_STREAMING = "livestreaming"
+    VOICES = "voices"
+    VOICE_ID = "voiceId"
 
 
 # https://bropat.github.io/eufy-security-ws/#/api_events?id=device-level-events
@@ -148,15 +87,6 @@ class ProductType(Enum):
     device = "device"
 
 
-class EventSourceType(Enum):
-    """Event type"""
-
-    station = "station"
-    device = "device"
-    driver = "driver"
-    server = "server"
-
-
 class PropertyType(Enum):
     """Property type"""
 
@@ -165,30 +95,7 @@ class PropertyType(Enum):
     boolean = "boolean"
 
 
-class StreamStatus(Enum):
-    """Stream status"""
-
-    IDLE = "idle"
-    PREPARING = "preparing"
-    STREAMING = "streaming"
-
-
-class StreamProvider(Enum):
-    """Stream provider"""
-
-    RTSP = "{rtsp_stream_url}"  # replace with rtsp url from device
-    P2P = "rtsp://{server_address}:{server_port}/{serial_no}"  # replace with stream name
-
-
-class PTZCommand(Enum):
-    """Pan Tilt Zoom Camera Commands"""
-
-    ROTATE360 = 0
-    LEFT = 1
-    RIGHT = 2
-    UP = 3
-    DOWN = 4
-
-
 class ProductCommand(Enum):
+    """Important Product Commands"""
+
     start_livestream = "Start P2P Livestream"

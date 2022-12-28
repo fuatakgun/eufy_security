@@ -4,25 +4,23 @@ import asyncio
 import logging
 
 from haffmpeg.camera import CameraMjpeg
+import voluptuous as vol
 
-from homeassistant.components.camera import Camera, CameraEntityFeature, StreamType
+from homeassistant.components.camera import Camera, CameraEntityFeature
 from homeassistant.components.ffmpeg import DATA_FFMPEG
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.aiohttp_client import (
     async_aiohttp_proxy_stream,
     async_get_clientsession,
 )
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import COORDINATOR, DOMAIN
+from .const import COORDINATOR, DOMAIN, Schema
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
-from .eufy_security_api.const import StreamProvider, StreamStatus
+from .eufy_security_api.camera import StreamProvider, StreamStatus
 from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.util import get_child_value, wait_for_value_to_equal
 
@@ -34,7 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = []
     for product in coordinator.api.devices.values():
-        if "start_livestream" in product.commands:
+        if product.is_camera is True:
             product_properties.append(Metadata.parse(product, {"name": "camera", "label": "Caamera"}))
 
     entities = [EufySecurityCamera(coordinator, metadata) for metadata in product_properties]
@@ -51,9 +49,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("ptz_left", {}, "_async_ptz_left")
     platform.async_register_entity_service("ptz_right", {}, "_async_ptz_right")
     platform.async_register_entity_service("ptz_360", {}, "_async_ptz_360")
-    platform.async_register_entity_service("trigger_alarm", {}, "_async_alarm_trigger")
+
+    platform.async_register_entity_service("trigger_alarm_with_duration", Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value, "_async_alarm_trigger")
     platform.async_register_entity_service("reset_alarm", {}, "_async_reset_alarm")
-    # platform.async_register_entity_service("quick_response", QUICK_RESPONSE_SCHEMA, "async_quick_response")
+    platform.async_register_entity_service("quick_response", Schema.QUICK_RESPONSE_SERVICE_SCHEMA.value, "_async_quick_response")
 
 
 class EufySecurityCamera(Camera, EufySecurityEntity):
@@ -88,21 +87,15 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     def available(self) -> bool:
         return True
 
-    async def _start_streaming(self):
+    async def _start_hass_streaming(self):
+        await self._stop_hass_streaming()
         await wait_for_value_to_equal(self.product.__dict__, "stream_status", StreamStatus.STREAMING)
-        await asyncio.sleep(3)
         await self.async_create_stream()
         self.stream.add_provider("hls")
         await self.stream.start()
-        asyncio.ensure_future(self._check_stream_availability())
         await self.async_camera_image()
 
-    async def _check_stream_availability(self):
-        if self.is_streaming is True and self.stream is not None and self.stream.available is False:
-            await self.async_turn_off()
-            # await self._stop_streaming()
-
-    async def _stop_streaming(self):
+    async def _stop_hass_streaming(self):
         if self.stream is not None:
             await self.stream.stop()
             self.stream = None
@@ -110,6 +103,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     @property
     def is_streaming(self) -> bool:
         """Return true if the device is recording."""
+        # asyncio.ensure_future(self._check_stream_availability())
         return self.product.stream_status == StreamStatus.STREAMING
 
     async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
@@ -128,30 +122,30 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def _start_p2p_livestream(self) -> None:
         """start byte based livestream on camera"""
         await self.product.start_p2p_livestream(CameraMjpeg(self.ffmpeg.binary))
-        await self._start_streaming()
+        await self._start_hass_streaming()
 
     async def _stop_p2p_livestream(self) -> None:
         """stop byte based livestream on camera"""
-        await self._stop_streaming()
+        await self._stop_hass_streaming()
         await self.product.stop_p2p_livestream()
 
     async def _start_rtsp_livestream(self) -> None:
         """start rtsp based livestream on camera"""
         await self.product.start_rtsp_livestream()
-        await self._start_streaming()
+        await self._start_hass_streaming()
 
     async def _stop_rtsp_livestream(self) -> None:
         """stop rtsp based livestream on camera"""
-        await self._stop_streaming()
+        await self._stop_hass_streaming()
         await self.product.stop_rtsp_livestream()
 
-    async def _async_alarm_trigger(self, code: str | None = None) -> None:
+    async def _async_alarm_trigger(self, duration: int = 10):
         """trigger alarm for a duration on camera"""
-        await self.product.trigger_alarm(self.metadata)
+        await self.product.trigger_alarm(duration)
 
     async def _async_reset_alarm(self) -> None:
         """reset ongoing alarm"""
-        await self.product.reset_alarm(self.metadata)
+        await self.product.reset_alarm()
 
     async def async_turn_on(self) -> None:
         """Turn off camera."""
@@ -181,3 +175,6 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def _async_ptz_360(self) -> None:
         await self.product.ptz_360()
+
+    async def _async_quick_response(self, voice_id: int) -> None:
+        await self.product.quick_response(voice_id)

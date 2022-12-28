@@ -1,21 +1,29 @@
+from enum import Enum
 import logging
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-
-from .const import COORDINATOR, DOMAIN, Platform, PlatformToPropertyType, CameraSensor
+from .const import COORDINATOR, DOMAIN, Platform, PlatformToPropertyType
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
 from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.util import get_child_value
 from .util import get_product_properties_by_filter
-from .eufy_security_api.camera import Camera
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
+
+class CameraSensor(Enum):
+    """Camera specific class attributes to be presented as sensor"""
+
+    stream_provider = "Stream Provider"
+    stream_url = "Stream URL"
+    stream_status = "Stream Status"
+    codec = "Video Codec"
+    video_queue_size = "Video Queue Size"
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -25,7 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         [coordinator.api.devices.values(), coordinator.api.stations.values()], PlatformToPropertyType[Platform.SENSOR.name].value
     )
     for camera in coordinator.api.devices.values():
-        if isinstance(camera, Camera) is True:
+        if camera.is_camera is True:
             for metadata in CameraSensor:
                 product_properties.append(Metadata.parse(camera, {"name": metadata.name, "label": metadata.value}))
     entities = [EufySecuritySensor(coordinator, metadata) for metadata in product_properties]

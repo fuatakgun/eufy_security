@@ -68,6 +68,7 @@ class EufySecurityProductEntity(BinarySensorEntity, CoordinatorEntity):
             "properties": self.product.properties,
             # "metadata": self.product.metadata_org,
             "commands": self.product.commands,
+            "voices": self.product.voices if self.product.is_camera else None,
         }
 
     @property

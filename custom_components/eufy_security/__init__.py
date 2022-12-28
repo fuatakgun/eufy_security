@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config, HomeAssistant
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import CAPTCHA_CONFIG, COORDINATOR, DOMAIN, PLATFORMS
+from .const import COORDINATOR, DOMAIN, PLATFORMS
 from .coordinator import EufySecurityDataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)

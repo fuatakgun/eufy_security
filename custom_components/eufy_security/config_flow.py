@@ -10,7 +10,6 @@ from homeassistant.helpers import aiohttp_client
 import homeassistant.helpers.config_validation as cv
 
 from .const import COORDINATOR, DOMAIN
-from .coordinator import EufySecurityDataUpdateCoordinator
 from .eufy_security_api.api_client import ApiClient
 from .eufy_security_api.exceptions import WebSocketConnectionError
 from .model import Config, ConfigField

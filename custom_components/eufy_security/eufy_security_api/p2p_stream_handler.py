@@ -71,7 +71,7 @@ class P2PStreamHandler:
         """True if ffmpeg exists and running"""
         return self.ffmpeg is not None and self.ffmpeg.is_running is True
 
-    def setup(self, ffmpeg, port_ready_future):
+    def setup(self, ffmpeg):
         """Setup the handler"""
         self.ffmpeg = ffmpeg
         self.port = None
@@ -79,7 +79,6 @@ class P2PStreamHandler:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.bind(("localhost", 0))
             self.port = sock.getsockname()[1]
-            port_ready_future.set_result(True)
             # self._set_remote_config()
             _LOGGER.debug(f"p2p 1 - waiting")
             sock.listen()
@@ -100,9 +99,9 @@ class P2PStreamHandler:
                 _LOGGER.debug(f"p2p 6")
             except Exception as ex:  # pylint: disable=broad-except
                 _LOGGER.debug(f"Exception %s - traceback: %s", ex, traceback.format_exc())
+        asyncio.run_coroutine_threadsafe(self.stop(), self.loop).result()
         self.port = None
         self.ffmpeg = None
-        asyncio.run_coroutine_threadsafe(self.stop(), self.loop).result()
         _LOGGER.debug(f"p2p 7")
 
     async def stop(self):

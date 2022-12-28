@@ -2,15 +2,13 @@
 from enum import Enum, auto
 import logging
 
+import voluptuous as vol
+
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import (
-    STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_HOME,
-    STATE_ALARM_DISARMED,
-    STATE_ALARM_TRIGGERED,
-    Platform,
-)
+from homeassistant.const import Platform
+import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.entity import EntityCategory
 
 from .eufy_security_api.const import MessageField, PropertyType
@@ -24,8 +22,6 @@ NAME = "Eufy Security"
 DOMAIN = "eufy_security"
 VERSION = "1.0.0"
 COORDINATOR = "coordinator"
-CAPTCHA_CONFIG = "captcha_config"
-
 
 PLATFORMS: list[str] = [
     Platform.BINARY_SENSOR,
@@ -40,14 +36,11 @@ PLATFORMS: list[str] = [
 ]
 
 
-class CameraSensor(Enum):
-    """Camera specific class attributes to be presented as sensor"""
+class Schema(Enum):
+    """General used service schema definition"""
 
-    stream_provider = "Stream Provider"
-    stream_url = "Stream URL"
-    stream_status = "Stream Status"
-    codec = "Video Codec"
-    video_queue_size = "Video Queue Size"
+    TRIGGER_ALARM_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("duration"): cv.Number})
+    QUICK_RESPONSE_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("voice_id"): cv.Number})
 
 
 class PropertyToEntityDescription(Enum):
@@ -140,29 +133,3 @@ class PlatformToPropertyType(Enum):
     SWITCH = MetadataFilter(readable=True, writeable=True, types=[PropertyType.boolean])
     SELECT = MetadataFilter(readable=True, writeable=True, types=[PropertyType.number], any_fields=[MessageField.STATES.value])
     NUMBER = MetadataFilter(readable=True, writeable=True, types=[PropertyType.number], no_fields=[MessageField.STATES.value])
-
-
-class CurrentModeToState(Enum):
-    """Alarm Entity Mode to State"""
-
-    NONE = -1
-    AWAY = 0
-    HOME = 1
-    CUSTOM_BYPASS = 3
-    NIGHT = 4
-    VACATION = 5
-    DISARMED = 63
-
-
-class CurrentModeToStateValue(Enum):
-    """Alarm Entity Mode to State Value"""
-
-    NONE = "Unknown"
-    AWAY = STATE_ALARM_ARMED_AWAY
-    HOME = STATE_ALARM_ARMED_HOME
-    CUSTOM_BYPASS = auto()
-    NIGHT = auto()
-    VACATION = auto()
-    DISARMED = STATE_ALARM_DISARMED
-    TRIGGERED = STATE_ALARM_TRIGGERED
-    ALARM_DELAYED = "Alarm delayed"
