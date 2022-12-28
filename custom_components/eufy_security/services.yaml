@@ -50,6 +50,30 @@ reset_alarm:
       domain: alarm_control_panel
       integration: eufy_security
 
+alarm_arm_custom1:
+  name: Arm Customer 1 for Alarm Panel
+  description: Arm Customer 1 for Alarm Panel
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
+alarm_arm_custom2:
+  name: Arm Customer 2 for Alarm Panel
+  description: Arm Customer 2 for Alarm Panel
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
+alarm_arm_custom3:
+  name: Arm Customer 3 for Alarm Panel
+  description: Arm Customer 3 for Alarm Panel
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
 send_message:
   name: Send Message
   description: Send a JSON message to Web Socket

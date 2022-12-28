@@ -69,6 +69,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         "trigger_alarm_with_duration", Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value, "async_alarm_trigger_with_duration"
     )
     platform.async_register_entity_service("reset_alarm", {}, "async_reset_alarm")
+    platform.async_register_entity_service("alarm_arm_custom1", {}, "async_alarm_arm_custom_bypass")
+    platform.async_register_entity_service("alarm_arm_custom2", {}, "async_alarm_arm_night")
+    platform.async_register_entity_service("alarm_arm_custom3", {}, "async_alarm_arm_vacation")
 
 
 class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity):
