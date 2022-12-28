@@ -1,5 +1,6 @@
 import logging
 
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, PropertyToEntityDescription
@@ -18,7 +19,7 @@ class EufySecurityEntity(CoordinatorEntity):
         super().__init__(coordinator)
         self.metadata: Metadata = metadata
         self.product.set_state_update_listener(coordinator.async_update_listeners)
-
+        # platform = entity_platform.async_get_current_platform().domain
         self._attr_unique_id = f"{DOMAIN}_{self.product.serial_no}_{self.product.product_type.value}_{metadata.name}"
         self._attr_should_poll = False
         self._attr_icon = self.description.icon

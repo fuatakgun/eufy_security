@@ -1,7 +1,10 @@
+import asyncio
 from enum import Enum
 import logging
 from queue import Queue
 import threading
+
+from aiortsp.rtsp.reader import RTSPReader
 
 from .const import MessageField
 from .event import Event
@@ -119,6 +122,7 @@ class Camera(Device):
         await wait_for_value(self.p2p_stream_handler.__dict__, "port", None)
         if self.codec is not None:
             await self._start_ffmpeg()
+        await self.rtsp_is_started()
 
     async def stop_livestream(self):
         """Process stop p2p livestream call"""
@@ -130,6 +134,15 @@ class Camera(Device):
         """Process start rtsp livestream call"""
         self.set_stream_prodiver(StreamProvider.RTSP)
         await self.api.start_rtsp_livestream(self.product_type, self.serial_no)
+        await self.rtsp_is_started()
+
+    async def rtsp_is_started(self):
+        _LOGGER.debug(f"rtsp_is_started 1 - {self.stream_url}")
+        async with RTSPReader(self.stream_url) as reader:
+            _LOGGER.debug(f"rtsp_is_started 2 - {reader}")
+            async for pkt in reader.iter_packets():
+                _LOGGER.debug(f"rtsp_is_started 3 - {pkt}")
+                return
 
     async def stop_rtsp_livestream(self):
         """Process stop rtsp livestream call"""

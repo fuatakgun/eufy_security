@@ -42,7 +42,12 @@ class Product:
     def _set_metadata(self, metadata: dict) -> None:
         self.metadata = {}
         for key, value in metadata.items():
-            self.metadata[key] = Metadata.parse(self, value)
+            metadata = Metadata.parse(self, value)
+
+            if key == "motionDetected" and metadata.name == "motionDetection":
+                metadata.name = key
+
+            self.metadata[key] = metadata
 
     def set_state_update_listener(self, listener: Callable):
         """Set listener function when state changes"""
