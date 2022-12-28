@@ -9,8 +9,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import COORDINATOR, DOMAIN
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
-from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.const import MessageField
+from .eufy_security_api.metadata import Metadata
+from .eufy_security_api.util import get_child_value
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -36,7 +37,7 @@ class EufySecurityLock(LockEntity, EufySecurityEntity):
 
     @property
     def is_locked(self):
-        return self.product.state.get(self.metadata.name)
+        return get_child_value(self.product.properties, self.metadata.name)
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Initiate lock call"""

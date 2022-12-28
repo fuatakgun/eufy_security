@@ -238,7 +238,7 @@ class ApiClient:
         if "livestream video data" not in message_str and "livestream audio data" not in message_str:
             _LOGGER.debug(f"_on_message - {message_str}")
         if message[MessageField.TYPE.value] == IncomingMessageType.result.name:
-            future = self.result_futures.get(message[MessageField.MESSAGE_ID.value])
+            future = self.result_futures.get(message.get(MessageField.MESSAGE_ID.value, -1), None)
 
             if future is None:
                 return

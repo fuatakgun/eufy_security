@@ -124,6 +124,12 @@ class PropertyToEntityDescription(Enum):
     alarmArmDelay = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     alarmDelay = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
 
+    # lock sensor
+    wrongTryProtectAlert = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    jammedAlert = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    shakeAlert = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    lockStatus = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+
     # fallback
     default = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
 
