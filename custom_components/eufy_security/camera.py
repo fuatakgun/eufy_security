@@ -92,6 +92,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         await wait_for_value_to_equal(self.product.__dict__, "stream_status", StreamStatus.STREAMING)
         await asyncio.sleep(3)
         await self.async_create_stream()
+        self.stream.add_provider("hls")
         await self.stream.start()
         asyncio.ensure_future(self._check_stream_availability())
         await self.async_camera_image()
