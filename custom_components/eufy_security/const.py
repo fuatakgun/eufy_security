@@ -145,6 +145,7 @@ class PlatformToPropertyType(Enum):
 class CurrentModeToState(Enum):
     """Alarm Entity Mode to State"""
 
+    NONE = -1
     AWAY = 0
     HOME = 1
     CUSTOM_BYPASS = 3
@@ -156,6 +157,7 @@ class CurrentModeToState(Enum):
 class CurrentModeToStateValue(Enum):
     """Alarm Entity Mode to State Value"""
 
+    NONE = "Unknown"
     AWAY = STATE_ALARM_ARMED_AWAY
     HOME = STATE_ALARM_ARMED_HOME
     CUSTOM_BYPASS = auto()

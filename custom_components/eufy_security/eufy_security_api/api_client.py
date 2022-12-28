@@ -217,8 +217,8 @@ class ApiClient:
         return await self._send_message_get_response(message)
 
     async def _on_message(self, message: dict) -> None:
-        message_str = str(message)[0:200]
-        # message_str = str(message)
+        # message_str = str(message)[0:200]
+        message_str = str(message)
         if "livestream video data" not in message_str and "livestream audio data" not in message_str:
             _LOGGER.debug(f"_on_message - {message_str}")
         if message[MessageField.TYPE.value] == IncomingMessageType.result.name:

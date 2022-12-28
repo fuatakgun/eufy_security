@@ -31,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = []
     for product in coordinator.api.stations.values():
-        if product.has(MessageField.CURRENT_MODE.value) is True:
+        if product.has(MessageField.GUARD_MODE.value) is True:
             product_properties.append(product.metadata[MessageField.CURRENT_MODE.value])
 
     entities = [EufySecurityAlarmControlPanel(coordinator, metadata) for metadata in product_properties]
@@ -111,4 +111,6 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
                 return self.coordinator.config.name_for_custom2
             if position == 2:
                 return self.coordinator.config.name_for_custom3
+        if current_mode is None:
+            current_mode = -1
         return CurrentModeToStateValue[CurrentModeToState(current_mode).name].value
