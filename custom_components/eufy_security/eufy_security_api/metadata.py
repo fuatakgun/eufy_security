@@ -17,6 +17,7 @@ class Metadata:
     min: int
     max: int
     product: Any
+    command: str
     states: dict = field(default_factory=dict)
 
     @classmethod
@@ -32,5 +33,6 @@ class Metadata:
             min=data.get(MessageField.MIN.value, None),
             max=data.get(MessageField.MAX.value, None),
             product=product,
+            command=data.get(MessageField.COMMAND.value, None),
             states=data.get(MessageField.STATES.value, None),
         )

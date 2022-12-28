@@ -62,6 +62,7 @@ class Camera(Device):
         self.video_queue: Queue = Queue()
         self.config = config
         self.voices = voices
+        self.ffmpeg = None
 
         self.p2p_stream_handler = P2PStreamHandler(self)
         self.p2p_stream_thread = None
@@ -70,6 +71,11 @@ class Camera(Device):
             self.set_stream_prodiver(StreamProvider.RTSP)
         else:
             self.set_stream_prodiver(StreamProvider.P2P)
+
+    def set_ffmpeg(self, ffmpeg):
+        """set ffmpeg binary"""
+        self.ffmpeg = ffmpeg
+        self.p2p_stream_handler.set_ffmpeg(ffmpeg)
 
     async def _handle_livestream_started(self, event: Event):
         # automatically find this function for respective event
@@ -103,20 +109,20 @@ class Camera(Device):
     async def _start_ffmpeg(self):
         await self.p2p_stream_handler.start_ffmpeg(self.config.ffmpeg_analyze_duration)
 
-    async def start_p2p_livestream(self, ffmpeg):
+    async def start_livestream(self):
         """Process start p2p livestream call"""
         self.set_stream_prodiver(StreamProvider.P2P)
         self.stream_status = StreamStatus.PREPARING
-        await self.api.start_p2p_livestream(self.product_type, self.serial_no)
-        self.p2p_stream_thread = threading.Thread(target=self.p2p_stream_handler.setup, daemon=True, args=[ffmpeg])
+        await self.api.start_livestream(self.product_type, self.serial_no)
+        self.p2p_stream_thread = threading.Thread(target=self.p2p_stream_handler.setup, daemon=True)
         self.p2p_stream_thread.start()
         await wait_for_value(self.p2p_stream_handler.__dict__, "port", None)
         if self.codec is not None:
             await self._start_ffmpeg()
 
-    async def stop_p2p_livestream(self):
+    async def stop_livestream(self):
         """Process stop p2p livestream call"""
-        await self.api.stop_p2p_livestream(self.product_type, self.serial_no)
+        await self.api.stop_livestream(self.product_type, self.serial_no)
         if self.p2p_stream_thread.is_alive() is True:
             await self.p2p_stream_handler.stop()
 
@@ -128,6 +134,30 @@ class Camera(Device):
     async def stop_rtsp_livestream(self):
         """Process stop rtsp livestream call"""
         await self.api.stop_rtsp_livestream(self.product_type, self.serial_no)
+
+    async def ptz_up(self) -> None:
+        """Look up"""
+        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.UP.value)
+
+    async def ptz_down(self) -> None:
+        """Look down"""
+        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.DOWN.value)
+
+    async def ptz_left(self) -> None:
+        """Look left"""
+        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.LEFT.value)
+
+    async def ptz_right(self) -> None:
+        """Look right"""
+        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.RIGHT.value)
+
+    async def ptz_360(self) -> None:
+        """Look around 360 degrees"""
+        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.ROTATE360.value)
+
+    async def quick_response(self, voice_id: int) -> None:
+        """Quick response message to camera"""
+        await self.api.quick_response(self.product_type, self.serial_no, voice_id)
 
     @property
     def is_rtsp_supported(self) -> bool:
@@ -164,27 +194,3 @@ class Camera(Device):
             url = url.replace("{server_port}", str(self.config.rtsp_server_port))
             self.stream_url = url
         _LOGGER.debug(f"url - {self.stream_provider} - {self.stream_url}")
-
-    async def ptz_up(self) -> None:
-        """Look up"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.UP.value)
-
-    async def ptz_down(self) -> None:
-        """Look down"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.DOWN.value)
-
-    async def ptz_left(self) -> None:
-        """Look left"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.LEFT.value)
-
-    async def ptz_right(self) -> None:
-        """Look right"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.RIGHT.value)
-
-    async def ptz_360(self) -> None:
-        """Look around 360 degrees"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.ROTATE360.value)
-
-    async def quick_response(self, voice_id: int) -> None:
-        """Quick response message to camera"""
-        await self.api.quick_response(self.product_type, self.serial_no, voice_id)

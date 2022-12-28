@@ -178,13 +178,13 @@ class ApiClient:
         command = product_type.name + "." + command_type.name
         await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
 
-    async def start_p2p_livestream(self, product_type: ProductType, serial_no: str) -> None:
+    async def start_livestream(self, product_type: ProductType, serial_no: str) -> None:
         """Process start p2p livestream call"""
         command_type = OutgoingMessageType.start_livestream
         command = product_type.name + "." + command_type.name
         await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
 
-    async def stop_p2p_livestream(self, product_type: ProductType, serial_no: str) -> None:
+    async def stop_livestream(self, product_type: ProductType, serial_no: str) -> None:
         """Process stop p2p livestream call"""
         command_type = OutgoingMessageType.stop_livestream
         command = product_type.name + "." + command_type.name

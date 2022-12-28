@@ -1,6 +1,7 @@
 """Define all constants for module."""
 from enum import Enum
 import logging
+from .command_description import CommandDescription
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -98,4 +99,14 @@ class PropertyType(Enum):
 class ProductCommand(Enum):
     """Important Product Commands"""
 
-    start_livestream = "Start P2P Livestream"
+    start_livestream = CommandDescription("Start P2P Stream", "start_livestream")
+    stop_livestream = CommandDescription("Stop P2P Stream", "stop_livestream")
+    start_rtsp_livestream = CommandDescription("Start RTSP Stream", "is_rtsp_enabled")
+    stop_rtsp_livestream = CommandDescription("Stop RTSP Stream", "is_rtsp_enabled")
+    ptz_up = CommandDescription("PTZ Up", "pan_and_tilt")
+    ptz_down = CommandDescription("PTZ Down", "pan_and_tilt")
+    ptz_left = CommandDescription("PTZ Left", "pan_and_tilt")
+    ptz_right = CommandDescription("PTZ Right", "pan_and_tilt")
+    ptz_360 = CommandDescription("PTZ 360", "pan_and_tilt")
+    trigger_alarm = CommandDescription("Trigger Alarm")
+    reset_alarm = CommandDescription("Reset Alarm")

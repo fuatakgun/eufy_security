@@ -45,6 +45,10 @@ class P2PStreamHandler:
         self.loop = None
         self.ffmpeg = None
 
+    def set_ffmpeg(self, ffmpeg):
+        """set ffmpeg process"""
+        self.ffmpeg = ffmpeg
+
     async def start_ffmpeg(self, duration):
         """start ffmpeg process"""
         self.loop = asyncio.get_running_loop()
@@ -71,9 +75,8 @@ class P2PStreamHandler:
         """True if ffmpeg exists and running"""
         return self.ffmpeg is not None and self.ffmpeg.is_running is True
 
-    def setup(self, ffmpeg):
+    def setup(self):
         """Setup the handler"""
-        self.ffmpeg = ffmpeg
         self.port = None
         empty_queue_counter = 0
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -101,10 +104,12 @@ class P2PStreamHandler:
                 _LOGGER.debug(f"Exception %s - traceback: %s", ex, traceback.format_exc())
         asyncio.run_coroutine_threadsafe(self.stop(), self.loop).result()
         self.port = None
-        self.ffmpeg = None
         _LOGGER.debug(f"p2p 7")
 
     async def stop(self):
         """kill ffmpeg process"""
         if self.ffmpeg is not None:
-            await self.ffmpeg.close(timeout=1)
+            try:
+                await self.ffmpeg.close(timeout=1)
+            except:
+                pass

@@ -32,7 +32,7 @@ PLATFORMS: list[str] = [
     Platform.ALARM_CONTROL_PANEL,
     Platform.NUMBER,
     Platform.CAMERA,
-    # Platform.BUTTON,
+    Platform.BUTTON,
 ]
 
 
@@ -123,6 +123,9 @@ class PropertyToEntityDescription(Enum):
     alarm = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     alarmArmDelay = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     alarmDelay = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+
+    # fallback
+    default = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
 
 
 class PlatformToPropertyType(Enum):

@@ -2,7 +2,7 @@ import logging
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, NAME, PropertyToEntityDescription
+from .const import DOMAIN, PropertyToEntityDescription
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.product import Product
@@ -34,7 +34,10 @@ class EufySecurityEntity(CoordinatorEntity):
     @property
     def description(self) -> PropertyToEntityDescription:
         """Get description of entity"""
-        return PropertyToEntityDescription[self.metadata.name].value
+        try:
+            return PropertyToEntityDescription[self.metadata.name].value
+        except KeyError:
+            return PropertyToEntityDescription.default.value
 
     @property
     def device_info(self):

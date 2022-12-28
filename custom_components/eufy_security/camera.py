@@ -33,15 +33,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     product_properties = []
     for product in coordinator.api.devices.values():
         if product.is_camera is True:
-            product_properties.append(Metadata.parse(product, {"name": "camera", "label": "Caamera"}))
+            product_properties.append(Metadata.parse(product, {"name": "camera", "label": "Camera"}))
 
     entities = [EufySecurityCamera(coordinator, metadata) for metadata in product_properties]
     async_add_entities(entities)
 
     # register entity level services
     platform = entity_platform.async_get_current_platform()
-    platform.async_register_entity_service("start_p2p_livestream", {}, "_start_p2p_livestream")
-    platform.async_register_entity_service("stop_p2p_livestream", {}, "_stop_p2p_livestream")
+    platform.async_register_entity_service("start_p2p_livestream", {}, "_start_livestream")
+    platform.async_register_entity_service("stop_p2p_livestream", {}, "_stop_livestream")
     platform.async_register_entity_service("start_rtsp_livestream", {}, "_start_rtsp_livestream")
     platform.async_register_entity_service("stop_rtsp_livestream", {}, "_stop_rtsp_livestream")
     platform.async_register_entity_service("ptz_up", {}, "_async_ptz_up")
@@ -70,14 +70,20 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
         # ffmpeg entities
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]
+        self.product.set_ffmpeg(CameraMjpeg(self.ffmpeg.binary))
 
     async def stream_source(self) -> str:
         _LOGGER.debug(f"stream_source - {self.product.stream_url}")
+        if self.is_streaming is False:
+            return None
         return self.product.stream_url
 
     async def handle_async_mjpeg_stream(self, request):
         stream = CameraMjpeg(self.ffmpeg.binary)
-        await stream.open_camera(await self.stream_source())
+        stream_source = await self.stream_source()
+        if stream_source is None:
+            return await super().handle_async_mjpeg_stream(request)
+        await stream.open_camera(stream_source)
         try:
             return await async_aiohttp_proxy_stream(self.hass, request, await stream.get_reader(), self.ffmpeg.ffmpeg_stream_content_type)
         finally:
@@ -89,6 +95,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def _start_hass_streaming(self):
         await self._stop_hass_streaming()
+        _LOGGER.debug(f"_stop_hass_streaming - 1 {self.stream}")
         await wait_for_value_to_equal(self.product.__dict__, "stream_status", StreamStatus.STREAMING)
         await self.async_create_stream()
         self.stream.add_provider("hls")
@@ -96,8 +103,11 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         await self.async_camera_image()
 
     async def _stop_hass_streaming(self):
+        _LOGGER.debug(f"_stop_hass_streaming - 1 {self.stream}")
         if self.stream is not None:
+            _LOGGER.debug(f"_stop_hass_streaming - 2 {self.stream}")
             await self.stream.stop()
+            _LOGGER.debug(f"_stop_hass_streaming - 3 {self.stream}")
             self.stream = None
 
     @property
@@ -119,15 +129,15 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
                         self._last_url = current_url
         return self._last_image
 
-    async def _start_p2p_livestream(self) -> None:
+    async def _start_livestream(self) -> None:
         """start byte based livestream on camera"""
-        await self.product.start_p2p_livestream(CameraMjpeg(self.ffmpeg.binary))
+        await self.product.start_livestream()
         await self._start_hass_streaming()
 
-    async def _stop_p2p_livestream(self) -> None:
+    async def _stop_livestream(self) -> None:
         """stop byte based livestream on camera"""
         await self._stop_hass_streaming()
-        await self.product.stop_p2p_livestream()
+        await self.product.stop_livestream()
 
     async def _start_rtsp_livestream(self) -> None:
         """start rtsp based livestream on camera"""
@@ -152,14 +162,14 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         if self.product.stream_provider == StreamProvider.RTSP:
             await self._start_rtsp_livestream()
         else:
-            await self._start_p2p_livestream()
+            await self._start_livestream()
 
     async def async_turn_off(self) -> None:
         """Turn off camera."""
         if self.product.stream_provider == StreamProvider.RTSP:
             await self._stop_rtsp_livestream()
         else:
-            await self._stop_p2p_livestream()
+            await self._stop_livestream()
 
     async def _async_ptz_up(self) -> None:
         await self.product.ptz_up()
