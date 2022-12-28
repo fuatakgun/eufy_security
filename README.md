@@ -83,8 +83,14 @@ So, let's start.
 8- You can also configure `Cloud Scan Interval`, Video Analyze Duration, `Custom Name 1`, `Custom Name 2` and `Custom Name 3`
 
 # Debugging Issues #
-I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
+I am more than happy to debug individual issues as long as you follow setup instructions. 
+
+I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. 
+
+For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
 
 If you are located in EU, use my account: fuatakgun@gmail.com
+
 If you are located in US, use shared test account: eufydeveloper@gmail.com
+
 To schedule the time, please use this link: https://calendly.com/fuatakgun/office-hour
