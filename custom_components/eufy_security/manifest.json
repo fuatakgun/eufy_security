@@ -5,7 +5,7 @@
   "issue_tracker": "https://github.com/fuatakgun/eufy_security/issues",
   "dependencies": ["ffmpeg", "stream"],
   "config_flow": true,
-  "version": "5.2.0",
+  "version": "5.2.1",
   "codeowners": ["@fuatakgun"],
   "requirements": ["websocket-client==1.1.0", "aiortsp==1.3.6"],
   "iot_class": "cloud_push",

@@ -101,7 +101,7 @@ class P2PStreamHandler:
                         sleep(500 / 1000)
                 _LOGGER.debug(f"p2p 6")
             except Exception as ex:  # pylint: disable=broad-except
-                _LOGGER.debug(f"Exception %s - traceback: %s", ex, traceback.format_exc())
+                _LOGGER.error(f"Exception %s - traceback: %s", ex, traceback.format_exc())
         asyncio.run_coroutine_threadsafe(self.stop(), self.loop).result()
         self.port = None
         _LOGGER.debug(f"p2p 7")
@@ -113,3 +113,5 @@ class P2PStreamHandler:
                 await self.ffmpeg.close(timeout=1)
             except:
                 pass
+        if self.camera.is_streaming is True:
+            await self.camera.stop_livestream()

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from aiortsp.rtsp.reader import RTSPReader
 from haffmpeg.camera import CameraMjpeg
 import voluptuous as vol
 
@@ -72,8 +73,24 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]
         self.product.set_ffmpeg(CameraMjpeg(self.ffmpeg.binary))
 
+    async def wait_till_stream_connects(self) -> bool:
+        """wait for RTSP stream to be started"""
+        stream_url = self.product.stream_url.replace("rtsp://", "rtspt://")
+        _LOGGER.debug(f"rtsp_is_started 1 - {stream_url}")
+        try:
+            async with RTSPReader(stream_url) as reader:
+                for _ in range(0, 5):
+                    _LOGGER.debug(f"rtsp_is_started 2 - {reader}")
+                    async for pkt in reader.iter_packets():
+                        _LOGGER.debug(f"rtsp_is_started 3 - {pkt is None}")
+                        return True
+                    _LOGGER.debug(f"rtsp_is_started 4 - {reader}")
+                    await asyncio.sleep(1)
+        except:
+            pass
+        return False
+
     async def stream_source(self) -> str:
-        _LOGGER.debug(f"stream_source - {self.product.stream_url}")
         if self.is_streaming is False:
             return None
         return self.product.stream_url
@@ -94,20 +111,18 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         return True
 
     async def _start_hass_streaming(self):
-        await self._stop_hass_streaming()
-        _LOGGER.debug(f"_stop_hass_streaming - 1 {self.stream}")
         await wait_for_value_to_equal(self.product.__dict__, "stream_status", StreamStatus.STREAMING)
-        await self.async_create_stream()
-        self.stream.add_provider("hls")
+        await self._stop_hass_streaming()
+        if await self.async_create_stream() is None:
+            _LOGGER.debug(f"_start_hass_streaming - stream is not created")
+            return
+        # self.stream.add_provider("hls")
         await self.stream.start()
         await self.async_camera_image()
 
     async def _stop_hass_streaming(self):
-        _LOGGER.debug(f"_stop_hass_streaming - 1 {self.stream}")
         if self.stream is not None:
-            _LOGGER.debug(f"_stop_hass_streaming - 2 {self.stream}")
             await self.stream.stop()
-            _LOGGER.debug(f"_stop_hass_streaming - 3 {self.stream}")
             self.stream = None
 
     @property
@@ -142,6 +157,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def _start_rtsp_livestream(self) -> None:
         """start rtsp based livestream on camera"""
         await self.product.start_rtsp_livestream()
+        await asyncio.sleep(2)
         await self._start_hass_streaming()
 
     async def _stop_rtsp_livestream(self) -> None:
