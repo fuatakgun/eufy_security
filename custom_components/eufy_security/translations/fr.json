@@ -33,10 +33,11 @@
           "rtsp_server_address": "Adresse IP de l'hôte pour le module complémentaire RTSP (P2P)",
           "rtsp_server_port": "Port TCP pour module complémentaire RTSP (P2P)",
           "ffmpeg_analyze_duration": "Durée de l'analyse vidéo en secondes [1 à 5] (P2P)",
+          "generate_ffmpeg_logs": "Générer des journaux FFMPEG",
+          "no_stream_in_hass": "Do not use STREAM module inside Home Assistant (if you do not watch the video inside Home Assistant native streaming or you are using WebRTC, enable this to decrease CPU usage",
           "name_for_custom1": "Remplacer le nom pour le mode de garde Personnalisé1",
           "name_for_custom2": "Remplacer le nom pour le mode de garde Personnalisé2",
-          "name_for_custom3": "Remplacer le nom pour le mode de garde Personnalisé3",
-          "generate_ffmpeg_logs": "Générer des journaux FFMPEG"
+          "name_for_custom3": "Remplacer le nom pour le mode de garde Personnalisé3"
         }
       }
     }

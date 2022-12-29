@@ -58,7 +58,9 @@ class P2PStreamHandler:
         codec = "hevc" if self.camera.codec == "h265" else self.camera.codec
         command[input_index - 1] = codec
         command[input_index + 1] = command[input_index + 1].replace("{port}", str(self.port))
-        options = FFMPEG_OPTIONS + " -report"
+        options = FFMPEG_OPTIONS
+        if self.camera.config.generate_ffmpeg_logs is True:
+            options = FFMPEG_OPTIONS + " -report"
         stream_url = f"-f rtsp -rtsp_transport tcp {self.camera.stream_url}"
         await self.ffmpeg.open(
             cmd=command,

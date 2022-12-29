@@ -1,29 +1,26 @@
 from __future__ import annotations
+
 import asyncio
 import contextlib
-
 import logging
 
 from haffmpeg.camera import CameraMjpeg
 
+from homeassistant.components import ffmpeg
 from homeassistant.components.camera import Camera, CameraEntityFeature
 from homeassistant.components.ffmpeg import DATA_FFMPEG
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
-from homeassistant.helpers.aiohttp_client import (
-    async_aiohttp_proxy_stream,
-    async_get_clientsession,
-)
+from homeassistant.helpers.aiohttp_client import async_aiohttp_proxy_stream
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import COORDINATOR, DOMAIN, Schema
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
 from .eufy_security_api.camera import StreamProvider, StreamStatus
-from .eufy_security_api.const import MessageField
 from .eufy_security_api.metadata import Metadata
-from .eufy_security_api.util import get_child_value, wait_for_value_to_equal
+from .eufy_security_api.util import wait_for_value_to_equal
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -79,10 +76,10 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         return self.product.stream_url
 
     async def handle_async_mjpeg_stream(self, request):
-        stream = CameraMjpeg(self.ffmpeg.binary)
         stream_source = await self.stream_source()
         if stream_source is None:
             return await super().handle_async_mjpeg_stream(request)
+        stream = CameraMjpeg(self.ffmpeg.binary)
         await stream.open_camera(stream_source)
         try:
             return await async_aiohttp_proxy_stream(self.hass, request, await stream.get_reader(), self.ffmpeg.ffmpeg_stream_content_type)
@@ -93,13 +90,16 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     def available(self) -> bool:
         return True
 
+    async def async_create_stream(self):
+        if self.coordinator.config.no_stream_in_hass is True:
+            return None
+        return await super().async_create_stream()
+
     async def _start_hass_streaming(self):
         await wait_for_value_to_equal(self.product.__dict__, "stream_status", StreamStatus.STREAMING)
         await self._stop_hass_streaming()
         if await self.async_create_stream() is None:
-            _LOGGER.debug("_start_hass_streaming - stream exists, not created")
             return
-        # self.stream.add_provider("hls")
         await self.stream.start()
         await self.async_camera_image()
 
@@ -111,7 +111,6 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     @property
     def is_streaming(self) -> bool:
         """Return true if the device is recording."""
-        # asyncio.ensure_future(self._check_stream_availability())
         return self.product.stream_status == StreamStatus.STREAMING
 
     async def _get_image_from_hass_stream(self, width, height):
@@ -121,12 +120,17 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
                 return result
 
     async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
-        _LOGGER.debug(f"async_camera_image 1 - {self.is_streaming}")
-        if self.is_streaming is True and self.stream is not None:
-            with contextlib.suppress(asyncio.TimeoutError):
-                self._last_image = await asyncio.wait_for(self._get_image_from_hass_stream(width, height), 5)
+        _LOGGER.debug(f"image 1 - {self.is_streaming} - {self.stream}")
+        if self.is_streaming is True:
+            if self.stream is not None:
+                with contextlib.suppress(asyncio.TimeoutError):
+                    self._last_image = await asyncio.wait_for(self._get_image_from_hass_stream(width, height), 5)
+                _LOGGER.debug(f"image 3.1 - {self.is_streaming} - is_empty  {self._last_image is None} - {self.stream.available}")
+            else:
+                self._last_image = await ffmpeg.async_get_image(self.hass, await self.stream_source(), width=width, height=height)
+                _LOGGER.debug(f"image 3.2 - {self.is_streaming} - is_empty  {self._last_image is None}")
             self._last_url = None
-            _LOGGER.debug(f"async_camera_image 3 - {self.is_streaming} - is_empty  {self._last_image is None} - {self.stream.available}")
+
         # else:
         #     current_url = get_child_value(self.product.properties, MessageField.PICTURE_URL.value)
         #     if current_url != self._last_url and current_url.startswith("https"):
