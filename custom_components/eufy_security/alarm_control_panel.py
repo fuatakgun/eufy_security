@@ -83,15 +83,13 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         self._attr_icon = None
         self._attr_code_arm_required = False
         self._attr_supported_features = (
-            AlarmControlPanelEntityFeature.ARM_HOME | AlarmControlPanelEntityFeature.ARM_AWAY | AlarmControlPanelEntityFeature.TRIGGER
+            AlarmControlPanelEntityFeature.ARM_HOME
+            | AlarmControlPanelEntityFeature.ARM_AWAY
+            | AlarmControlPanelEntityFeature.TRIGGER
+            | AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
+            | AlarmControlPanelEntityFeature.ARM_NIGHT
+            | AlarmControlPanelEntityFeature.ARM_VACATION
         )
-        if self.coordinator.config.map_extra_alarm_modes is True:
-            self._attr_supported_features = (
-                self._attr_supported_features
-                | AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
-                | AlarmControlPanelEntityFeature.ARM_NIGHT
-                | AlarmControlPanelEntityFeature.ARM_VACATION
-            )
 
     @property
     def guard_mode_metadata(self) -> Metadata:

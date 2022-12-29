@@ -33,7 +33,6 @@
           "rtsp_server_address": "Adresse IP de l'hôte pour le module complémentaire RTSP (P2P)",
           "rtsp_server_port": "Port TCP pour module complémentaire RTSP (P2P)",
           "ffmpeg_analyze_duration": "Durée de l'analyse vidéo en secondes [1 à 5] (P2P)",
-          "map_extra_alarm_modes": "Mapper les modes de garde personnalisés en contournement, nuit et vacances (dans l'ordre)",
           "name_for_custom1": "Remplacer le nom pour le mode de garde Personnalisé1",
           "name_for_custom2": "Remplacer le nom pour le mode de garde Personnalisé2",
           "name_for_custom3": "Remplacer le nom pour le mode de garde Personnalisé3",

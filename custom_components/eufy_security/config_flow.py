@@ -31,7 +31,6 @@ class EufySecurityOptionFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(ConfigField.rtsp_server_address.name, default=self.config.rtsp_server_address): str,
                 vol.Optional(ConfigField.rtsp_server_port.name, default=self.config.rtsp_server_port): cv.port,
                 vol.Optional(ConfigField.ffmpeg_analyze_duration.name, default=self.config.ffmpeg_analyze_duration): float,
-                vol.Optional(ConfigField.map_extra_alarm_modes.name, default=self.config.map_extra_alarm_modes): bool,
                 vol.Optional(ConfigField.name_for_custom1.name, default=self.config.name_for_custom1): str,
                 vol.Optional(ConfigField.name_for_custom2.name, default=self.config.name_for_custom2): str,
                 vol.Optional(ConfigField.name_for_custom3.name, default=self.config.name_for_custom3): str,

@@ -1,9 +1,11 @@
 import asyncio
+import contextlib
 from enum import Enum
 import logging
 from queue import Queue
 import threading
 
+from aiortsp.rtsp.reader import RTSPReader
 
 from .const import MessageField
 from .event import Event
@@ -74,6 +76,9 @@ class Camera(Device):
         else:
             self.set_stream_prodiver(StreamProvider.P2P)
 
+        self.p2p_started_event = asyncio.Event()
+        self.rtsp_started_event = asyncio.Event()
+
     @property
     def is_streaming(self) -> bool:
         """Is Camera in Streaming Status"""
@@ -99,6 +104,7 @@ class Camera(Device):
         # automatically find this function for respective event
         _LOGGER.debug(f"_handle_rtsp_livestream_started - {event}")
         self.stream_status = StreamStatus.STREAMING
+        self.rtsp_started_event.set()
 
     async def _handle_rtsp_livestream_stopped(self, event: Event):
         # automatically find this function for respective event
@@ -116,7 +122,21 @@ class Camera(Device):
     async def _start_ffmpeg(self):
         await self.p2p_stream_handler.start_ffmpeg(self.config.ffmpeg_analyze_duration)
 
-    async def start_livestream(self):
+    async def _is_stream_url_ready(self) -> bool:
+        _LOGGER.debug(f"_is_stream_url_ready - 1")
+        with contextlib.suppress(Exception):
+            while True:
+                async with RTSPReader(self.stream_url.replace("rtsp://", "rtspt://")) as reader:
+                    _LOGGER.debug(f"_is_stream_url_ready - 2")
+                    async for pkt in reader.iter_packets():
+                        _LOGGER.debug(f"_is_stream_url_ready - 3")
+                        print("PKT", pkt.seq, pkt.pt, len(pkt))
+                        return True
+                    _LOGGER.debug(f"_is_stream_url_ready - 4")
+                await asyncio.sleep(0.5)
+        return False
+
+    async def start_livestream(self) -> bool:
         """Process start p2p livestream call"""
         self.set_stream_prodiver(StreamProvider.P2P)
         self.stream_status = StreamStatus.PREPARING
@@ -124,8 +144,22 @@ class Camera(Device):
         self.p2p_stream_thread = threading.Thread(target=self.p2p_stream_handler.setup, daemon=True)
         self.p2p_stream_thread.start()
         await wait_for_value(self.p2p_stream_handler.__dict__, "port", None)
+
         if self.codec is not None:
             await self._start_ffmpeg()
+
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(self.p2p_started_event.wait(), 5)
+
+        if self.p2p_started_event.is_set() is False:
+            return False
+
+        try:
+            await asyncio.wait_for(self._is_stream_url_ready(), 5)
+        except asyncio.TimeoutError:
+            return False
+
+        return True
 
     async def stop_livestream(self):
         """Process stop p2p livestream call"""
@@ -136,7 +170,20 @@ class Camera(Device):
     async def start_rtsp_livestream(self):
         """Process start rtsp livestream call"""
         self.set_stream_prodiver(StreamProvider.RTSP)
+        self.stream_status = StreamStatus.PREPARING
         await self.api.start_rtsp_livestream(self.product_type, self.serial_no)
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(self.rtsp_started_event.wait(), 5)
+
+        if self.rtsp_started_event.is_set() is False:
+            return False
+
+        try:
+            await asyncio.wait_for(self._is_stream_url_ready(), 5)
+        except asyncio.TimeoutError:
+            return False
+
+        return True
 
     async def stop_rtsp_livestream(self):
         """Process stop rtsp livestream call"""

@@ -1,11 +1,10 @@
 from __future__ import annotations
-
 import asyncio
+import contextlib
+
 import logging
 
-from aiortsp.rtsp.reader import RTSPReader
 from haffmpeg.camera import CameraMjpeg
-import voluptuous as vol
 
 from homeassistant.components.camera import Camera, CameraEntityFeature
 from homeassistant.components.ffmpeg import DATA_FFMPEG
@@ -22,6 +21,7 @@ from .const import COORDINATOR, DOMAIN, Schema
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
 from .eufy_security_api.camera import StreamProvider, StreamStatus
+from .eufy_security_api.const import MessageField
 from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.util import get_child_value, wait_for_value_to_equal
 
@@ -73,23 +73,6 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]
         self.product.set_ffmpeg(CameraMjpeg(self.ffmpeg.binary))
 
-    async def wait_till_stream_connects(self) -> bool:
-        """wait for RTSP stream to be started"""
-        stream_url = self.product.stream_url.replace("rtsp://", "rtspt://")
-        _LOGGER.debug(f"rtsp_is_started 1 - {stream_url}")
-        try:
-            async with RTSPReader(stream_url) as reader:
-                for _ in range(0, 5):
-                    _LOGGER.debug(f"rtsp_is_started 2 - {reader}")
-                    async for pkt in reader.iter_packets():
-                        _LOGGER.debug(f"rtsp_is_started 3 - {pkt is None}")
-                        return True
-                    _LOGGER.debug(f"rtsp_is_started 4 - {reader}")
-                    await asyncio.sleep(1)
-        except:
-            pass
-        return False
-
     async def stream_source(self) -> str:
         if self.is_streaming is False:
             return None
@@ -114,7 +97,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         await wait_for_value_to_equal(self.product.__dict__, "stream_status", StreamStatus.STREAMING)
         await self._stop_hass_streaming()
         if await self.async_create_stream() is None:
-            _LOGGER.debug(f"_start_hass_streaming - stream is not created")
+            _LOGGER.debug("_start_hass_streaming - stream exists, not created")
             return
         # self.stream.add_provider("hls")
         await self.stream.start()
@@ -131,23 +114,39 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         # asyncio.ensure_future(self._check_stream_availability())
         return self.product.stream_status == StreamStatus.STREAMING
 
+    async def _get_image_from_hass_stream(self, width, height):
+        while True:
+            result = await self.stream.async_get_image(width, height)
+            if result is not None:
+                return result
+
     async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
+        _LOGGER.debug(f"async_camera_image 1 - {self.is_streaming}")
         if self.is_streaming is True and self.stream is not None:
-            self._last_image = await self.stream.async_get_image(width, height)
+            with contextlib.suppress(asyncio.TimeoutError):
+                self._last_image = await asyncio.wait_for(self._get_image_from_hass_stream(width, height), 5)
             self._last_url = None
-        else:
-            current_url = get_child_value(self.product.properties, self.metadata.name)
-            if current_url != self._last_url and current_url.startswith("https"):
-                async with async_get_clientsession(self.coordinator.hass).get(current_url) as response:
-                    if response.status == 200:
-                        self._last_image = await response.read()
-                        self._last_url = current_url
+            _LOGGER.debug(f"async_camera_image 3 - {self.is_streaming} - is_empty  {self._last_image is None} - {self.stream.available}")
+        # else:
+        #     current_url = get_child_value(self.product.properties, MessageField.PICTURE_URL.value)
+        #     if current_url != self._last_url and current_url.startswith("https"):
+        #         async with async_get_clientsession(self.coordinator.hass).get(current_url) as response:
+        #             if response.status == 200:
+        #                 self._last_image = await response.read()
+        #                 self._last_url = current_url
+        #                 _LOGGER.debug(f"async_camera_image 4 - is_empty {self._last_image is None}")
+
+        _LOGGER.debug(f"async_camera_image 5 - is_empty {self._last_image is None}")
+        if self._last_image is not None:
+            _LOGGER.debug(f"async_camera_image 6 - {len(self._last_image)}")
         return self._last_image
 
     async def _start_livestream(self) -> None:
         """start byte based livestream on camera"""
-        await self.product.start_livestream()
-        await self._start_hass_streaming()
+        if await self.product.start_livestream() is False:
+            await self._stop_livestream()
+        else:
+            await self._start_hass_streaming()
 
     async def _stop_livestream(self) -> None:
         """stop byte based livestream on camera"""
@@ -156,9 +155,10 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def _start_rtsp_livestream(self) -> None:
         """start rtsp based livestream on camera"""
-        await self.product.start_rtsp_livestream()
-        await asyncio.sleep(2)
-        await self._start_hass_streaming()
+        if await self.product.start_rtsp_livestream() is False:
+            await self._stop_rtsp_livestream()
+        else:
+            await self._start_hass_streaming()
 
     async def _stop_rtsp_livestream(self) -> None:
         """stop rtsp based livestream on camera"""

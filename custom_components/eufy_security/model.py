@@ -26,8 +26,7 @@ class ConfigField(Enum):
     rtsp_server_address = auto()
     rtsp_server_port = 8554
     ffmpeg_analyze_duration = 1.2  # microseconds
-    generate_ffmpeg_logs = False
-    map_extra_alarm_modes = False
+    generate_ffmpeg_logs = auto()
     name_for_custom1 = "Custom 1"
     name_for_custom2 = "Custom 2"
     name_for_custom3 = "Custom 3"
@@ -49,7 +48,6 @@ class Config:
     rtsp_server_port: int = ConfigField.rtsp_server_port.value
     ffmpeg_analyze_duration: float = ConfigField.ffmpeg_analyze_duration.value
     generate_ffmpeg_logs: bool = ConfigField.generate_ffmpeg_logs.value
-    map_extra_alarm_modes: bool = ConfigField.map_extra_alarm_modes.value
     name_for_custom1: str = ConfigField.name_for_custom1.value
     name_for_custom2: str = ConfigField.name_for_custom2.value
     name_for_custom3: str = ConfigField.name_for_custom3.value

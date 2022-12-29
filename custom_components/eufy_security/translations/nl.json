@@ -33,7 +33,6 @@
           "rtsp_server_address": "Host IP-adres voor RTSP-add-on (P2P)",
           "rtsp_server_port": "TCP Poort voor de RTSP-extensie (P2P)",
           "ffmpeg_analyze_duration": "Video-analyseduur in seconden [1 tot 5] (P2P)",
-          "map_extra_alarm_modes": "Wijs aangepaste bewakingsmodi toe aan bypass, nacht en vakantie (in volgorde)",
           "name_for_custom1": "Naam negeren voor Custom1 Beveiligings-modus",
           "name_for_custom2": "Naam negeren voor Custom2 Beveiligings-modus",
           "name_for_custom3": "Naam negeren voor Custom4 Beveiligings-modus",

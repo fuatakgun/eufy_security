@@ -36,7 +36,6 @@
           "ffmpeg_analyze_duration": "Durata analisi video in secondi [da 1 a 5] (P2P)",
           "auto_start_stream": "Avvia automaticamente lo streaming al clic",
           "fix_binary_sensor_state": "Correggi gli stati del sensore binario (da Vero/Falso a On/Off)",
-          "map_extra_alarm_modes": "Mappa le modalità di guardia personalizzate in Bypass, Night e Vacation (in ordine)",
           "name_for_custom1": "Sostituisci il nome per la modalità di protezione Personalizzata1",
           "name_for_custom2": "Sostituisci il nome per la modalità di protezione Personalizzata2",
           "name_for_custom3": "Sostituisci il nome per la modalità di protezione Personalizzata3",

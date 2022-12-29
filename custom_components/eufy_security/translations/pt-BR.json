@@ -33,7 +33,6 @@
           "rtsp_server_address": "Endereço IP do host para add-on RTSP(P2P)",
           "rtsp_server_port": "Porta TCP para add-on RTSP (P2P)",
           "ffmpeg_analyze_duration": "Duração da análise de vídeo em segundos [1 a 5] (P2P)",
-          "map_extra_alarm_modes": "Mapeie os modos de guarda personalizados em Bypass, Night e Vacation (em ordem)",
           "name_for_custom1": "Nome de substituição para o modo de guarda personalizado 1",
           "name_for_custom2": "Nome de substituição para o modo de guarda personalizado 2",
           "name_for_custom3": "Nome de substituição para o modo de guarda personalizado 3",

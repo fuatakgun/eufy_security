@@ -83,10 +83,11 @@ class P2PStreamHandler:
             sock.bind(("localhost", 0))
             self.port = sock.getsockname()[1]
             # self._set_remote_config()
-            _LOGGER.debug(f"p2p 1 - waiting")
+            _LOGGER.debug("p2p 1 - waiting")
             sock.listen()
             client_socket, _ = sock.accept()
-            _LOGGER.debug(f"p2p 1 - arrived")
+            _LOGGER.debug("p2p 1 - arrived")
+            self.camera.p2p_started_event.set()
             client_socket.setblocking(False)
             try:
                 with client_socket:
@@ -99,12 +100,12 @@ class P2PStreamHandler:
                             while not self.camera.video_queue.empty():
                                 client_socket.sendall(bytearray(self.camera.video_queue.get()))
                         sleep(500 / 1000)
-                _LOGGER.debug(f"p2p 6")
+                _LOGGER.debug("p2p 6")
             except Exception as ex:  # pylint: disable=broad-except
                 _LOGGER.error(f"Exception %s - traceback: %s", ex, traceback.format_exc())
         asyncio.run_coroutine_threadsafe(self.stop(), self.loop).result()
         self.port = None
-        _LOGGER.debug(f"p2p 7")
+        _LOGGER.debug("p2p 7")
 
     async def stop(self):
         """kill ffmpeg process"""

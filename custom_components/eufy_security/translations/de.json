@@ -33,7 +33,6 @@
           "rtsp_server_address": "Host-IP-Adresse für RTSP-Erweiterung (P2P)",
           "rtsp_server_port": "TCP-Port für RTSP-Erweiterung (P2P)",
           "ffmpeg_analyze_duration": "Dauer der Videoanalyse in Sekunden [1 bis 5] (P2P)",
-          "map_extra_alarm_modes": "Ordnen Sie benutzerdefinierte Guard-Modi Bypass, Nacht und Urlaub zu (in Reihenfolge)",
           "name_for_custom1": "Überschreibungsname für benutzerdefinierten Schutzmodus (1)",
           "name_for_custom2": "Überschreibungsname für benutzerdefinierten Schutzmodus (2)",
           "name_for_custom3": "Überschreibungsname für benutzerdefinierten Schutzmodus (3)",
