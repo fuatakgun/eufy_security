@@ -66,7 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     # register entity level services
     platform = entity_platform.async_get_current_platform()
     platform.async_register_entity_service(
-        "trigger_alarm_with_duration", Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value, "async_alarm_trigger_with_duration"
+        "trigger_base_alarm_with_duration", Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value, "async_alarm_trigger_with_duration"
     )
     platform.async_register_entity_service("reset_alarm", {}, "async_reset_alarm")
     platform.async_register_entity_service("alarm_arm_custom1", {}, "async_alarm_arm_custom_bypass")

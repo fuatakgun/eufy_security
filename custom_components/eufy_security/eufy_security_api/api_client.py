@@ -166,6 +166,24 @@ class ApiClient:
         command = product_type.name + "." + command_type.name
         await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, voice_id=voice_id))
 
+    async def snooze(
+        self, product_type: ProductType, serial_no: str, snooze_time: int, snooze_chime: bool, snooze_motion: bool, snooze_homebase: bool
+    ) -> None:
+        """Process start pan tilt rotate zoom"""
+        command_type = OutgoingMessageType.snooze
+        command = product_type.name + "." + command_type.name
+        await self._send_message_get_response(
+            OutgoingMessage(
+                command_type,
+                command=command,
+                serial_no=serial_no,
+                snooze_time=snooze_time,
+                snooze_chime=snooze_chime,
+                snooze_motion=snooze_motion,
+                snooze_homebase=snooze_homebase,
+            )
+        )
+
     async def start_rtsp_livestream(self, product_type: ProductType, serial_no: str) -> None:
         """Process start rtsp livestream call"""
         command_type = OutgoingMessageType.start_rtsp_livestream

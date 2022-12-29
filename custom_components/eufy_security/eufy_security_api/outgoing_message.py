@@ -20,6 +20,10 @@ class OutgoingMessageToParameter(Enum):
     direction = "direction"
     verifyCode = "verify_code"
     voiceId = "voice_id"
+    snoozeTime = "snooze_time"
+    snoozeChime = "snooze_chime"
+    snoozeMotion = "snooze_motion"
+    snoozeHomebase = "snooze_homebase"
 
 
 class OutgoingMessageType(Enum):
@@ -66,6 +70,14 @@ class OutgoingMessageType(Enum):
         MessageField.COMMAND.value: auto(),
         MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
         MessageField.VOICE_ID.value: MessageField.BIND_AT_RUNTIME,
+    }
+    snooze = {
+        MessageField.COMMAND.value: auto(),
+        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
+        MessageField.SNOOZE_TIME.value: MessageField.BIND_AT_RUNTIME,
+        MessageField.SNOOZE_CHIME.value: MessageField.BIND_AT_RUNTIME,
+        MessageField.SNOOZE_MOTION.value: MessageField.BIND_AT_RUNTIME,
+        MessageField.SNOOZE_HOMEBASE.value: MessageField.BIND_AT_RUNTIME,
     }
 
 

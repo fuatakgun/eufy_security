@@ -65,6 +65,11 @@ class Product:
         """Process reset alarm call"""
         await self.api.reset_alarm(self.product_type, self.serial_no)
 
+    async def snooze(self, snooze_time: int, snooze_chime: bool, snooze_motion: bool, snooze_homebase: bool) -> None:
+        """Process snooze call"""
+        await self.api.snooze(self.product_type, self.serial_no, snooze_time, snooze_chime, snooze_motion, snooze_homebase)
+        await self.api.poll_refresh()
+
     def has(self, property_name: str) -> bool:
         """Checks if product has required property"""
         return False if self.properties.get(property_name, None) is None else True

@@ -41,6 +41,14 @@ class Schema(Enum):
 
     TRIGGER_ALARM_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("duration"): cv.Number})
     QUICK_RESPONSE_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("voice_id"): cv.Number})
+    SNOOZE = make_entity_service_schema(
+        {
+            vol.Required("snooze_time"): cv.Number,
+            vol.Required("snooze_chime"): cv.boolean,
+            vol.Required("snooze_motion"): cv.boolean,
+            vol.Required("snooze_homebase"): cv.boolean,
+        }
+    )
 
 
 class PropertyToEntityDescription(Enum):
@@ -61,6 +69,8 @@ class PropertyToEntityDescription(Enum):
     personName = EntityDescription(id=auto(), icon="mdi:account-question")
     rtspStreamUrl = EntityDescription(id=auto(), icon="mdi:movie", category=EntityCategory.DIAGNOSTIC)
     chargingStatus = EntityDescription(id=auto(), icon="mdi:ev-station", category=EntityCategory.DIAGNOSTIC)
+    snoozeStartTime = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+
     stream_provider = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     stream_url = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     stream_status = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
@@ -81,6 +91,23 @@ class PropertyToEntityDescription(Enum):
     notificationAllOtherMotion = EntityDescription(id=auto(), icon="mdi:message-badge", category=EntityCategory.CONFIG)
     notificationCrying = EntityDescription(id=auto(), icon="mdi:message-badge", category=EntityCategory.CONFIG)
     notificationAllSound = EntityDescription(id=auto(), icon="mdi:message-badge", category=EntityCategory.CONFIG)
+    identityPersonDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    strangerPersonDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    vehicleDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    dogDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    dogLickDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    dogPoopDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    radarMotionDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    someoneLoitering = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    packageTaken = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    packageStranded = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    packageDelivered = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    soundDetectionRoundLook = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    deliveryGuard = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    deliveryGuardPackageGuarding = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    snoozeHomebase = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    snoozeMotion = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    snoozeChime = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
 
     # device switch
     enabled = EntityDescription(id=auto())
@@ -98,6 +125,8 @@ class PropertyToEntityDescription(Enum):
     microphone = EntityDescription(id=auto(), icon="mdi:microphone", category=EntityCategory.CONFIG)
     speaker = EntityDescription(id=auto(), icon="mdi:volume-high", category=EntityCategory.CONFIG)
     audioRecording = EntityDescription(id=auto(), icon="mdi:record-circle", category=EntityCategory.CONFIG)
+    snooze = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    snoozeTime = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
 
     # device select
     powerSource = EntityDescription(id=auto(), icon="mdi:power-plug", category=EntityCategory.DIAGNOSTIC)
@@ -129,6 +158,7 @@ class PropertyToEntityDescription(Enum):
     jammedAlert = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     shakeAlert = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     lockStatus = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    leftOpenAlarm = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
 
     # fallback
     default = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)

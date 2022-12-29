@@ -130,7 +130,6 @@ class Camera(Device):
                     _LOGGER.debug(f"_is_stream_url_ready - 2")
                     async for pkt in reader.iter_packets():
                         _LOGGER.debug(f"_is_stream_url_ready - 3")
-                        print("PKT", pkt.seq, pkt.pt, len(pkt))
                         return True
                     _LOGGER.debug(f"_is_stream_url_ready - 4")
                 await asyncio.sleep(0.5)

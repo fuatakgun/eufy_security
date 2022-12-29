@@ -64,6 +64,12 @@ class MessageField(Enum):
     VOICES = "voices"
     VOICE_ID = "voiceId"
 
+    # snooze
+    SNOOZE_TIME = "snoozeTime"
+    SNOOZE_CHIME = "snoozeChime"
+    SNOOZE_MOTION = "snoozeMotion"
+    SNOOZE_HOMEBASE = "snoozeHomebase"
+
 
 # https://bropat.github.io/eufy-security-ws/#/api_events?id=device-level-events
 class EventNameToHandler(Enum):
