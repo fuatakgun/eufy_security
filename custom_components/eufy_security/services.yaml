@@ -136,7 +136,6 @@ trigger_camera_alarm_with_duration:
           min: 0
           max: 300
 
-
 trigger_base_alarm_with_duration:
   name: Trigger Alarm for a Duration
   description: Trigger Alarm for a Duration
@@ -174,7 +173,6 @@ quick_response:
         number:
           min: 0
           max: 999999
-
 snooze:
   name: Snooze Alarm
   description: Snooze Alarm for a Duration
@@ -193,21 +191,24 @@ snooze:
           min: 0
           max: 1000
     snooze_chime:
-      name: Will chime be snoozed?
+      name: Snooze Chime
+      description: Will chime be snoozed?
       required: true
       example: False
       default: False
       selector:
         boolean:
     snooze_motion:
-      name: Will motion notifications be snoozed?
+      name: Snooze Motion
+      description: Will motion notifications be snoozed?
       required: true
       example: False
       default: False
       selector:
         boolean:
     snooze_homebase:
-      name: Will home base be snoozed?
+      name: Snooze Homebase
+      description: Will home base be snoozed?
       required: true
       example: False
       default: False
