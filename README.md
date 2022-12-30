@@ -253,5 +253,7 @@ To schedule the time, please use this link: https://calendly.com/fuatakgun/offic
 ![image](https://user-images.githubusercontent.com/11085566/210081657-a839623a-1d89-4a15-93d9-1025fd44803d.png)
 ![image](https://user-images.githubusercontent.com/11085566/210081673-b2a92eaa-9763-4913-a955-c6a48753d5ba.png)
 ![image](https://user-images.githubusercontent.com/11085566/210081687-148d63d4-9bf8-4d47-81f1-6ed09584141a.png)
+![image](https://user-images.githubusercontent.com/11085566/210081954-14e83d45-7bc6-4623-b13b-fb458d0caad5.png)
+![image](https://user-images.githubusercontent.com/11085566/210081967-46926dad-55de-4a36-b4ba-a4b6ae99c7ac.png)
 
 
