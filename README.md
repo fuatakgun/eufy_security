@@ -24,7 +24,7 @@ Please check here: https://github.com/bropat/eufy-security-client#known-working-
 
 In upcoming steps, you are going to install at least one add-on and one integration.
 
-In Home Assistant eco-system, if you are using Supervised or HASS OS based setup, you can use `Add-ons` page of Home Assistant to install these. If you are running Core or you don't have `Add-ons` option in your setup, you need to install the docker and run these containers yourself. You will see respective commands in respective steps.
+In Home Assistant eco-system, if you are using Supervised or HASS OS based setup, you can use `Add-ons` page of Home Assistant to install these. If you are running Core or you don't have `Add-ons` option in your setup, you need to install the docker and run these containers yourself. You will see respective commands in respective steps. If you are interested in composing of your docker container, please check the end section
 
 This integration is not part of Home Assistant Core so you have to install this as a custom integration. There are two ways of doing this, either manaully downloading and copying files or using HACS (Home Assistant Community Store). I will be using HACS method here.
 
@@ -165,7 +165,7 @@ cards:
   - `quick_response` - Send a quick response message for doorbell, you can get `voice_id` information from `Debug (device)` sensor attributes of device.
   - `snooze` - Snooze ongoing notification for a given duration.
 - Alarm Panel Services;
-  - There is an select entity called Guard Mode, it is one to one mapping of Eufy Security state. 
+  - There is an select entity called Guard Mode, it is one to one mapping of Eufy Security state. Current Mode sensor is showing the current state of home base.
   - `trigger_base_alarm_with_duration` - Trigger alarm on station for a given duration
   - `reset_alarm` - Reset ongoing alarm for a given duration
   - `snooze` - Snooze ongoing notification for a given duration.
@@ -177,6 +177,7 @@ cards:
   - `alarm_arm_custom3` - Switch to custom 3
   - `geofence` - Switch to geofencing, this might not impact the state of panel given that it will chage its state based on geolocation via eufy app
   - `schedule` - Switch to custom 3, this might not impact the state of panel given that it will chage its state based on schedule via eufy app
+  - `chime` - Trigger a chime sound on base station (liked it) - I do not know exact list of ringtones available, try it yourself.
 
 # Example Automation
 ## Start streaming on camera, when there is a motion, this would generate a new thumbnail on Home Assistant

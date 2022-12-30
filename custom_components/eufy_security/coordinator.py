@@ -55,8 +55,5 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         return self._platforms
 
     async def _update_local(self):
-        # try:
         await self.api.poll_refresh()
         return self.data
-        # except Exception as exception:
-        # raise UpdateFailed() from exception

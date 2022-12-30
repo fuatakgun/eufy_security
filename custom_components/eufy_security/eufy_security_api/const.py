@@ -22,6 +22,7 @@ class MessageField(Enum):
     CONNECTED = "connected"
     SOURCE = "source"
     SCHEMA_VERSION = "schemaVersion"
+    LOG_LEVEL = "level"
     BIND_AT_RUNTIME = "bindAtRuntime"
     SERIAL_NUMBER = "serialNumber"
     PROPERTIES = "properties"
@@ -57,6 +58,7 @@ class MessageField(Enum):
     CURRENT_MODE = "currentMode"
     GUARD_MODE = "guardMode"
     SECONDS = "seconds"
+    RINGTONE = "ringtone"
 
     # camera specific
     PICTURE_URL = "pictureUrl"

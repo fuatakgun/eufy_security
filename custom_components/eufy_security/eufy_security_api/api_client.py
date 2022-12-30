@@ -63,38 +63,6 @@ class ApiClient:
         await self._set_schema(SCHEMA_VERSION)
         await self._set_products()
 
-    async def set_captcha_and_connect(self, captcha_id: str, captcha_input: str):
-        """Set captcha set products"""
-        await self._set_captcha(captcha_id, captcha_input)
-        await asyncio.sleep(10)
-        await self._set_products()
-
-    async def set_mfa_and_connect(self, mfa_input: str):
-        """Set captcha set products"""
-        await self._set_mfa_code(mfa_input)
-        await asyncio.sleep(10)
-        await self._set_products()
-
-    async def _set_captcha(self, captcha_id: str, captcha_input: str) -> None:
-        command_type = OutgoingMessageType.set_captcha
-        command = EventSourceType.driver.name + "." + command_type.name
-        await self._send_message_get_response(
-            OutgoingMessage(command_type, command=command, captcha_id=captcha_id, captcha_input=captcha_input)
-        )
-
-    async def _set_mfa_code(self, mfa_input: str) -> None:
-        command_type = OutgoingMessageType.set_verify_code
-        command = EventSourceType.driver.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, verify_code=mfa_input))
-
-    async def _connect_driver(self) -> None:
-        command_type = OutgoingMessageType.driver_connect
-        command = EventSourceType.driver.name + "." + "connect"
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command))
-
-    async def _set_schema(self, schema_version: int) -> None:
-        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_api_schema, schema_version=schema_version))
-
     async def _set_products(self) -> None:
         result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_listening))
         if result[MessageField.STATE.value][EventSourceType.driver.name][MessageField.CONNECTED.value] is False:
@@ -142,6 +110,46 @@ class ApiClient:
             response[serial_no] = product
         return response
 
+    async def set_captcha_and_connect(self, captcha_id: str, captcha_input: str):
+        """Set captcha set products"""
+        await self._set_captcha(captcha_id, captcha_input)
+        await asyncio.sleep(10)
+        await self._set_products()
+
+    async def set_mfa_and_connect(self, mfa_input: str):
+        """Set mfa code set products"""
+        await self._set_mfa_code(mfa_input)
+        await asyncio.sleep(10)
+        await self._set_products()
+
+    # general api commands
+    async def _set_captcha(self, captcha_id: str, captcha_input: str) -> None:
+        command_type = OutgoingMessageType.set_captcha
+        command = EventSourceType.driver.name + "." + command_type.name
+        await self._send_message_get_response(
+            OutgoingMessage(command_type, command=command, captcha_id=captcha_id, captcha_input=captcha_input)
+        )
+
+    async def _set_mfa_code(self, mfa_input: str) -> None:
+        command_type = OutgoingMessageType.set_verify_code
+        command = EventSourceType.driver.name + "." + command_type.name
+        await self._send_message_get_response(OutgoingMessage(command_type, command=command, verify_code=mfa_input))
+
+    async def _connect_driver(self) -> None:
+        command_type = OutgoingMessageType.driver_connect
+        command = EventSourceType.driver.name + "." + "connect"
+        await self._send_message_get_response(OutgoingMessage(command_type, command=command))
+
+    async def _set_schema(self, schema_version: int) -> None:
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_api_schema, schema_version=schema_version))
+
+    async def set_log_level(self, log_level: str) -> None:
+        """set log level of websocket server"""
+        command_type = OutgoingMessageType.set_log_level
+        command = EventSourceType.driver.name + "." + "connect"
+        await self._send_message_get_response(OutgoingMessage(command_type, command=command, log_level=log_level))
+
+    # device and station functions
     async def _get_is_rtsp_streaming(self, product_type: ProductType, serial_no: str) -> bool:
         command_type = OutgoingMessageType.is_rtsp_livestreaming
         command = product_type.name + "." + command_type.name
@@ -161,15 +169,21 @@ class ApiClient:
         await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, direction=direction))
 
     async def quick_response(self, product_type: ProductType, serial_no: str, voice_id: int) -> None:
-        """Process start pan tilt rotate zoom"""
+        """Process quick response for doorbell"""
         command_type = OutgoingMessageType.quick_response
         command = product_type.name + "." + command_type.name
         await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, voice_id=voice_id))
 
+    async def chime(self, product_type: ProductType, serial_no: str, ringtone: int) -> None:
+        """Process chme call"""
+        command_type = OutgoingMessageType.chime
+        command = product_type.name + "." + command_type.name
+        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, ringtone=ringtone))
+
     async def snooze(
         self, product_type: ProductType, serial_no: str, snooze_time: int, snooze_chime: bool, snooze_motion: bool, snooze_homebase: bool
     ) -> None:
-        """Process start pan tilt rotate zoom"""
+        """Process snooze for devices ans stations"""
         command_type = OutgoingMessageType.snooze
         command = product_type.name + "." + command_type.name
         await self._send_message_get_response(
@@ -252,7 +266,7 @@ class ApiClient:
 
     async def _on_message(self, message: dict) -> None:
         message_str = str(message)[0:200]
-        # message_str = str(message)
+        message_str = str(message)
         if "livestream video data" not in message_str and "livestream audio data" not in message_str:
             _LOGGER.debug(f"_on_message - {message_str}")
         if message[MessageField.TYPE.value] == IncomingMessageType.result.name:

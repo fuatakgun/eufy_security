@@ -113,3 +113,7 @@ class Station(Product):
 
     def __init__(self, api, serial_no: str, properties: dict, metadata: dict, commands: []) -> None:
         super().__init__(api, ProductType.station, serial_no, properties, metadata, commands)
+
+    async def chime(self, ringtone: int) -> None:
+        """Quick response message to camera"""
+        await self.api.chime(self.product_type, self.serial_no, ringtone)

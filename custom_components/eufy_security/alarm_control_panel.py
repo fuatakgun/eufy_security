@@ -76,6 +76,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("alarm_arm_custom3", {}, "async_alarm_arm_vacation")
     platform.async_register_entity_service("geofence", {}, "geofence")
     platform.async_register_entity_service("schedule", {}, "schedule")
+    platform.async_register_entity_service("chime", Schema.CHIME_SERVICE_SCHEMA.value, "chime")
 
 
 class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity):
@@ -140,6 +141,10 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
     async def schedule(self) -> None:
         """switch to schedule mode"""
         await self._set_guard_mode(CurrentModeToState.SCHEDULE)
+
+    async def chime(self, ringtone: int) -> None:
+        """chime on alarm control panel"""
+        await self.product.chime(ringtone)
 
     @property
     def state(self):

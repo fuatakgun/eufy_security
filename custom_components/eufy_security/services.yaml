@@ -13,6 +13,25 @@ send_message:
       selector:
         text:
 
+set_log_level:
+  name: Set Log Level of Add-on
+  description: Set Log Level of Add-on, this is needed to debug issues happening in eufy-security-ws add-on. Before calling a problematic command, set the log level (preferable to debug), execute your command and revert it back to info.
+  fields:
+    log_level:
+      name: Log Level
+      description: Log Level Option
+      required: true
+      selector:
+        select:
+          options:
+            - silly
+            - trace
+            - debug
+            - info
+            - warn
+            - error
+            - fatal
+
 ptz_360:
   name: Rotate 360 degrees
   description: Rotate 360 degrees for supported PTZ cameras
@@ -197,6 +216,26 @@ trigger_base_alarm_with_duration:
         number:
           min: 0
           max: 300
+
+chime:
+  name: Chime on Base Station
+  description: Only supported if no doorbell device is registered at the station where the chime is to be performed
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+  fields:
+    ringtone:
+      name: Ringtone ID
+      description: Ringtone ID?
+      required: true
+      example: 419
+      default: 419
+      selector:
+        number:
+          min: 0
+          max: 999999
+
 snooze:
   name: Snooze Alarm
   description: Snooze Alarm for a Duration

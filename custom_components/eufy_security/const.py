@@ -41,6 +41,7 @@ class Schema(Enum):
 
     TRIGGER_ALARM_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("duration"): cv.Number})
     QUICK_RESPONSE_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("voice_id"): cv.Number})
+    CHIME_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("ringtone"): cv.Number})
     SNOOZE = make_entity_service_schema(
         {
             vol.Required("snooze_time"): cv.Number,

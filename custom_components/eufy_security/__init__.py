@@ -29,8 +29,13 @@ async def async_setup(hass: HomeAssistant, config: Config):
         coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
         await coordinator.async_refresh()
 
+    async def handle_log_level(call):
+        coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
+        await coordinator.api.set_log_level(call.data.get("log_level"))
+
     hass.services.async_register(DOMAIN, "force_sync", handle_force_sync)
     hass.services.async_register(DOMAIN, "send_message", handle_send_message)
+    hass.services.async_register(DOMAIN, "set_log_level", handle_log_level)
 
     return True
 

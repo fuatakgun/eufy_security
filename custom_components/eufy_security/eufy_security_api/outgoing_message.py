@@ -24,6 +24,8 @@ class OutgoingMessageToParameter(Enum):
     snoozeChime = "snooze_chime"
     snoozeMotion = "snooze_motion"
     snoozeHomebase = "snooze_homebase"
+    level = "log_level"
+    ringtone = "ringtone"
 
 
 class OutgoingMessageType(Enum):
@@ -31,6 +33,7 @@ class OutgoingMessageType(Enum):
 
     driver_connect = {MessageField.COMMAND.value: auto()}
     set_api_schema = {MessageField.COMMAND.value: auto(), MessageField.SCHEMA_VERSION.value: MessageField.BIND_AT_RUNTIME}
+    set_log_level = {MessageField.COMMAND.value: auto(), MessageField.LOG_LEVEL.value: MessageField.BIND_AT_RUNTIME}
     start_listening = {MessageField.COMMAND.value: auto()}
     get_properties_metadata = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
     get_properties = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
@@ -78,6 +81,11 @@ class OutgoingMessageType(Enum):
         MessageField.SNOOZE_CHIME.value: MessageField.BIND_AT_RUNTIME,
         MessageField.SNOOZE_MOTION.value: MessageField.BIND_AT_RUNTIME,
         MessageField.SNOOZE_HOMEBASE.value: MessageField.BIND_AT_RUNTIME,
+    }
+    chime = {
+        MessageField.COMMAND.value: auto(),
+        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
+        MessageField.RINGTONE.value: MessageField.BIND_AT_RUNTIME,
     }
 
 
