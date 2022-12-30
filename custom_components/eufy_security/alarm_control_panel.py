@@ -30,9 +30,11 @@ class CurrentModeToState(Enum):
     NONE = -1
     AWAY = 0
     HOME = 1
+    SCHEDULE = 2
     CUSTOM_BYPASS = 3
     NIGHT = 4
     VACATION = 5
+    GEOFENCE = 47
     DISARMED = 63
 
 
@@ -72,6 +74,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("alarm_arm_custom1", {}, "async_alarm_arm_custom_bypass")
     platform.async_register_entity_service("alarm_arm_custom2", {}, "async_alarm_arm_night")
     platform.async_register_entity_service("alarm_arm_custom3", {}, "async_alarm_arm_vacation")
+    platform.async_register_entity_service("geofence", {}, "geofence")
+    platform.async_register_entity_service("schedule", {}, "schedule")
 
 
 class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity):
@@ -128,6 +132,14 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
     async def async_reset_alarm(self) -> None:
         """reset ongoing alarm but there is no change in current mode"""
         await self.product.reset_alarm()
+
+    async def geofence(self) -> None:
+        """switch to geofence mode"""
+        await self._set_guard_mode(CurrentModeToState.GEOFENCE)
+
+    async def schedule(self) -> None:
+        """switch to schedule mode"""
+        await self._set_guard_mode(CurrentModeToState.SCHEDULE)
 
     @property
     def state(self):

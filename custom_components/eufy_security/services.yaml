@@ -2,6 +2,17 @@ force_sync:
   name: Force Sync
   description: Pull latest data from cloud and update internal state
 
+send_message:
+  name: Send Message
+  description: Send a JSON message to Web Socket
+  fields:
+    message:
+      name: Message
+      description: Raw message in JSON format
+      required: true
+      selector:
+        text:
+
 ptz_360:
   name: Rotate 360 degrees
   description: Rotate 360 degrees for supported PTZ cameras
@@ -42,48 +53,13 @@ ptz_left:
       domain: camera
       integration: eufy_security
 
-reset_alarm:
-  name: Reset Alarm for Alarm Panel
-  description: Reset Alarm for Alarm Panel
+generate_image:
+  name: Generate Image for Camera
+  description: Generate Image for Camera
   target:
     entity:
-      domain: alarm_control_panel
+      domain: camera
       integration: eufy_security
-
-alarm_arm_custom1:
-  name: Arm Customer 1 for Alarm Panel
-  description: Arm Customer 1 for Alarm Panel
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-
-alarm_arm_custom2:
-  name: Arm Customer 2 for Alarm Panel
-  description: Arm Customer 2 for Alarm Panel
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-
-alarm_arm_custom3:
-  name: Arm Customer 3 for Alarm Panel
-  description: Arm Customer 3 for Alarm Panel
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-
-send_message:
-  name: Send Message
-  description: Send a JSON message to Web Socket
-  fields:
-    message:
-      name: Message
-      description: Raw message in JSON format
-      required: true
-      selector:
-        text:
 
 start_p2p_livestream:
   name: Start Live Stream over P2P
@@ -136,25 +112,6 @@ trigger_camera_alarm_with_duration:
           min: 0
           max: 300
 
-trigger_base_alarm_with_duration:
-  name: Trigger Alarm for a Duration
-  description: Trigger Alarm for a Duration
-  target:
-    entity:
-      domain: alarm_control_panel
-      integration: eufy_security
-  fields:
-    duration:
-      name: Duration
-      description: Duration in seconds
-      required: true
-      example: 10
-      default: 10
-      selector:
-        number:
-          min: 0
-          max: 300
-
 quick_response:
   name: Send quick response
   description: Send quick response
@@ -173,6 +130,73 @@ quick_response:
         number:
           min: 0
           max: 999999
+
+reset_alarm:
+  name: Reset Alarm for Alarm Panel
+  description: Reset Alarm for Alarm Panel
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
+alarm_arm_custom1:
+  name: Arm Customer 1 for Alarm Panel
+  description: Arm Customer 1 for Alarm Panel
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
+alarm_arm_custom2:
+  name: Arm Customer 2 for Alarm Panel
+  description: Arm Customer 2 for Alarm Panel
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
+alarm_arm_custom3:
+  name: Arm Customer 3 for Alarm Panel
+  description: Arm Customer 3 for Alarm Panel
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
+geofence:
+  name: Switch to geofence mode
+  description: Switch to geofence mode
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
+schedule:
+  name: Switch to schedule mode
+  description: Switch to schedule mode
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
+trigger_base_alarm_with_duration:
+  name: Trigger Alarm for a Duration
+  description: Trigger Alarm for a Duration
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+  fields:
+    duration:
+      name: Duration
+      description: Duration in seconds
+      required: true
+      example: 10
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 300
 snooze:
   name: Snooze Alarm
   description: Snooze Alarm for a Duration

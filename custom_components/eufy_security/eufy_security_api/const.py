@@ -1,6 +1,7 @@
 """Define all constants for module."""
 from enum import Enum
 import logging
+
 from .command_description import CommandDescription
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)

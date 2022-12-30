@@ -18,7 +18,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import COORDINATOR, DOMAIN, Schema
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
-from .eufy_security_api.camera import StreamProvider, StreamStatus
+from .eufy_security_api.camera import (
+    STREAM_SLEEP_SECONDS,
+    STREAM_TIMEOUT_SECONDS,
+    StreamProvider,
+    StreamStatus,
+)
 from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.util import wait_for_value_to_equal
 
@@ -38,6 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     # register entity level services
     platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service("generate_image", {}, "_generate_image")
     platform.async_register_entity_service("start_p2p_livestream", {}, "_start_livestream")
     platform.async_register_entity_service("stop_p2p_livestream", {}, "_stop_livestream")
     platform.async_register_entity_service("start_rtsp_livestream", {}, "_start_rtsp_livestream")
@@ -101,9 +107,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def _start_hass_streaming(self):
         await wait_for_value_to_equal(self.product.__dict__, "stream_status", StreamStatus.STREAMING)
         await self._stop_hass_streaming()
-        if await self.async_create_stream() is None:
-            return
-        await self.stream.start()
+        await self.async_create_stream()
+        if self.stream is not None:
+            await self.stream.start()
         await self.async_camera_image()
 
     async def _stop_hass_streaming(self):
@@ -120,20 +126,35 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         while True:
             result = await self.stream.async_get_image(width, height)
             if result is not None:
+                _LOGGER.debug(f"_get_image_from_hass_stream - received {len(result)}")
                 return result
+            _LOGGER.debug(f"_get_image_from_hass_stream - is_empty {result is None}")
+            await asyncio.sleep(STREAM_SLEEP_SECONDS)
+
+    async def _get_image_from_stream_url(self, width, height):
+        while True:
+            result = await ffmpeg.async_get_image(self.hass, await self.stream_source(), width=width, height=height)
+            if result is not None:
+                _LOGGER.debug(f"_get_image_from_stream_url - received {len(result)}")
+                return result
+            _LOGGER.debug(f"_get_image_from_stream_url - is_empty {result is None}")
+            await asyncio.sleep(STREAM_SLEEP_SECONDS)
 
     async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
         _LOGGER.debug(f"image 1 - {self.is_streaming} - {self.stream}")
         if self.is_streaming is True:
             if self.stream is not None:
                 with contextlib.suppress(asyncio.TimeoutError):
-                    self._last_image = await asyncio.wait_for(self._get_image_from_hass_stream(width, height), 5)
-                _LOGGER.debug(f"image 3.1 - {self.is_streaming} - is_empty  {self._last_image is None} - {self.stream.available}")
+                    self._last_image = await asyncio.wait_for(self._get_image_from_stream_url(width, height), STREAM_TIMEOUT_SECONDS)
+                    # self._last_image = await asyncio.wait_for(self._get_image_from_hass_stream(width, height), STREAM_TIMEOUT_SECONDS)
+                _LOGGER.debug(f"image 2 with hass stream - is_empty  {self._last_image is None}")
             else:
-                self._last_image = await ffmpeg.async_get_image(self.hass, await self.stream_source(), width=width, height=height)
-                _LOGGER.debug(f"image 3.2 - {self.is_streaming} - is_empty  {self._last_image is None}")
+                with contextlib.suppress(asyncio.TimeoutError):
+                    self._last_image = await asyncio.wait_for(self._get_image_from_stream_url(width, height), STREAM_TIMEOUT_SECONDS)
+                _LOGGER.debug(f"image 2 without hass stream - is_empty {self._last_image is None}")
             self._last_url = None
 
+        # until encryption is fixed on thumbnails and notifications this section is turned off
         # else:
         #     current_url = get_child_value(self.product.properties, MessageField.PICTURE_URL.value)
         #     if current_url != self._last_url and current_url.startswith("https"):
@@ -208,6 +229,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def _async_ptz_360(self) -> None:
         await self.product.ptz_360()
+
+    async def _generate_image(self) -> None:
+        await self.async_camera_image()
 
     async def _async_quick_response(self, voice_id: int) -> None:
         await self.product.quick_response(voice_id)

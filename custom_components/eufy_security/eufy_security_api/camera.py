@@ -16,6 +16,9 @@ from .util import wait_for_value
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
+STREAM_TIMEOUT_SECONDS = 15
+STREAM_SLEEP_SECONDS = 0.5
+
 
 class StreamStatus(Enum):
     """Stream status"""
@@ -92,7 +95,6 @@ class Camera(Device):
     async def _handle_livestream_started(self, event: Event):
         # automatically find this function for respective event
         _LOGGER.debug(f"_handle_livestream_started - {event}")
-        self.stream_status = StreamStatus.STREAMING
 
     async def _handle_livestream_stopped(self, event: Event):
         # automatically find this function for respective event
@@ -103,7 +105,6 @@ class Camera(Device):
     async def _handle_rtsp_livestream_started(self, event: Event):
         # automatically find this function for respective event
         _LOGGER.debug(f"_handle_rtsp_livestream_started - {event}")
-        self.stream_status = StreamStatus.STREAMING
         self.rtsp_started_event.set()
 
     async def _handle_rtsp_livestream_stopped(self, event: Event):
@@ -123,16 +124,16 @@ class Camera(Device):
         await self.p2p_stream_handler.start_ffmpeg(self.config.ffmpeg_analyze_duration)
 
     async def _is_stream_url_ready(self) -> bool:
-        _LOGGER.debug(f"_is_stream_url_ready - 1")
+        _LOGGER.debug("_is_stream_url_ready - 1")
         with contextlib.suppress(Exception):
             while True:
                 async with RTSPReader(self.stream_url.replace("rtsp://", "rtspt://")) as reader:
-                    _LOGGER.debug(f"_is_stream_url_ready - 2")
+                    _LOGGER.debug("_is_stream_url_ready - 2 - reader opened")
                     async for pkt in reader.iter_packets():
-                        _LOGGER.debug(f"_is_stream_url_ready - 3")
+                        _LOGGER.debug(f"_is_stream_url_ready - 3 - received {len(pkt)}")
                         return True
-                    _LOGGER.debug(f"_is_stream_url_ready - 4")
-                await asyncio.sleep(0.5)
+                    _LOGGER.debug("_is_stream_url_ready - 4 - reader closed")
+                await asyncio.sleep(STREAM_SLEEP_SECONDS)
         return False
 
     async def start_livestream(self) -> bool:
@@ -148,16 +149,16 @@ class Camera(Device):
             await self._start_ffmpeg()
 
         with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(self.p2p_started_event.wait(), 5)
+            await asyncio.wait_for(self.p2p_started_event.wait(), STREAM_TIMEOUT_SECONDS)
 
         if self.p2p_started_event.is_set() is False:
             return False
 
         try:
-            await asyncio.wait_for(self._is_stream_url_ready(), 5)
+            await asyncio.wait_for(self._is_stream_url_ready(), STREAM_TIMEOUT_SECONDS)
         except asyncio.TimeoutError:
             return False
-
+        self.stream_status = StreamStatus.STREAMING
         return True
 
     async def stop_livestream(self):
@@ -181,7 +182,7 @@ class Camera(Device):
             await asyncio.wait_for(self._is_stream_url_ready(), 5)
         except asyncio.TimeoutError:
             return False
-
+        self.stream_status = StreamStatus.STREAMING
         return True
 
     async def stop_rtsp_livestream(self):
