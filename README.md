@@ -84,6 +84,9 @@ So, let's start.
 
 8- You can also configure `Cloud Scan Interval`, Video Analyze Duration, `Custom Name 1`, `Custom Name 2` and `Custom Name 3`
 
+![image](https://user-images.githubusercontent.com/11085566/210082270-4de06bbe-0d10-4dde-9fd3-cb12d6758b67.png)
+
+
 ## Setting up your dashboard
 Please replace `camera.entrance` with your camera entity name. You also need to install WebRTC integration from HACS for faster (almost instant) streaming.
 
