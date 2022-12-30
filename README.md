@@ -33,6 +33,8 @@ Lastly, your camera would not start streaming magically by itself, you have to c
 So, let's start.
 
 ## 1. Installing Eufy Security Add-On
+If you use your own docker service, please run it like this `docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -e COUNTRY=country_code -e TRUSTED_DEVICE_NAME=your_device_name -p 3000:3000 bropat/eufy-security-ws:X.Y.Z`. To find out current supported add-on version, please get values for X.Y.Z from here (https://github.com/fuatakgun/eufy_security_addon/blob/main/config.json#L3) and jump into Step 6.
+
 1- Add 'Eufy Security Add-On Repository' to Add-On Store. Please follow steps located here (https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons) and use this repository URL (https://github.com/fuatakgun/eufy_security_addon)
 
 2- Search 'Eufy Security' on Add-on Store (https://your-instance.duckdns.org/hassio/store)
@@ -51,6 +53,9 @@ So, let's start.
 ```
 
 ## 2. Install RTSP Simple Server Add-on - Required for P2P Based Video Streaming - Not Required for RTSP Based Video Streaming
+
+If you use your own docker service, please run it like this `docker run -it RTSP_PROTOCOLS=tcp -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server:latest` and jump into Step 5.
+
 1- Add `RTSP Simple Server Add-on` Repository to `Add-On Store`. Please follow steps located here (https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons) and use this repository URL (https://github.com/fuatakgun/rtsp_simple_server/)
 
 2- Search `RTSP Simple Server` on `Add-on Store` (https://your-instance.duckdns.org/hassio/store)
@@ -84,8 +89,10 @@ So, let's start.
 
 8- You can also configure `Cloud Scan Interval`, Video Analyze Duration, `Custom Name 1`, `Custom Name 2` and `Custom Name 3`
 
-## Setting up your dashboard
-Please replace `camera.entrance` with your camera entity name. You also need to install WebRTC integration from HACS for faster (almost instant) streaming.
+## Setting up your dashboard for camera
+
+Native Home Assistant streaming is fairly slow, so you are highly adviced to install WebRTC integration from HACS.
+Below code will show camera picture while camera is not streaming and webrtc card while camera is streaming (conditional cards). Please replace `camera.entrance` with your camera entity name.
 
 ```
 square: false
