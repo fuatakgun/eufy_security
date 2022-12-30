@@ -1,11 +1,13 @@
 Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congragulations on being a brave heart and trying this version.
 
 # Gratitude
+
 - @bropat for building docker image (https://github.com/bropat/eufy-security-ws) so I can wrap it as Home Assistant Add-on. You can also thank him over here: https://ko-fi.com/bropat
 - @cdnninja for educating me on github actions and many other good practices
 - Home assistant community (https://community.home-assistant.io/t/eufy-security-integration/318353)
 
-# How is this working ?
+# How is this working?
+
 - @bropat built `eufy-security-ws` using `eufy-security-client` to imitate mobile app and web portal functionalities and I had wrapped `eufy-security-ws` as `eufy_security_addon` so we can use it as Home Assistant Add-on.
 - Add-on requires email address, password, country code, event duration in seconds and trusted device name.
 - Every time add-on is started, it forces all other sessions to log off, so you must create a secondary account and share your home/devices with secondary account including admin rights and you must use secondary account credentials on add-on page. Please login once to eufy mobile app with this secondary account to be sure that devices are available.
@@ -15,9 +17,11 @@ Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congra
 - **As we already called out earlier, add-on heavily relies on push notifications, so you must enable all kind of push notifications (motion detected, person detected, lock events, alarm events etc) in your mobile app. These notifications are not user based but device based so after enabling all these notifications, your main account will probably bloated with many push notifications. In android, there is a setting to disable specific notifications, please use it. **
 
 # Supported or Known Working devices
+
 Please check here: https://github.com/bropat/eufy-security-client#known-working-devices
 
 # Installation
+
 In upcoming steps, you are going to install at least one add-on and one integration.
 
 In Home Assistant eco-system, if you are using Supervised or HASS OS based setup, you can use `Add-ons` page of Home Assistant to install these. If you are running Core or you don't have `Add-ons` option in your setup, you need to install the docker and run these containers yourself. You will see respective commands in respective steps.
@@ -33,19 +37,20 @@ Lastly, your camera would not start streaming magically by itself, you have to c
 So, let's start.
 
 ## 1. Installing Eufy Security Add-On
+
 If you use your own docker service, please run it like this `docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -e COUNTRY=country_code -e TRUSTED_DEVICE_NAME=your_device_name -p 3000:3000 bropat/eufy-security-ws:X.Y.Z`. To find out current supported add-on version, please get values for X.Y.Z from here (https://github.com/fuatakgun/eufy_security_addon/blob/main/config.json#L3) and jump into Step 6.
 
-1- Add 'Eufy Security Add-On Repository' to Add-On Store. Please follow steps located here (https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons) and use this repository URL (https://github.com/fuatakgun/eufy_security_addon)
+1- Add `Eufy Security Add-On Repository` to Add-On Store. Please follow steps located here (https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons) and use this repository URL (https://github.com/fuatakgun/eufy_security_addon)
 
-2- Search 'Eufy Security' on Add-on Store (https://your-instance.duckdns.org/hassio/store)
+2- Search `Eufy Security` on Add-on Store (https://your-instance.duckdns.org/hassio/store)
 
-3- Install 'Eufy Security Add-on' 
+3- Install `Eufy Security Add-on` 
 
-4- When installation is completed, go to 'Configuration' page of Add-on and put Username (email), Password, Country (2 letter code), Event Duration in Seconds and Trusted Device Name.
+4- When installation is completed, go to `Configuration` page of Add-on and put Username (email), Password, Country (2 letter code), Event Duration in Seconds and Trusted Device Name.
 
-5- Hit 'Start' and wait for it to be started.
+5- Hit `Start` and wait for it to be started.
 
-6- Check 'Logs', you have to see something like this;
+6- Check `Logs`, you have to see something like this;
 ```
 2022-12-27 20:09:16.339  INFO  Eufy Security server listening on host 0.0.0.0, port 3000 
 2022-12-27 20:09:26.569  INFO  Connected to station T8010NXXX on host 87.240.219.ZZZ and port 29946 
@@ -73,6 +78,7 @@ If you use your own docker service, please run it like this `docker run -it RTSP
 ```
 
 ## 3. Installing Eufy Security Integration
+
 1- If you have not already installed, install `HACS` following this guide: https://hacs.xyz/docs/setup/download
 
 2- When `HACS` is ready, search for `Eufy Security` inside `HACS` Integrations
@@ -94,10 +100,10 @@ If you use your own docker service, please run it like this `docker run -it RTSP
 
 ![image](https://user-images.githubusercontent.com/11085566/210082270-4de06bbe-0d10-4dde-9fd3-cb12d6758b67.png)
 
-
 ## Setting up your dashboard for camera
 
-Native Home Assistant streaming is fairly slow, so you are highly adviced to install WebRTC integration from HACS.
+Native Home Assistant streaming is fairly slow (maybe not?), so you are highly adviced to install WebRTC integration from HACS.
+
 Below code will show camera picture while camera is not streaming and webrtc card while camera is streaming (conditional cards). Please replace `camera.entrance` with your camera entity name.
 
 ```
@@ -142,7 +148,9 @@ cards:
         - type: custom:webrtc-camera
           entity: camera.entrance
 ``` 
+
 # Features
+
 - There are many sensors available out there, if you need an additional one, raise a request and share your `Debug (device)` and `Debug (station)` sensor attributes so I can extract these sensors. If these sensors cannot be extracted from state of device, please mention it explicitly.
 - There are many `button`, `switch` and `select` entities, please use them.
 - Integration Services;
@@ -170,9 +178,11 @@ cards:
   - `geofence` - Switch to geofencing, this might not impact the state of panel given that it will chage its state based on geolocation via eufy app
   - `schedule` - Switch to custom 3, this might not impact the state of panel given that it will chage its state based on schedule via eufy app
 
-# Examples
+# Example Automation
 ## Start streaming on camera, when there is a motion, this would generate a new thumbnail on Home Assistant
-- Replace `camera.entrance` with your own entity name.
+
+Replace `camera.entrance` with your own entity name.
+
 ```
 alias: Capture Image on Trigger, Send Mobile Notification with Actions, Snooze or Alarm via Actions
 description: ""
@@ -244,23 +254,19 @@ action:
             target:
               entity_id: camera.entrance
 mode: single
-
 ```
 
 # Debugging Issues
-I am more than happy to debug individual issues as long as you follow setup instructions. 
 
-I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. 
+I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
 
-For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
-
-If you are located in EU, use my account: fuatakgun@gmail.com
-
-If you are located in US, use shared test account: eufydeveloper@gmail.com
+- If you are located in EU, use my account: fuatakgun@gmail.com
+- If you are located in US, use shared test account: eufydeveloper@gmail.com
 
 To schedule the time, please use this link: https://calendly.com/fuatakgun/office-hour
 
 # Show Off
+
 ![image](https://user-images.githubusercontent.com/11085566/210081589-43ce2e52-a9e7-4f25-9238-bcdd6212852d.png)
 ![image](https://user-images.githubusercontent.com/11085566/210081619-6cc1e0d1-ecca-49ee-b18c-d1348db1feee.png)
 ![image](https://user-images.githubusercontent.com/11085566/210081657-a839623a-1d89-4a15-93d9-1025fd44803d.png)
