@@ -39,6 +39,7 @@ PLATFORMS: list[str] = [
 class Schema(Enum):
     """General used service schema definition"""
 
+    PTZ_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("direction"): cv.string})
     TRIGGER_ALARM_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("duration"): cv.Number})
     QUICK_RESPONSE_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("voice_id"): cv.Number})
     CHIME_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("ringtone"): cv.Number})

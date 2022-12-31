@@ -32,6 +32,27 @@ set_log_level:
             - error
             - fatal
 
+ptz:
+  name: Central PTZ Service
+  description: Call PTZ command for supported PTZ cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+  fields:
+    direction:
+      name: Direction
+      description: Direction Option
+      required: true
+      selector:
+        select:
+          options:
+            - ROTATE360
+            - DOWN
+            - UP
+            - RIGHT
+            - LEFT
+
 ptz_360:
   name: Rotate 360 degrees
   description: Rotate 360 degrees for supported PTZ cameras

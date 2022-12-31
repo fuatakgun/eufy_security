@@ -189,6 +189,9 @@ class Camera(Device):
         """Process stop rtsp livestream call"""
         await self.api.stop_rtsp_livestream(self.product_type, self.serial_no)
 
+    async def ptz(self, direction: str) -> None:
+        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand[direction].value)
+
     async def ptz_up(self) -> None:
         """Look up"""
         await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.UP.value)

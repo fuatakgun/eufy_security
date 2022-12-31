@@ -48,6 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("stop_p2p_livestream", {}, "_stop_livestream")
     platform.async_register_entity_service("start_rtsp_livestream", {}, "_start_rtsp_livestream")
     platform.async_register_entity_service("stop_rtsp_livestream", {}, "_stop_rtsp_livestream")
+    platform.async_register_entity_service("ptz", Schema.PTZ_SERVICE_SCHEMA.value, "_async_ptz")
     platform.async_register_entity_service("ptz_up", {}, "_async_ptz_up")
     platform.async_register_entity_service("ptz_down", {}, "_async_ptz_down")
     platform.async_register_entity_service("ptz_left", {}, "_async_ptz_left")
@@ -214,6 +215,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             await self._stop_rtsp_livestream()
         else:
             await self._stop_livestream()
+
+    async def _async_ptz(self, direction: str) -> None:
+        await self.product.ptz(direction)
 
     async def _async_ptz_up(self) -> None:
         await self.product.ptz_up()
