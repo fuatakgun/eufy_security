@@ -26,6 +26,7 @@ class OutgoingMessageToParameter(Enum):
     snoozeHomebase = "snooze_homebase"
     level = "log_level"
     ringtone = "ringtone"
+    pin = "pin"
 
 
 class OutgoingMessageType(Enum):
@@ -87,6 +88,12 @@ class OutgoingMessageType(Enum):
         MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
         MessageField.RINGTONE.value: MessageField.BIND_AT_RUNTIME,
     }
+    verify_pin = {
+        MessageField.COMMAND.value: auto(),
+        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
+        MessageField.PIN.value: MessageField.BIND_AT_RUNTIME,
+    }
+    unlock = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
 
 
 class OutgoingMessage:

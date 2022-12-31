@@ -1,8 +1,9 @@
+import asyncio
 from collections.abc import Callable
 import logging
 from typing import Any
 
-from .const import EventNameToHandler, MessageField, ProductType, ProductCommand
+from .const import EventNameToHandler, MessageField, ProductCommand, ProductType
 from .event import Event
 from .metadata import Metadata
 
@@ -31,6 +32,8 @@ class Product:
 
         self._set_properties(properties)
         self._set_metadata(metadata)
+
+        self.pin_verified_future = None
 
     def _set_properties(self, properties: dict) -> None:
         self.properties = properties
@@ -70,9 +73,16 @@ class Product:
         await self.api.snooze(self.product_type, self.serial_no, snooze_time, snooze_chime, snooze_motion, snooze_homebase)
         await self.api.poll_refresh()
 
-    def has(self, property_name: str) -> bool:
-        """Checks if product has required property"""
-        return False if self.properties.get(property_name, None) is None else True
+    async def unlock(self, code: str) -> bool:
+        """Process unlock the safe"""
+        self.pin_verified_future = asyncio.get_running_loop().create_future()
+        await self.api.verify_pin(self.product_type, self.serial_no, code)
+        await asyncio.wait_for(self.pin_verified_future, timeout=5)
+        event = self.pin_verified_future.result()
+        if event.data[MessageField.SUCCESSFULL.value] is False:
+            return False
+        await self.api.unlock(self.product_type, self.serial_no)
+        return True
 
     async def process_event(self, event: Event):
         """Act on received event"""
@@ -95,10 +105,22 @@ class Product:
     async def _handle_property_changed(self, event: Event):
         self.properties[event.data[MessageField.NAME.value]] = event.data[MessageField.VALUE.value]
 
+    async def _handle_pin_verified(self, event: Event):
+        self.pin_verified_future.set_result(event)
+
     @property
     def is_camera(self):
         """checks if Product is camera"""
         return True if ProductCommand.start_livestream.name in self.commands else False
+
+    @property
+    def is_safe_lock(self):
+        """checks if Product is safe lock"""
+        return True if ProductCommand.verify_p_i_n.name in self.commands else False
+
+    def has(self, property_name: str) -> bool:
+        """Checks if product has required property"""
+        return False if self.properties.get(property_name, None) is None else True
 
 
 class Device(Product):

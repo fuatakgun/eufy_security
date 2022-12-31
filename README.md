@@ -178,8 +178,12 @@ cards:
   - `geofence` - Switch to geofencing, this might not impact the state of panel given that it will chage its state based on geolocation via eufy app
   - `schedule` - Switch to custom 3, this might not impact the state of panel given that it will chage its state based on schedule via eufy app
   - `chime` - Trigger a chime sound on base station (liked it) - I do not know exact list of ringtones available, try it yourself.
+- Lock Services;
+  - `lock` and `unlock` for locks
+  - `unlock` with code for safes
 
 # Example Automation
+
 ## Start streaming on camera, when there is a motion, this would generate a new thumbnail on Home Assistant
 
 Replace `camera.entrance` with your own entity name.
@@ -255,6 +259,16 @@ action:
             target:
               entity_id: camera.entrance
 mode: single
+```
+
+## Unlock safe with code
+
+```
+service: lock.unlock
+data:
+  code: "testtest"
+target:
+  entity_id: lock.safe
 ```
 
 # Debugging Issues

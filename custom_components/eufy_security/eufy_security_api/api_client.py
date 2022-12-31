@@ -198,6 +198,18 @@ class ApiClient:
             )
         )
 
+    async def verify_pin(self, product_type: ProductType, serial_no: str, pin: str) -> None:
+        """verify pin for safe product"""
+        command_type = OutgoingMessageType.verify_pin
+        command = product_type.name + "." + command_type.name
+        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, pin=pin))
+
+    async def unlock(self, product_type: ProductType, serial_no: str) -> None:
+        """unlock for safe product"""
+        command_type = OutgoingMessageType.unlock
+        command = product_type.name + "." + command_type.name
+        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
+
     async def start_rtsp_livestream(self, product_type: ProductType, serial_no: str) -> None:
         """Process start rtsp livestream call"""
         command_type = OutgoingMessageType.start_rtsp_livestream

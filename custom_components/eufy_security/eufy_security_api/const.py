@@ -53,6 +53,8 @@ class MessageField(Enum):
 
     # lock specific
     LOCKED = "locked"
+    PIN = "pin"
+    SUCCESSFULL = "successfull"
 
     # alarm control panel specific
     CURRENT_MODE = "currentMode"
@@ -88,6 +90,7 @@ class EventNameToHandler(Enum):
     rtsp_livestream_stopped = "rtsp livestream stopped"
     livestream_video_data_received = "livestream video data"
     livestream_audio_data_received = "livestream audio data"
+    pin_verified = "pin verified"
 
 
 class ProductType(Enum):
@@ -119,3 +122,4 @@ class ProductCommand(Enum):
     ptz_360 = CommandDescription("PTZ 360", "pan_and_tilt")
     trigger_alarm = CommandDescription("Trigger Alarm")
     reset_alarm = CommandDescription("Reset Alarm")
+    verify_p_i_n = CommandDescription("Verify Pin")

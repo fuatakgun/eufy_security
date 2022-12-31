@@ -4,7 +4,10 @@ from typing import Any
 from homeassistant.components.lock import LockEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.const import ATTR_CODE
+
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.exceptions import HomeAssistantError
 
 from .const import COORDINATOR, DOMAIN
 from .coordinator import EufySecurityDataUpdateCoordinator
@@ -41,8 +44,16 @@ class EufySecurityLock(LockEntity, EufySecurityEntity):
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Initiate lock call"""
+        if self.product.is_safe_lock is True:
+            raise HomeAssistantError(f"Locking is not supported for lock ({self.product.name})")
         await self.product.set_property(self.metadata, True)
 
     async def async_unlock(self, **kwargs: Any) -> None:
         """Initiate unlock call"""
-        await self.product.set_property(self.metadata, False)
+        code = kwargs.get(ATTR_CODE, None)
+        if self.product.is_safe_lock is True and code is not None:
+            # handling safe unlocking with pin
+            if await self.product.unlock(code) is False:
+                raise HomeAssistantError(f"PIN verification failed for lock ({self.product.name})")
+        else:
+            await self.product.set_property(self.metadata, False)
