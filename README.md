@@ -1,3 +1,5 @@
+An improved Alpha version is coming, test it before it is merged into Master branch. https://github.com/fuatakgun/eufy_security/issues/610
+
 I have baked a custom integration to control Eufy Security Cameras and access RTSP (real time streaming protocol) and P2P (peer to peer) stream if possible. Integration supports doorbells, cameras, home bases, motion and contact sensors and it is far from complete. 
 
 Under the hood, it is using `eufy-security-ws` (https://github.com/bropat/eufy-security-ws) web socket application which uses `eufy-security-client` (https://github.com/bropat/eufy-security-client) to communicate with eufy servers and devices over cloud and peer to peer connection. So, I am following versioning of `eufy-security-ws` directly as add-on version.
