@@ -7,12 +7,16 @@ assignees: ''
 
 ---
 
-Please check Services, Known Bug / Issues and Troubleshooting over here first: https://github.com/fuatakgun/eufy_security/blob/master/README.md
+Please check existing (open or closed) issues before creating a new one. (https://github.com/fuatakgun/eufy_security/issues?q=is%3Aissue+)
+
+If this is not an issue, you can use `Discussions` (https://github.com/fuatakgun/eufy_security/discussions) section.
 
 **Describe the bug**
+
 A clear and concise description of what the bug is.
 
-**To Reproduce**
+**To reproduce**
+
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
@@ -20,16 +24,31 @@ Steps to reproduce the behavior:
 4. See error
 
 **Expected behavior**
+
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Additional information**
 
-**Hardware Information about Home Assistant
+Go to Settings -> System -> Repairs -> Click on 3 dots (...) -> System Information and get Version and Installation Type to below fields;
+- Home Assistant Installation Type (OS - Supvervised - Core): 
+- Home Assistant Core Version: 
 
-**Hardware Information about Cameras
-- Camera Model
-- Live Streaming Protocol: RTSP or P2p
+Hardware Information;
+- Camera Model:
+
+
+- Live Streaming Protocol (RTSP/P2P): 
+
+
+- Debug Logs from Home Assistant (https://github.com/fuatakgun/eufy_security/discussions/624)
+
+
+- Logs from Eufy Security Add-on (either from Add-ons page of Home Assistant or Docker output):
+
+
+- Would you share your device with me in case further debugging required? (Yes/No): 
+
 
 **Additional context**
-Add any other context about the problem here.
+
+Add any other context about the problem goes here.

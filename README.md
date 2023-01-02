@@ -1,5 +1,21 @@
 Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congragulations on being a brave heart and trying this version.
 
+- [Gratitude](#gratitude)
+- [How is this working?](#how-is-this-working)
+- [Supported or Known Working devices](#supported-or-known-working-devices)
+- [Installation](#installation)
+  - [1. Installing Eufy Security Add-On](#1-installing-eufy-security-add-on)
+  - [2. Install RTSP Simple Server Add-on - Required for P2P Based Video Streaming - Not Required for RTSP Based Video Streaming](#2-install-rtsp-simple-server-add-on---required-for-p2p-based-video-streaming---not-required-for-rtsp-based-video-streaming)
+  - [3. Installing Eufy Security Integration](#3-installing-eufy-security-integration)
+  - [4. Setting up your dashboard for camera](#4-setting-up-your-dashboard-for-camera)
+- [Features](#features)
+- [Example Automation](#example-automation)
+  - [Start streaming on camera, when there is a motion, this would generate a new thumbnail on Home Assistant](#start-streaming-on-camera-when-there-is-a-motion-this-would-generate-a-new-thumbnail-on-home-assistant)
+  - [Unlock safe with code](#unlock-safe-with-code)
+- [Debugging Issues](#debugging-issues)
+- [Show Off](#show-off)
+
+
 # Gratitude
 
 - @bropat for building docker image (https://github.com/bropat/eufy-security-ws) so I can wrap it as Home Assistant Add-on. You can also thank him over here: https://ko-fi.com/bropat
@@ -100,7 +116,7 @@ If you use your own docker service, please run it like this `docker run -it RTSP
 
 ![image](https://user-images.githubusercontent.com/11085566/210082270-4de06bbe-0d10-4dde-9fd3-cb12d6758b67.png)
 
-## Setting up your dashboard for camera
+## 4. Setting up your dashboard for camera
 
 Native Home Assistant streaming is fairly slow (maybe not?), so you are highly adviced to install WebRTC integration from HACS.
 
@@ -272,6 +288,10 @@ target:
 ```
 
 # Debugging Issues
+
+First, check all issues (open or close) to find out if there was any similar question rather than duplicating it.
+Later on, if you find a similar issue, please just put +1 on it, sharing same logs over and over does not help at all.
+Lastly, create your issue following the template. I will probabaly ask follow up questions later on.
 
 I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
 
