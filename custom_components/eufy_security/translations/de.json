@@ -11,7 +11,7 @@
       },
       "reauth_confirm": {
         "title": "Eufy Security: Captcha",
-        "description": "{captcha_image}",
+        "description": "{captcha_img}",
         "data": {
           "captcha": "Captcha"
         }
@@ -30,17 +30,14 @@
         "title": "Eufy Security: Einrichtung",
         "data": {
           "sync_interval": "Cloud-Scan-Intervall in Sekunden [1 bis 9999]",
-          "use_rtsp_server_addon": "Verwenden Sie das RTSP-Erweiterung (P2P)",
           "rtsp_server_address": "Host-IP-Adresse für RTSP-Erweiterung (P2P)",
           "rtsp_server_port": "TCP-Port für RTSP-Erweiterung (P2P)",
           "ffmpeg_analyze_duration": "Dauer der Videoanalyse in Sekunden [1 bis 5] (P2P)",
-          "auto_start_stream": "Stream bei Klick automatisch starten",
-          "fix_binary_sensor_state": "Binäre Sensorzustände korrigieren (Wahr/Falsch auf Ein/Aus)",
-          "map_extra_alarm_modes": "Ordnen Sie benutzerdefinierte Guard-Modi Bypass, Nacht und Urlaub zu (in Reihenfolge)",
+          "generate_ffmpeg_logs": "Generieren Sie FFMPEG-Protokolle",
+          "no_stream_in_hass": "Do not use STREAM module inside Home Assistant (if you do not watch the video inside Home Assistant native streaming or you are using WebRTC, enable this to decrease CPU usage",
           "name_for_custom1": "Überschreibungsname für benutzerdefinierten Schutzmodus (1)",
           "name_for_custom2": "Überschreibungsname für benutzerdefinierten Schutzmodus (2)",
-          "name_for_custom3": "Überschreibungsname für benutzerdefinierten Schutzmodus (3)",
-          "generate_ffmpeg_logs": "Generieren Sie FFMPEG-Protokolle"
+          "name_for_custom3": "Überschreibungsname für benutzerdefinierten Schutzmodus (3)"
         }
       }
     }

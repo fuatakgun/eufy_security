@@ -4,130 +4,43 @@ import traceback
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.config_entries import SOURCE_REAUTH
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntry
 from homeassistant.core import callback
 from homeassistant.helpers import aiohttp_client
+import homeassistant.helpers.config_validation as cv
 
-from .const import (
-    CONF_AUTO_START_STREAM,
-    CONF_CAPTCHA,
-    CONF_FFMPEG_ANALYZE_DURATION,
-    CONF_FIX_BINARY_SENSOR_STATE,
-    CONF_HOST,
-    CONF_MAP_EXTRA_ALARM_MODES,
-    CONF_NAME_FOR_CUSTOM1,
-    CONF_NAME_FOR_CUSTOM2,
-    CONF_NAME_FOR_CUSTOM3,
-    CONF_PORT,
-    CONF_RTSP_SERVER_ADDRESS,
-    CONF_RTSP_SERVER_PORT,
-    CONF_SYNC_INTERVAL,
-    CONF_USE_RTSP_SERVER_ADDON,
-    CONF_GENERATE_FFMPEG_LOGS,
-    COORDINATOR,
-    DEFAULT_AUTO_START_STREAM,
-    DEFAULT_FFMPEG_ANALYZE_DURATION,
-    DEFAULT_FIX_BINARY_SENSOR_STATE,
-    DEFAULT_HOST,
-    DEFAULT_MAP_EXTRA_ALARM_MODES,
-    DEFAULT_NAME_FOR_CUSTOM1,
-    DEFAULT_NAME_FOR_CUSTOM2,
-    DEFAULT_NAME_FOR_CUSTOM3,
-    DEFAULT_PORT,
-    DEFAULT_RTSP_SERVER_PORT,
-    DEFAULT_SYNC_INTERVAL,
-    DEFAULT_USE_RTSP_SERVER_ADDON,
-    DEFAULT_GENERATE_FFMPEG_LOGS,
-    DOMAIN,
-)
-from .coordinator import EufySecurityDataUpdateCoordinator
-from .websocket import EufySecurityWebSocket
+from .const import COORDINATOR, DOMAIN
+from .eufy_security_api.api_client import ApiClient
+from .eufy_security_api.exceptions import WebSocketConnectionError
+from .model import Config, ConfigField
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class EufySecurityOptionFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry):
+    """Option flow handler for integration"""
+
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize option flow handler"""
+        self.config = Config.parse(config_entry)
         self.config_entry = config_entry
         _LOGGER.debug(f"{DOMAIN} EufySecurityOptionFlowHandler - {config_entry.data}")
         self.schema = vol.Schema(
             {
-                vol.Optional(
-                    CONF_SYNC_INTERVAL,
-                    default=self.config_entry.options.get(
-                        CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL
-                    ),
-                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=9999)),
-                vol.Optional(
-                    CONF_USE_RTSP_SERVER_ADDON,
-                    default=self.config_entry.options.get(
-                        CONF_USE_RTSP_SERVER_ADDON, DEFAULT_USE_RTSP_SERVER_ADDON
-                    ),
-                ): bool,
-                vol.Optional(
-                    CONF_RTSP_SERVER_ADDRESS,
-                    default=self.config_entry.options.get(
-                        CONF_RTSP_SERVER_ADDRESS, config_entry.data.get(CONF_HOST)
-                    ),
-                ): str,
-                vol.Optional(
-                    CONF_RTSP_SERVER_PORT,
-                    default=self.config_entry.options.get(
-                        CONF_RTSP_SERVER_PORT, DEFAULT_RTSP_SERVER_PORT
-                    ),
-                ): int,
-                vol.Optional(
-                    CONF_FFMPEG_ANALYZE_DURATION,
-                    default=self.config_entry.options.get(
-                        CONF_FFMPEG_ANALYZE_DURATION, DEFAULT_FFMPEG_ANALYZE_DURATION
-                    ),
-                ): vol.All(vol.Coerce(float), vol.Range(min=1, max=5)),
-                vol.Optional(
-                    CONF_AUTO_START_STREAM,
-                    default=self.config_entry.options.get(
-                        CONF_AUTO_START_STREAM, DEFAULT_AUTO_START_STREAM
-                    ),
-                ): bool,
-                vol.Optional(
-                    CONF_FIX_BINARY_SENSOR_STATE,
-                    default=self.config_entry.options.get(
-                        CONF_FIX_BINARY_SENSOR_STATE, DEFAULT_FIX_BINARY_SENSOR_STATE
-                    ),
-                ): bool,
-                vol.Optional(
-                    CONF_MAP_EXTRA_ALARM_MODES,
-                    default=self.config_entry.options.get(
-                        CONF_MAP_EXTRA_ALARM_MODES, DEFAULT_MAP_EXTRA_ALARM_MODES
-                    ),
-                ): bool,
-                vol.Optional(
-                    CONF_NAME_FOR_CUSTOM1,
-                    default=self.config_entry.options.get(
-                        CONF_NAME_FOR_CUSTOM1, DEFAULT_NAME_FOR_CUSTOM1
-                    ),
-                ): str,
-                vol.Optional(
-                    CONF_NAME_FOR_CUSTOM2,
-                    default=self.config_entry.options.get(
-                        CONF_NAME_FOR_CUSTOM2, DEFAULT_NAME_FOR_CUSTOM2
-                    ),
-                ): str,
-                vol.Optional(
-                    CONF_NAME_FOR_CUSTOM3,
-                    default=self.config_entry.options.get(
-                        CONF_NAME_FOR_CUSTOM3, DEFAULT_NAME_FOR_CUSTOM3
-                    ),
-                ): str,
-                vol.Optional(
-                    CONF_GENERATE_FFMPEG_LOGS,
-                    default=self.config_entry.options.get(
-                        CONF_GENERATE_FFMPEG_LOGS, DEFAULT_GENERATE_FFMPEG_LOGS
-                    ),
-                ): bool,
+                vol.Optional(ConfigField.sync_interval.name, default=self.config.sync_interval): int,
+                vol.Optional(ConfigField.rtsp_server_address.name, default=self.config.rtsp_server_address): str,
+                vol.Optional(ConfigField.rtsp_server_port.name, default=self.config.rtsp_server_port): cv.port,
+                vol.Optional(ConfigField.ffmpeg_analyze_duration.name, default=self.config.ffmpeg_analyze_duration): float,
+                vol.Optional(ConfigField.generate_ffmpeg_logs.name, default=self.config.generate_ffmpeg_logs): bool,
+                vol.Optional(ConfigField.no_stream_in_hass.name, default=self.config.no_stream_in_hass): bool,
+                vol.Optional(ConfigField.name_for_custom1.name, default=self.config.name_for_custom1): str,
+                vol.Optional(ConfigField.name_for_custom2.name, default=self.config.name_for_custom2): str,
+                vol.Optional(ConfigField.name_for_custom3.name, default=self.config.name_for_custom3): str,
             }
         )
 
     async def async_step_init(self, user_input=None):
+        """Form handler"""
         if user_input is not None:
             _LOGGER.debug(f"{DOMAIN} user input in option flow : %s", user_input)
             return self.async_create_entry(title="", data=user_input)
@@ -136,18 +49,18 @@ class EufySecurityOptionFlowHandler(config_entries.OptionsFlow):
 
 
 class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+    """Config flow handler for integration"""
 
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_PUSH
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(config_entry: ConfigEntry):
         _LOGGER.debug(f"{DOMAIN} EufySecurityOptionFlowHandler - {config_entry.data}")
         return EufySecurityOptionFlowHandler(config_entry)
 
     def __init__(self):
-        self.coordinator: EufySecurityDataUpdateCoordinator = None
         self._errors = {}
 
     async def async_step_user(self, user_input=None):
@@ -155,8 +68,17 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._errors = {}
 
         if self.source == SOURCE_REAUTH:
-            self.coordinator = self.hass.data[DOMAIN][COORDINATOR]
-            self.coordinator.captcha_config.set_input(user_input[CONF_CAPTCHA])
+            coordinator = self.hass.data[DOMAIN][COORDINATOR]
+            if coordinator.config.mfa_required is True:
+                mfa_input = user_input[ConfigField.mfa_input.name]
+                await coordinator.api.set_mfa_and_connect(mfa_input)
+            else:
+                captcha_id = coordinator.config.captcha_id
+                captcha_input = user_input[ConfigField.captcha_input.name]
+                coordinator.config.captcha_id = None
+                coordinator.config.captcha_img = None
+                await coordinator.api.set_captcha_and_connect(captcha_id, captcha_input)
+
             if self._async_current_entries():
                 await self.hass.config_entries.async_reload(self.context["entry_id"])
 
@@ -164,16 +86,10 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="single_instance_allowed")
 
         if user_input is not None:
-            valid = await self._test_credentials(
-                user_input[CONF_HOST], user_input[CONF_PORT]
-            )
+            valid = await self._test_credentials(user_input[ConfigField.host.name], user_input[ConfigField.port.name])
             if valid:
-                return self.async_create_entry(
-                    title=user_input[CONF_HOST], data=user_input
-                )
-            else:
-                self._errors["base"] = "auth"
-
+                return self.async_create_entry(title=user_input[ConfigField.host.name], data=user_input)
+            self._errors["base"] = "auth"
             return await self._show_config_form(user_input)
 
         return await self._show_config_form(user_input)
@@ -183,49 +99,53 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_HOST, default=DEFAULT_HOST): str,
-                    vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
+                    vol.Required(ConfigField.host.name, default=ConfigField.host.value): str,
+                    vol.Required(ConfigField.port.name, default=ConfigField.port.value): int,
                 }
             ),
             errors=self._errors,
         )
 
     async def _test_credentials(self, host, port):  # pylint: disable=unused-argument
-        session = aiohttp_client.async_get_clientsession(self.hass)
         try:
-            eufy_ws: EufySecurityWebSocket = EufySecurityWebSocket(
-                None, host, port, session, None, None, None, None
-            )
-            await eufy_ws.connect()
-            if not eufy_ws.ws.closed:
-                eufy_ws.ws.close()
+            config = Config(host=host, port=port)
+            api_client: ApiClient = ApiClient(config, aiohttp_client.async_get_clientsession(self.hass))
+            await api_client.ws_connect()
+            await api_client.disconnect()
             return True
-        except Exception as ex:  # pylint: disable=broad-except
-            _LOGGER.error(
-                f"{DOMAIN} Exception in login : %s - traceback: %s",
-                ex,
-                traceback.format_exc(),
-            )
+        except WebSocketConnectionError as ex:  # pylint: disable=broad-except
+            _LOGGER.error(f"{DOMAIN} Exception in login : %s - traceback: %s", ex, traceback.format_exc())
         return False
 
     async def async_step_reauth(self, user_input=None):
+        """initialize captcha flow"""
         _LOGGER.debug(f"{DOMAIN} async_step_reauth - {user_input}")
-        self.coordinator = self.hass.data[DOMAIN][COORDINATOR]
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(self, user_input=None):
+        """Re-authenticate via captcha or mfa code"""
+        coordinator = self.hass.data[DOMAIN][COORDINATOR]
+        _LOGGER.debug(f"{DOMAIN} async_step_reauth_confirm - {coordinator.config}")
         if user_input is None:
-            return self.async_show_form(
-                step_id="reauth_confirm",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required(CONF_CAPTCHA): str,
-                    }
-                ),
-                description_placeholders={
-                    "captcha_image": '<img src="'
-                    + self.coordinator.captcha_config.image
-                    + '"/>'
-                },
-            )
+            if coordinator.config.mfa_required is True:
+                return self.async_show_form(
+                    step_id="reauth_confirm",
+                    data_schema=vol.Schema(
+                        {
+                            vol.Required(ConfigField.mfa_input.name): str,
+                        }
+                    ),
+                )
+            else:
+                return self.async_show_form(
+                    step_id="reauth_confirm",
+                    data_schema=vol.Schema(
+                        {
+                            vol.Required(ConfigField.captcha_input.name): str,
+                        }
+                    ),
+                    description_placeholders={
+                        "captcha_img": '<img id="eufy_security_captcha" src="' + coordinator.config.captcha_img + '"/>'
+                    },
+                )
         return await self.async_step_user(user_input)

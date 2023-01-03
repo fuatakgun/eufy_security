@@ -1,227 +1,313 @@
-**An improved Alpha version is coming, test it before it is merged into Master branch. https://github.com/fuatakgun/eufy_security/issues/610**
+Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congragulations on being a brave heart and trying this version.
 
-I have baked a custom integration to control Eufy Security Cameras and access RTSP (real time streaming protocol) and P2P (peer to peer) stream if possible. Integration supports doorbells, cameras, home bases, motion and contact sensors and it is far from complete. 
+- [Gratitude](#gratitude)
+- [How is this working?](#how-is-this-working)
+- [Supported or Known Working devices](#supported-or-known-working-devices)
+- [Installation](#installation)
+  - [1. Installing Eufy Security Add-On](#1-installing-eufy-security-add-on)
+  - [2. Install RTSP Simple Server Add-on - Required for P2P Based Video Streaming - Not Required for RTSP Based Video Streaming](#2-install-rtsp-simple-server-add-on---required-for-p2p-based-video-streaming---not-required-for-rtsp-based-video-streaming)
+  - [3. Installing Eufy Security Integration](#3-installing-eufy-security-integration)
+  - [4. Setting up your dashboard for camera](#4-setting-up-your-dashboard-for-camera)
+- [Features](#features)
+- [Example Automation](#example-automation)
+  - [Start streaming on camera, when there is a motion, this would generate a new thumbnail on Home Assistant](#start-streaming-on-camera-when-there-is-a-motion-this-would-generate-a-new-thumbnail-on-home-assistant)
+  - [Unlock safe with code](#unlock-safe-with-code)
+- [Debugging Issues](#debugging-issues)
+- [Show Off](#show-off)
 
-Under the hood, it is using `eufy-security-ws` (https://github.com/bropat/eufy-security-ws) web socket application which uses `eufy-security-client` (https://github.com/bropat/eufy-security-client) to communicate with eufy servers and devices over cloud and peer to peer connection. So, I am following versioning of `eufy-security-ws` directly as add-on version.
 
-**Big thanks to @bropat who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat**
+# Gratitude
 
-# 1. Services #
-## 1.1 Camera Services ##
-- start_rtsp_livestream / stop_rtsp_livestream (RTSP): **if your camera can stream over RTSP, please enable it over eufy app, this is more more reliable and less power consuming and you can use these services to start and stop stream.**. This service starts a new stream using RTSP. Currently, it is limited to one stream per home assistant. https://github.com/bropat/eufy-security-client/issues/63
-- start_livesteam / start_p2p_livestream / stop_livestream / stop_p2p_livestream (P2P): if there is no support for RTSP, you can use P2P streaming, this should work for all camera types but much more power consuming for your HA instance.
-- turn_on / turn_off: it first checks **if there is rtsp attribute in camera and if yes; it will use RTSP services,** if not, it will use P2P services.
-- enable_rtsp / disable_rtsp: to enable RTSP option in cameras, you can use this services, but I rather prefer you to enable it using the mobile app because enabling rtsp configuration also triggers a new stream to start which causes issues for integration.
-- enable / disable: enable and disable respective device.
+- @bropat for building docker image (https://github.com/bropat/eufy-security-ws) so I can wrap it as Home Assistant Add-on. You can also thank him over here: https://ko-fi.com/bropat
+- @cdnninja for educating me on github actions and many other good practices
+- Home assistant community (https://community.home-assistant.io/t/eufy-security-integration/318353)
 
-## 1.2 Station Services ##
-![image](https://user-images.githubusercontent.com/11085566/127906780-ba18d5a0-03c3-407a-922a-dc519e59dfe8.png)
-- alarm_arm_home / alarm_arm_away / alarm_disarm / alarm_guard_schedule (requires configuration on eufy app) / alarm_guard_geo (requires configuration on eufy app)
-- alarm_arm_custom1 / alarm_arm_custom2 / alarm_arm_custom3 - you need to create custom configurations for these to work
-- alarm_trigger / alarm_trigger_with_duration - trigger alarm on home station
-- reset_alarm - stop the alarm state
+# How is this working?
 
-## 1.3 Other Devices ##
-Locks (not the Wifi), motion and contact sensors are supported and native services can be used.
+- @bropat built `eufy-security-ws` using `eufy-security-client` to imitate mobile app and web portal functionalities and I had wrapped `eufy-security-ws` as `eufy_security_addon` so we can use it as Home Assistant Add-on.
+- Add-on requires email address, password, country code, event duration in seconds and trusted device name.
+- Every time add-on is started, it forces all other sessions to log off, so you must create a secondary account and share your home/devices with secondary account including admin rights and you must use secondary account credentials on add-on page. Please login once to eufy mobile app with this secondary account to be sure that devices are available.
+- Country code is very crucial to connect to correct regional servers. If your main account has setup in US and if you are trying to login into your secondary account in DE country, your device data would not be found in EU servers. So please pay attention to put correct country code. (Source: Alpha 2 country code https://en.wikipedia.org/wiki/ISO_3166-1#Officially_assigned_code_elements)
+- Event duration in seconds correspond to how long (in seconds) entities in home assistant would stay in active. As an example, when camera notices a person, add-on would receive a push notification from eufy and home assistant integration will active person detected sensor and person detected sensor will stay on state for `event duration in seconds` long.
+- Trusted device name is a required identifier for eufy systems to record this add-on as mobile client, so you can differentiate the connection from this add-on in multi factor authentication (two factor authentication) page.
+- **As we already called out earlier, add-on heavily relies on push notifications, so you must enable all kind of push notifications (motion detected, person detected, lock events, alarm events etc) in your mobile app. These notifications are not user based but device based so after enabling all these notifications, your main account will probably bloated with many push notifications. In android, there is a setting to disable specific notifications, please use it. **
 
-## 1.4 Integration Services ##
-- force_sync - get latest changes from cloud as some changes are not generating notifications to be captured automatically
+# Supported or Known Working devices
 
-# 2. Known Bugs / Issues / Supported Devices #
-Check here: https://github.com/fuatakgun/eufy_security/issues
-Supported devices: https://github.com/bropat/eufy-security-client#known-working-devices
+Please check here: https://github.com/bropat/eufy-security-client#known-working-devices
 
-# 3. Troubleshooting
-1- **Create a separate account for HA integration as that account will be logged out automatically from mobile app when HA integration logged in. Do not forget to share your cameras with your new account (preferably with adming rights), enable motion notifications with full picture and enable push notifications. This integration depends on push notifications to catch any updates.**
+# Installation
 
-Please log-in using your new account in respective mobile app to validate that new account has full access to all shared devices. If the issue still persists, creating a new account also solved it many times. If you still have the issue, please create an issue over here: https://github.com/bropat/eufy-security-client
+In upcoming steps, you are going to install at least one add-on and one integration.
 
-Moreover, if you are having issues related to home base states, please double check if you see a message in add on logs regarding to these changes as below examples, if you are not receiving, you have a problem with push notifications or device sharing, I cannot help.
+In Home Assistant eco-system, if you are using Supervised or HASS OS based setup, you can use `Add-ons` page of Home Assistant to install these. If you are running Core or you don't have `Add-ons` option in your setup, you need to install the docker and run these containers yourself. You will see respective commands in respective steps. If you are interested in composing of your docker container, please check the end section
+
+This integration is not part of Home Assistant Core so you have to install this as a custom integration. There are two ways of doing this, either manaully downloading and copying files or using HACS (Home Assistant Community Store). I will be using HACS method here.
+
+If you are intending to use this integration for video streaming purposes and if your camera does not support RTSP (Real Time Streaming Protocol) based streaming (no optino of continous or NAS recording in your camera settings), you also need to install RTSP Simple Server Add-on. This add-on will enable us to convert peer to peer (P2P) bytes into a RTSP stream so you can play it nicely inside Home Assistant (with or without RTC) or with VLC Player.
+
+If you are intending to use this integration for video streaming purposes and if your camera supports RTSP, you will probabaly enjoy reliable stream because generating RTSP stream is responsibility of hardware and it is very much reliable than P2P based streaming. There is no need to convert incoming P2P bytes into RTSP stream. There are some modified version of Android apk of Eufy Security out there which could enable RTSP stream for unsupported devices but I have not tried it. Moreover, I do not own personally a P2P required device, that is because, many times, I cannot replicate your issues locally and we need to work together to debug these issues.
+
+Lastly, your camera would not start streaming magically by itself, you have to call `turn_on` or `turn_off` services of respective camera entities. So, when you first install everything, you would not have any video until you call these functions. Moreover, P2P streaming might stop randomly because of low level issues, you can restart it again with `turn_off` and `turn_on`. You can trigger your automations on camera states (idle, preparing, streaming).
+
+So, let's start.
+
+## 1. Installing Eufy Security Add-On
+
+If you use your own docker service, please run it like this `docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -e COUNTRY=country_code -e TRUSTED_DEVICE_NAME=your_device_name -p 3000:3000 bropat/eufy-security-ws:X.Y.Z`. To find out current supported add-on version, please get values for X.Y.Z from here (https://github.com/fuatakgun/eufy_security_addon/blob/main/config.json#L3) and jump into Step 6.
+
+1- Add `Eufy Security Add-On Repository` to Add-On Store. Please follow steps located here (https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons) and use this repository URL (https://github.com/fuatakgun/eufy_security_addon)
+
+2- Search `Eufy Security` on Add-on Store (https://your-instance.duckdns.org/hassio/store)
+
+3- Install `Eufy Security Add-on` 
+
+4- When installation is completed, go to `Configuration` page of Add-on and put Username (email), Password, Country (2 letter code), Event Duration in Seconds and Trusted Device Name.
+
+5- Hit `Start` and wait for it to be started.
+
+6- Check `Logs`, you have to see something like this;
 ```
-2022-07-11 14:06:35.442  INFO  Alarm mode for station T8010N2320460480 changed to: AWAY 
-2022-07-11 14:06:36.562  INFO  Received push notification for changing guard mode 
-2022-07-11 14:17:17.904  INFO  Alarm mode for station T8010N2320460480 changed to: HOME 
-2022-07-11 14:17:18.466  INFO  Received push notification for changing guard mode 
+2022-12-27 20:09:16.339  INFO  Eufy Security server listening on host 0.0.0.0, port 3000 
+2022-12-27 20:09:26.569  INFO  Connected to station T8010NXXX on host 87.240.219.ZZZ and port 29946 
+2022-12-27 20:09:26.601  INFO  Connected to station T8410PXXX on host 87.240.219.YYY and port 18969 
 ```
 
-2- RTSP - As of now, live stream is limited to 3 minutes and this is a hard limitation by Eufy, so we do not have a solution in place. So, if you keep live stream running more than 3 minutes, it will be turned off by hardware but **home assistant will not be notified on this**. So, next time you want to start live stream, you notice that nothing will be happening as we assume that it is already running. As a workaround, please call stop and start in order. https://github.com/fuatakgun/eufy_security/issues/10#issuecomment-886251442 
+## 2. Install RTSP Simple Server Add-on - Required for P2P Based Video Streaming - Not Required for RTSP Based Video Streaming
 
-3- P2P - To have P2P streaming work out, we have an additional add-on to mirror incoming video bytes and stream as it is an RTSP stream. But to do so, integration first needs to analyze X seconds from incmoing bytes to understand video codec information (dimensions, fps, codec etc) and then initializes the stream on add-on. So, depending on your hardware and video quality (**please always set STREAMING QUALITY, CODEC and COMPRESSION to LOW**) this could change between 1 to 5 seconds. I am able to stream more than 15 minutes for my 2C cameras using P2P. If your P2P stream fails to start, please play with this configuration in integration options page. Check below image;
+If you use your own docker service, please run it like this `docker run -it RTSP_PROTOCOLS=tcp -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server:latest` and jump into Step 5.
 
-![image](https://user-images.githubusercontent.com/11085566/136794616-fa238dd8-9bd6-41d8-ac14-2c0fb4f0eb23.png)
+1- Add `RTSP Simple Server Add-on` Repository to `Add-On Store`. Please follow steps located here (https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons) and use this repository URL (https://github.com/fuatakgun/rtsp_simple_server/)
 
-4- Please do not enable `Preload Stream` functionality in Camera View if your camera is battery powered (not streaming all the time) for two reasons; it is not adding functionality in our use case and it sends a signal to enable live stream to your cameras which might end up excessive battery consumption.
-![image](https://user-images.githubusercontent.com/11085566/128697823-f83b5ce5-1f31-48c9-ac6d-712bd56b504b.png)
+2- Search `RTSP Simple Server` on `Add-on Store` (https://your-instance.duckdns.org/hassio/store)
 
-5- One user reported that there is an issue regarding to 2k Battery Doorbell in terms of receiving motion and person detection sensor. If you are having a similar issue, please apply this solution: https://github.com/fuatakgun/eufy_security/issues/22#issuecomment-908157691
+3- Install `RTSP Simple Server` 
 
-6- I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
+4- Hit `Start` and wait for it to be started.
 
-- If you are located in EU, use my account: `fuatakgun@gmail.com`
-- If you are located in US, use shared test account: `eufydeveloper@gmail.com`
-
-6- If you have any other issue, please create it an issue on github repository, give information about your home assistant hardware, camera model, streaming type (rtsp or p2p), steps required to generate the issue. Enable excessive logging and share your logs from integration and related add ons.
-
+5- Check Logs, you have to see something like this;
 ```
-logger:
-  logs:
-    custom_components.eufy_security: debug
+2022/12/27 23:53:09 I [0/0] rtsp-simple-server v0.17.6
+2022/12/27 23:53:09 I [0/0] [RTSP] TCP listener opened on :8554
+2022/12/27 23:53:09 I [0/0] [RTMP] listener opened on :1935
+2022/12/27 23:53:09 I [0/0] [HLS] listener opened on :8888
 ```
 
-# 6. Installation
-***Warning, there is an existing integration (https://github.com/nonsleepr/ha-eufy-security) and I have used the same internal name with this integration, unintentinally. You can not keep both integrations and trying to install might cause issues. You can backup old one if you want to test this, just rename `custom_components/eufy_security` into something else (eg `eufy_security_nonsleepr`)***
+## 3. Installing Eufy Security Integration
 
-Please follow screenshots below. In summary;
-- You will first install HASS Add On assuming you are running on Hassos or Supervised. If not, please execute this command to run docker instance manually ```docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -e COUNTRY=country_code -p 3000:3000 bropat/eufy-security-ws:X.Y.Z```. To find out correct values for X.Y.Z, please check here https://github.com/fuatakgun/eufy_security_addon/blob/main/config.json#L3
-- Later on, you should install RTSP Server Add On to have faster/more reliable p2p streaming. I will deprecate/not support file based streaming soon, so, please migrate in timely manner. If you are not using Hassos or Supervised installation please execute this command to run docker instance manually ```docker run --rm -it -e RTSP_PROTOCOLS=tcp -d -p 8554:8554 -p 1935:1935 aler9/rtsp-simple-server```
-- When you are done with HASS Add On, you will install integration via HACS, downloading files over UI, restarting home assistant and setting up integration.
-- Double check if your `configuration.yaml` includes `ffmpeg` integration. If not, please do like this; https://www.home-assistant.io/integrations/ffmpeg/#configuration . This integration relies on `ffmpeg` to be setup to live stream via P2P and capture images from live RTSP/P2P streams.
+1- If you have not already installed, install `HACS` following this guide: https://hacs.xyz/docs/setup/download
 
-## 6.1 Installing Eufy Security Add On - Required
-1- Go to Add-On Store page and select `Repositories`
+2- When `HACS` is ready, search for `Eufy Security` inside `HACS` Integrations
 
-![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
+3- Install `Eufy Security` integration, restart your Home Assistant instance.
 
-2- Add custom repository URL 
-```https://github.com/fuatakgun/eufy_security_addon```
+4- Check `Settings -> Devices & Services` page (https://your-instance.duckdns.org/config/integrations), click on `Add Integration` and search for `Eufy Security`. If you do not see it, first validate that it is installed via HACS and you had restarted it, later try with another browser. Integrations list might be already cached in your browser.
 
-![2-add-on-repository](https://user-images.githubusercontent.com/11085566/126563898-8c642026-1e16-4484-8177-0bc6a93d59e8.PNG)
+5- Put `Eufy Security Add-on IP Address` (127.0.0.1 for Supervised installation) and `configured port` (default 3000) and click Submit.
 
-3- Confirm that you can see `Eufy Security WS Addon`
+6- You might receive Captcha or Multi Factor Authentications (MFA) warnings, please Reconfigure the integration. Captcha code will be visible on Reconfigure page and MFA Code will be emailed or texted to you. Please enter these values. After this, you might need to restart your Home Assistant instance.
 
-![3-add-on-visible](https://user-images.githubusercontent.com/11085566/126563911-ec5e0e52-312b-4e65-a25b-54a02a348752.PNG)
+7- If you have installed `RTSP Simple Server Add-On`, please put its `IP Address` and `Port` into Integration Configuration page.
 
-4- Click on `Eufy Security WS Addon`, install add-on and switch to `Configuration` page, fill username, password and **country code (2 letter)**, save the configs and start the add-on. I advise you to create a new account and share your cameras from main account to new account. Use that new account for home assistant purposes only.
+8- You can also configure `Cloud Scan Interval`, Video Analyze Duration, `Custom Name 1`, `Custom Name 2` and `Custom Name 3`
 
-![4-add-on-configure](https://user-images.githubusercontent.com/11085566/126563919-273e413b-f2ac-49c4-8342-dfd5c5887ccf.PNG)
+![image](https://user-images.githubusercontent.com/11085566/210082270-4de06bbe-0d10-4dde-9fd3-cb12d6758b67.png)
 
-5-Validate that you are connected checking logs page.
 
-![5-add-on-log](https://user-images.githubusercontent.com/11085566/126563928-3ee2d48d-06e2-4681-9076-3992f4546b16.PNG)
+![image](https://user-images.githubusercontent.com/11085566/210082270-4de06bbe-0d10-4dde-9fd3-cb12d6758b67.png)
 
-## 6.2 Installing RTSP Simple Server Add On (for faster P2P streaming) - Required
-1- Go to Add-On Store page and select `Repositories`
-![1-add-on-store](https://user-images.githubusercontent.com/11085566/126563889-8bc98e9a-8cb5-4f71-a3a7-3bde8e3f1182.PNG)
+## 4. Setting up your dashboard for camera
 
-2- Add custom repository URL 
-```https://github.com/fuatakgun/rtsp_simple_server```
+Native Home Assistant streaming is fairly slow (maybe not?), so you are highly adviced to install WebRTC integration from HACS.
 
-3- Confirm that you can see `RTSP Simple Server Addon` - probably at the end of the page
-![image](https://user-images.githubusercontent.com/11085566/127865866-5c47cfd1-0130-4a6a-a00c-8a763acd2100.png)
-
-4- Click on `RTSP Simple Server Addon`, install add-on, please do not change any configuration and start the add-on.
-![image](https://user-images.githubusercontent.com/11085566/127866038-44d2db72-2e20-46bd-a3d7-328213bf6713.png)
-
-5- Start the Add-On and validate if it is running well checking the logs.
-![image](https://user-images.githubusercontent.com/11085566/127866173-af817b84-034e-449e-8143-a94a78564052.png)
-
-## 6.3 Installing Integration
-
-1- Go to HACS and search for 'Eufy Security'
-
-2- Install the `Eufy Security` repository
-
-![8-hacs-install](https://user-images.githubusercontent.com/11085566/126563950-1c89c1e8-f77d-46ac-8910-77048500a07f.PNG)
-
-3- You need to restart your HA instance to pick up new repository.
-
-![9-hacs-restart](https://user-images.githubusercontent.com/11085566/126563954-b801e4ea-b93e-4695-928d-a82221fe01f4.PNG)
-
-4- After restart, go to `Configuration` - `Integrations` page and click on `Add Integration`
-
-![10-integrations](https://user-images.githubusercontent.com/11085566/126563961-a05c5e50-b006-4759-b55a-548f691a13d8.PNG)
-
-5- Search for ```Eufy Security``` and click on it
-
-![11-integration-search](https://user-images.githubusercontent.com/11085566/126563968-920a74de-ab93-456b-b4b2-dcf651a07f9f.PNG)
-
-6- In next page, use ```localhost``` if you have used Add-on installation, otherwise put your Docker instance ip address and keep `3000` as port
-
-![12-integration-configure](https://user-images.githubusercontent.com/11085566/126563976-234005e7-2920-4ef0-a301-187d4d929f10.png)
-
-7- You will be shown devices connected to your account. Or you can be alerted with captcha notification.
-
-![13-integration-done](https://user-images.githubusercontent.com/11085566/126563982-38b3a00a-ff6a-45aa-8dcc-b04e864a37f8.PNG)
-
-8- Follow screenshots below for captcha
-a. Get notified about captcha request
-![image](https://user-images.githubusercontent.com/11085566/145604195-7b5499b3-9603-468b-aa03-84121047719b.png)
-
-b. Go to Integrations Page and click `RECONFIGURE`
-![image](https://user-images.githubusercontent.com/11085566/145604271-3cfd3a5a-a6ba-42dc-8b9b-b0f8e759c8b2.png)
-
-c. Enter the correct code and click `Submit` (I will put wrong intentionally)
-![image](https://user-images.githubusercontent.com/11085566/145604402-7f5f0feb-339a-49d8-b97f-f136ddf5121b.png)
-
-d. If you put the wrong code, after couple of seconds, you will get a similar error in Integrations page, but this time, `RECONFIGURE` button will be missing. Please Disable and Enable back the integration to get the respective option again. (Working on a better solution)
-![image](https://user-images.githubusercontent.com/11085566/145604673-c1a8e17a-0969-4d8d-a0df-647ce5c36741.png)
-
-e. After entering correct captcha code, your devices will be ready to use.
-
-9- If your camera does not support RTSP based live streaming, you can use `Start Live Stream` and `Stop Live Stream` services rather than turn_on and turn_off because they tend to be using RTSP functions. They require camera entities as input, you can use UI for this. More importantly, please set your `Streaming Quality` settings to `Low` per each camera using Eufy Security app, otherwise WebRTC will fail to stream the video. Underlying issue is realted mid or high quality codecs are not supported by WebRTC.
-
-![14-services-live-stream](https://user-images.githubusercontent.com/11085566/126563991-5ef949c5-144c-4702-a9e3-577e2d37c0f8.PNG)
-
-10- If you want faster P2P live streaming, go to Integration Configuration section and enable it.
-![image](https://user-images.githubusercontent.com/11085566/127866543-1345d56f-b4f3-4154-96c7-a278d747cf8d.png)
-
-## 6.3 WebRTC - Required
-
-You can use WebRTC for light speed streaming inside Home Assistant.
-
-1- Install WebRTC following these steps: https://github.com/AlexxIT/WebRTC#installation
-
-2- Disable Auto Start on Click to be sure that cameras are not starting to stream autoamtically.
-
-![image](https://user-images.githubusercontent.com/11085566/136706616-7ba09fec-f75b-4010-b58e-bf0f8f2d47da.png)
-
-3- Setup two conditional cards for each camera as below, do not forget to put correct camera entity names (replace `front` with your camera name). If your camera name is "living_room", change: `binary_sensor.front_streaming_sensor` to `binary_sensor.living_room_streaming_sensor`, `camera.front` to `camera.living_room`
-- So, when camera is not streaming, you will get latest captured image and when you click on image, it will start streaming (camera.turn_on service call).
-- When camera is streaming, you will get WebRTC card which has 1-2 seconds latency while streaming.
+Below code will show camera picture while camera is not streaming and webrtc card while camera is streaming (conditional cards). Please replace `camera.entrance` with your camera entity name.
 
 ```
-type: grid
 square: false
+columns: 1
+type: grid
 cards:
   - type: conditional
     conditions:
-      - entity: binary_sensor.front_streaming_sensor
-        state: 'False'
+      - entity: camera.entrance
+        state: idle
     card:
+      show_state: true
+      show_name: true
       type: picture-entity
-      entity: camera.front
+      entity: camera.entrance
+      camera_image: camera.entrance
       tap_action:
         action: call-service
         service: camera.turn_on
+        data: {}
         target:
-          entity_id: camera.front
+          entity_id: camera.entrance
   - type: conditional
     conditions:
-      - entity: binary_sensor.front_streaming_sensor
-        state: 'True'
+      - entity: camera.entrance
+        state: streaming
     card:
       type: vertical-stack
       cards:
-        - type: custom:webrtc-camera
-          entity: camera.front
-        - type: button
-          name: Stop Streaming
-          show_state: false
+        - show_name: true
           show_icon: false
+          type: button
           tap_action:
             action: call-service
             service: camera.turn_off
+            data: {}
             target:
-              entity_id: camera.front
-columns: 1
+              entity_id: camera.entrance
+          entity: camera.entrance
+          name: Stop
+        - type: custom:webrtc-camera
+          entity: camera.entrance
+``` 
+
+# Features
+
+- There are many sensors available out there, if you need an additional one, raise a request and share your `Debug (device)` and `Debug (station)` sensor attributes so I can extract these sensors. If these sensors cannot be extracted from state of device, please mention it explicitly.
+- There are many `button`, `switch` and `select` entities, please use them.
+- Integration Services;
+  - Force Sync - Integration will get latest changes from cloud. Some features are not updated via push notifications, you can call this if you want and integration will call this regularly.
+- Camera Services;
+  - `turn_on` and `turn_off` - Integration will check if your device supports RTSP and fallback P2P based streaming
+  - `start_rtsp_livestream` and `stop_rtsp_livestream` - Stream will be started using RTSP if your device supports it
+  - `start_p2p_livestream` and `stop_p2p_livestream` - Stream will be started using P2P, all devices work here
+  - `generate_image` - This will generate a thumbnail for Home Assistant if camera is already streaming
+  - `ptz_up`, `ptz_down`, `ptz_right`, `ptz_left`, `ptz_360` - Pan and Tilt commands
+  - `trigger_camera_alarm_with_duration` - Trigger alarm on camera for a given duration
+  - `quick_response` - Send a quick response message for doorbell, you can get `voice_id` information from `Debug (device)` sensor attributes of device.
+  - `snooze` - Snooze ongoing notification for a given duration.
+- Alarm Panel Services;
+  - There is an select entity called Guard Mode, it is one to one mapping of Eufy Security state. Current Mode sensor is showing the current state of home base.
+  - `trigger_base_alarm_with_duration` - Trigger alarm on station for a given duration
+  - `reset_alarm` - Reset ongoing alarm for a given duration
+  - `snooze` - Snooze ongoing notification for a given duration.
+  - `arm_home` - Switch to Home state
+  - `arm_away` - Switch to Away state
+  - `disarm` - Disarm the panel
+  - `alarm_arm_custom1` - Switch to custom 1
+  - `alarm_arm_custom2` - Switch to custom 2
+  - `alarm_arm_custom3` - Switch to custom 3
+  - `geofence` - Switch to geofencing, this might not impact the state of panel given that it will chage its state based on geolocation via eufy app
+  - `schedule` - Switch to custom 3, this might not impact the state of panel given that it will chage its state based on schedule via eufy app
+  - `chime` - Trigger a chime sound on base station (liked it) - I do not know exact list of ringtones available, try it yourself.
+- Lock Services;
+  - `lock` and `unlock` for locks
+  - `unlock` with code for safes
+
+# Example Automation
+
+## Start streaming on camera, when there is a motion, this would generate a new thumbnail on Home Assistant
+
+Replace `camera.entrance` with your own entity name.
+
+```
+alias: Capture Image on Trigger, Send Mobile Notification with Actions, Snooze or Alarm via Actions
+description: ""
+trigger:
+  - platform: state
+    entity_id:
+      - binary_sensor.entrance_motion_detected
+      - binary_sensor.entrance_person_detected
+    to: "on"
+    id: sensor
+  - platform: event
+    event_type: mobile_app_notification_action
+    id: snooze
+    event_data:
+      action: SNOOZE
+  - platform: event
+    event_type: mobile_app_notification_action
+    id: alarm
+    event_data:
+      action: ALARM
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: sensor
+        sequence:
+          - service: eufy_security.start_p2p_livestream
+            data: {}
+            target:
+              entity_id: camera.entrance
+          - service: eufy_security.generate_image
+            data: {}
+            target:
+              entity_id: camera.entrance
+          - service: eufy_security.stop_p2p_livestream
+            data: {}
+            target:
+              entity_id: camera.entrance
+          - service: notify.mobile_app_fuatx3pro
+            data:
+              message: Motion detected
+              data:
+                image: /api/camera_proxy/camera.entrance
+                actions:
+                  - action: ALARM
+                    title: Alarm
+                  - action: SNOOZE
+                    title: Snooze
+      - conditions:
+          - condition: trigger
+            id: snooze
+        sequence:
+          - service: eufy_security.snooze
+            data:
+              snooze_time: 10
+              snooze_chime: false
+              snooze_motion: true
+              snooze_homebase: false
+            target:
+              entity_id: camera.entrance
+      - conditions:
+          - condition: trigger
+            id: alarm
+        sequence:
+          - service: eufy_security.trigger_camera_alarm_with_duration
+            data:
+              duration: 1
+            target:
+              entity_id: camera.entrance
+mode: single
 ```
 
-RTSP Experience with WebRTC: https://drive.google.com/file/d/1qIYUx82C0CnpsTycP9dTS0NX6IEqeqHD/view?usp=drivesdk
+## Unlock safe with code
 
-P2P Experience with WebRTC: https://drive.google.com/file/d/1qCW9XX32vInQgFF7hPqoxp-ssno2Sye9/view?usp=drivesdk
+```
+service: lock.unlock
+data:
+  code: "testtest"
+target:
+  entity_id: lock.safe
+```
 
-Thanks @conorlap for this. - https://github.com/fuatakgun/eufy_security/issues/43
+# Debugging Issues
 
+First, check all issues (open or close) to find out if there was any similar question rather than duplicating it.
+Later on, if you find a similar issue, please just put +1 on it, sharing same logs over and over does not help at all.
+Lastly, create your issue following the template. I will probabaly ask follow up questions later on.
 
+I am more than happy to debug individual issues as long as you follow setup instructions. I need you to share your problematic cameras with me so that I can use my own machine to debug the issue. For each debugging request, please create a github issue so we can track from there. Do not forget to remove the sharing settings after we are done :)
 
-### Raise your issues in Github. ###
+- If you are located in EU, use my account: fuatakgun@gmail.com
+- If you are located in US, use shared test account: eufydeveloper@gmail.com
+
+To schedule the time, please use this link: https://calendly.com/fuatakgun/office-hour
+
+# Show Off
+
+![image](https://user-images.githubusercontent.com/11085566/210081589-43ce2e52-a9e7-4f25-9238-bcdd6212852d.png)
+![image](https://user-images.githubusercontent.com/11085566/210081619-6cc1e0d1-ecca-49ee-b18c-d1348db1feee.png)
+![image](https://user-images.githubusercontent.com/11085566/210081657-a839623a-1d89-4a15-93d9-1025fd44803d.png)
+![image](https://user-images.githubusercontent.com/11085566/210081673-b2a92eaa-9763-4913-a955-c6a48753d5ba.png)
+![image](https://user-images.githubusercontent.com/11085566/210081687-148d63d4-9bf8-4d47-81f1-6ed09584141a.png)
+![image](https://user-images.githubusercontent.com/11085566/210081954-14e83d45-7bc6-4623-b13b-fb458d0caad5.png)
+![image](https://user-images.githubusercontent.com/11085566/210081967-46926dad-55de-4a36-b4ba-a4b6ae99c7ac.png)
+
+https://user-images.githubusercontent.com/11085566/210083674-bbf082ab-5f20-4d1c-ab61-e687c7ce7506.mp4

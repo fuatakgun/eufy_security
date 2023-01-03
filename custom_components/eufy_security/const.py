@@ -1,603 +1,176 @@
-import asyncio
-from datetime import datetime
-from enum import Enum
+"""Constants for integration"""
+from enum import Enum, auto
 import logging
-from queue import Queue
 
-from homeassistant.config_entries import ConfigEntry
+import voluptuous as vol
+
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.const import Platform
+import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.config_validation import make_entity_service_schema
+from homeassistant.helpers.entity import EntityCategory
+
+from .eufy_security_api.const import MessageField, PropertyType
+from .eufy_security_api.metadata_filter import MetadataFilter
+from .model import EntityDescription
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 # Base component constants
 NAME = "Eufy Security"
 DOMAIN = "eufy_security"
-VERSION = "0.0.1"
+VERSION = "1.0.0"
 COORDINATOR = "coordinator"
-CAPTCHA_CONFIG = "captcha_config"
 
-# Platforms
-ALARM_CONTROL_PANEL = "alarm_control_panel"
-BINARY_SENSOR = "binary_sensor"
-CAMERA = "camera"
-SENSOR = "sensor"
-LOCK = "lock"
-SWITCH = "switch"
-SELECT = "select"
-PLATFORMS = [CAMERA, BINARY_SENSOR, SENSOR, ALARM_CONTROL_PANEL, LOCK, SWITCH, SELECT]
-
-# Configuration and options
-CONF_HOST: str = "host"
-CONF_PORT: str = "port"
-CONF_CAPTCHA: str = "captcha"
-CONF_USE_RTSP_SERVER_ADDON: str = "use_rtsp_server_addon"
-CONF_RTSP_SERVER_ADDRESS: str = "rtsp_server_address"
-CONF_RTSP_SERVER_PORT: str = "rtsp_server_port"
-CONF_FFMPEG_ANALYZE_DURATION: str = "ffmpeg_analyze_duration"
-CONF_SYNC_INTERVAL: str = "sync_interval"
-CONF_AUTO_START_STREAM: str = "auto_start_stream"
-CONF_FIX_BINARY_SENSOR_STATE: str = "fix_binary_sensor_state"
-CONF_MAP_EXTRA_ALARM_MODES: str = "map_extra_alarm_modes"
-CONF_NAME_FOR_CUSTOM1: str = "name_for_custom1"
-CONF_NAME_FOR_CUSTOM2: str = "name_for_custom2"
-CONF_NAME_FOR_CUSTOM3: str = "name_for_custom3"
-CONF_GENERATE_FFMPEG_LOGS: str = "generate_ffmpeg_logs"
-
-DEFAULT_HOST: str = "0.0.0.0"
-DEFAULT_PORT: int = 3000
-DEFAULT_USE_RTSP_SERVER_ADDON: bool = False
-DEFAULT_RTSP_SERVER_PORT: int = 8554
-DEFAULT_SYNC_INTERVAL: int = 600  # seconds
-DEFAULT_FFMPEG_ANALYZE_DURATION: float = 1.2  # microseconds
-DEFAULT_CODEC: str = "h264"
-DEFAULT_AUTO_START_STREAM: bool = True
-DEFAULT_FIX_BINARY_SENSOR_STATE: bool = False
-DEFAULT_MAP_EXTRA_ALARM_MODES: bool = False
-DEFAULT_NAME_FOR_CUSTOM1: str = "Custom 1"
-DEFAULT_NAME_FOR_CUSTOM2: str = "Custom 2"
-DEFAULT_NAME_FOR_CUSTOM3: str = "Custom 3"
-DEFAULT_GENERATE_FFMPEG_LOGS: bool = False
-
-
-P2P_LIVESTREAMING_STATUS = "p2pLiveStreamingStatus"
-RTSP_LIVESTREAMING_STATUS = "rtspLiveStreamingStatus"
-STREAMING_EVENT_NAMES = [RTSP_LIVESTREAMING_STATUS, P2P_LIVESTREAMING_STATUS]
-LATEST_CODEC = "latest codec"
-SET_API_SCHEMA = {
-    "messageId": "set_api_schema",
-    "command": "set_api_schema",
-    "schemaVersion": 11,
-}
-DRIVER_CONNECT_MESSAGE = {"messageId": "driver_connect", "command": "driver.connect"}
-SET_CAPTCHA_MESSAGE = {
-    "messageId": "driver_set_captcha",
-    "command": "driver.set_captcha",
-    "captchaId": None,
-    "captcha": None,
-}
-START_LISTENING_MESSAGE = {"messageId": "start_listening", "command": "start_listening"}
-POLL_REFRESH_MESSAGE = {"messageId": "poll_refresh", "command": "driver.poll_refresh"}
-GET_P2P_LIVESTREAM_STATUS_PLACEHOLDER = "get_p2p_livestream_status"
-GET_RTSP_LIVESTREAM_STATUS_PLACEHOLDER = "get_rtsp_livestream_status"
-GET_DEVICE_PROPERTIES_METADATA_MESSAGE = {
-    "messageId": "get_device_properties_metadata",
-    "command": "device.get_properties_metadata",
-    "serialNumber": None,
-}
-GET_DEVICE_PROPERTIES_MESSAGE = {
-    "messageId": "get_device_properties",
-    "command": "device.get_properties",
-    "serialNumber": None,
-}
-GET_DEVICE_VOICES_MESSAGE = {
-    "messageId": "get_voices",
-    "command": "device.get_voices",
-    "serialNumber": None,
-}
-GET_STATION_PROPERTIES_METADATA_MESSAGE = {
-    "messageId": "get_station_properties_metadata",
-    "command": "station.get_properties_metadata",
-    "serialNumber": None,
-}
-GET_STATION_PROPERTIES_MESSAGE = {
-    "messageId": "get_station_properties",
-    "command": "station.get_properties",
-    "serialNumber": None,
-}
-GET_RTSP_LIVESTREAM_STATUS_MESSAGE = {
-    "messageId": "get_rtsp_livestream_status",
-    "command": "device.is_rtsp_livestreaming",
-    "serialNumber": None,
-}
-GET_P2P_LIVESTREAM_STATUS_MESSAGE = {
-    "messageId": "get_p2p_livestream_status",
-    "command": "device.is_livestreaming",
-    "serialNumber": None,
-}
-QUICK_RESPONSE_MESSAGE = {
-    "messageId": "quick_response",
-    "command": "device.quick_response",
-    "serialNumber": None,
-    "voiceId": None,
-    "value": True,
-}
-SET_RTSP_STREAM_MESSAGE = {
-    "messageId": "set_rtsp_stream_on",
-    "command": "device.set_rtsp_stream",
-    "serialNumber": None,
-    "value": None,
-}
-SET_RTSP_LIVESTREAM_MESSAGE = {
-    "messageId": "start_rtsp_livestream",
-    "command": "device.{state}_rtsp_livestream",
-    "serialNumber": None,
-}
-SET_P2P_LIVESTREAM_MESSAGE = {
-    "messageId": "start_livesteam",
-    "command": "device.{state}_livestream",
-    "serialNumber": None,
-}
-SET_DEVICE_STATE_MESSAGE = {
-    "messageId": "enable_device",
-    "command": "device.enable_device",
-    "serialNumber": None,
-    "value": None,
-}
-SET_GUARD_MODE_MESSAGE = {
-    "messageId": "set_guard_mode",
-    "command": "station.set_guard_mode",
-    "serialNumber": None,
-    "mode": None,
-}
-SET_PROPERTY_MESSAGE = {
-    "messageId": "device_set_property",
-    "command": "device.set_property",
-    "serialNumber": None,
-    "name": None,
-    "value": None,
-}
-STATION_TRIGGER_ALARM = {
-    "messageId": "trigger_alarm",
-    "command": "station.trigger_alarm",
-    "serialNumber": None,
-    "seconds": 10,
-}
-STATION_RESET_ALARM = {
-    "messageId": "reset_alarm",
-    "command": "station.reset_alarm",
-    "serialNumber": None,
-}
-CAMERA_TRIGGER_ALARM = {
-    "messageId": "trigger_alarm",
-    "command": "device.trigger_alarm",
-    "serialNumber": None,
-    "seconds": 10,
-}
-CAMERA_RESET_ALARM = {
-    "messageId": "reset_alarm",
-    "command": "device.reset_alarm",
-    "serialNumber": None,
-}
-SET_LOCK_MESSAGE = {
-    "messageId": "lock_device",
-    "command": "device.lock_device",
-    "serialNumber": None,
-    "value": None,
-}
-SET_PTZ_MESSAGE = {
-    "messageId": "device_set_ptz",
-    "command": "device.pan_and_tilt",
-    "serialNumber": None,
-    "direction": None,
-}
-
-
-MESSAGE_IDS_TO_PROCESS = [
-    START_LISTENING_MESSAGE["messageId"],
-    GET_DEVICE_PROPERTIES_MESSAGE["messageId"],
-    GET_DEVICE_PROPERTIES_METADATA_MESSAGE["messageId"],
-    GET_DEVICE_VOICES_MESSAGE["messageId"],
-    GET_STATION_PROPERTIES_MESSAGE["messageId"],
-    GET_STATION_PROPERTIES_METADATA_MESSAGE["messageId"],
-    GET_P2P_LIVESTREAM_STATUS_MESSAGE["messageId"],
-    GET_RTSP_LIVESTREAM_STATUS_MESSAGE["messageId"],
-    DRIVER_CONNECT_MESSAGE["messageId"],
-    SET_CAPTCHA_MESSAGE["messageId"],
+PLATFORMS: list[str] = [
+    Platform.BINARY_SENSOR,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
+    Platform.LOCK,
+    Platform.ALARM_CONTROL_PANEL,
+    Platform.NUMBER,
+    Platform.CAMERA,
+    Platform.BUTTON,
 ]
-MESSAGE_TYPES_TO_PROCESS = ["result", "event"]
-PROPERTY_CHANGED_PROPERTY_NAME = "event_property_name"
-P2P_LIVESTREAM_STARTED = "livestream started"
-P2P_LIVESTREAM_STOPPED = "livestream stopped"
-RTSP_LIVESTREAM_STARTED = "rtsp livestream started"
-RTSP_LIVESTREAM_STOPPED = "rtsp livestream stopped"
-EVENT_CONFIGURATION: dict = {
-    "connected": {
-        "name": "event",
-        "value": "event",
-        "type": "driver",
-    },
-    "captcha request": {
-        "name": "captcha",
-        "value": "captcha",
-        "type": "captcha",
-    },
-    "property changed": {
-        "name": PROPERTY_CHANGED_PROPERTY_NAME,
-        "value": "value",
-        "type": "state",
-    },
-    "person detected": {
-        "name": "personDetected",
-        "value": "state",
-        "type": "state",
-    },
-    "motion detected": {
-        "name": "motionDetected",
-        "value": "state",
-        "type": "state",
-    },
-    P2P_LIVESTREAM_STARTED: {
-        "name": P2P_LIVESTREAMING_STATUS,
-        "value": "event",
-        "type": "state",
-    },
-    P2P_LIVESTREAM_STOPPED: {
-        "name": P2P_LIVESTREAMING_STATUS,
-        "value": "event",
-        "type": "state",
-    },
-    RTSP_LIVESTREAM_STARTED: {
-        "name": RTSP_LIVESTREAMING_STATUS,
-        "value": "event",
-        "type": "state",
-    },
-    RTSP_LIVESTREAM_STOPPED: {
-        "name": RTSP_LIVESTREAMING_STATUS,
-        "value": "event",
-        "type": "state",
-    },
-    "livestream video data": {
-        "name": "video_data",
-        "value": "buffer",
-        "type": "event",
-    },
-    "alarm event": {
-        "name": "alarmEvent",
-        "value": "alarmEvent",
-        "type": "state",
-    },
-    "alarm delay event": {
-        "name": "alarmDelayEvent",
-        "value": "alarmDelayEvent",
-        "type": "state",
-    },
-}
-
-STATE_ALARM_CUSTOM1 = "custom1"
-STATE_ALARM_CUSTOM2 = "custom2"
-STATE_ALARM_CUSTOM3 = "custom3"
-STATE_ALARM_DELAYED = "delayed"
-STATE_GUARD_SCHEDULE = "schedule"
-STATE_GUARD_GEO = "geo"
-STATE_GUARD_OFF = "off"
 
 
-class PTZ(Enum):
-    ROTATE360 = 0
-    LEFT = 1
-    RIGHT = 2
-    UP = 3
-    DOWN = 4
+class Schema(Enum):
+    """General used service schema definition"""
 
-# sync from https://github.com/bropat/eufy-security-client/blob/4d2684e56757b60c2c8afa1ff5c4df75016c6fac/src/http/types.ts
-class DEVICE_TYPE(Enum):
-    STATION = 0
-    CAMERA = 1
-    SENSOR = 2
-    FLOODLIGHT = 3
-    CAMERA_E = 4
-    DOORBELL = 5
-    BATTERY_DOORBELL = 7
-    CAMERA2C = 8
-    CAMERA2 = 9
-    MOTION_SENSOR = 10
-    KEYPAD = 11
-    CAMERA2_PRO = 14
-    CAMERA2C_PRO = 15
-    BATTERY_DOORBELL_2 = 16
-    HOMEBASE_3 = 18
-    CAMERA3 = 19
-    CAMERA3C = 23
-    INDOOR_CAMERA = 30
-    INDOOR_PT_CAMERA = 31
-    SOLO_CAMERA = 32
-    SOLO_CAMERA_PRO = 33
-    INDOOR_CAMERA_1080 = 34
-    INDOOR_PT_CAMERA_1080 = 35
-    FLOODLIGHT_CAMERA_8422 = 37
-    FLOODLIGHT_CAMERA_8423 = 38
-    FLOODLIGHT_CAMERA_8424 = 39
-    INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT = 44
-    INDOOR_OUTDOOR_CAMERA_2K = 45
-    INDOOR_OUTDOOR_CAMERA_1080P = 46
-    LOCK_BASIC = 50
-    LOCK_ADVANCED = 51
-    LOCK_BASIC_NO_FINGER = 52
-    LOCK_ADVANCED_NO_FINGER = 53   
-    LOCK_8503 = 54
-    LOCK_8530 = 55
-    LOCK_85A3 = 56
-    LOCK_8592 = 57
-    LOCK_8504 = 58
-    SOLO_CAMERA_SPOTLIGHT_1080 = 60
-    SOLO_CAMERA_SPOTLIGHT_2K = 61
-    SOLO_CAMERA_SPOTLIGHT_SOLAR = 62
-    SMART_DROP = 90
-    DOORBELL_DUAL = 91
-    BATTERY_DOORBELL_DUAL = 93
-    INDOOR_COST_DOWN_CAMERA = 100
-    CAMERA_GUN = 101
-    CAMERA_SNAIL = 102
-    CAMERA_FG = 110
-    SMART_SAFE_7400 = 140
-    SMART_SAFE_7401 = 141
-    SMART_SAFE_7402 = 142
-    SMART_SAFE_7403 = 143
+    PTZ_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("direction"): cv.string})
+    TRIGGER_ALARM_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("duration"): cv.Number})
+    QUICK_RESPONSE_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("voice_id"): cv.Number})
+    CHIME_SERVICE_SCHEMA = make_entity_service_schema({vol.Required("ringtone"): cv.Number})
+    SNOOZE = make_entity_service_schema(
+        {
+            vol.Required("snooze_time"): cv.Number,
+            vol.Required("snooze_chime"): cv.boolean,
+            vol.Required("snooze_motion"): cv.boolean,
+            vol.Required("snooze_homebase"): cv.boolean,
+        }
+    )
 
 
-DEVICE_CATEGORY = {
-    DEVICE_TYPE.STATION: "STATION",
-    DEVICE_TYPE.HOMEBASE_3: "STATION",
-    DEVICE_TYPE.CAMERA: "CAMERA",
-    DEVICE_TYPE.SENSOR: "SENSOR",
-    DEVICE_TYPE.FLOODLIGHT: "CAMERA",
-    DEVICE_TYPE.CAMERA_E: "CAMERA",
-    DEVICE_TYPE.DOORBELL: "DOORBELL",
-    DEVICE_TYPE.BATTERY_DOORBELL: "DOORBELL",
-    DEVICE_TYPE.CAMERA2C: "CAMERA",
-    DEVICE_TYPE.CAMERA2: "CAMERA",
-    DEVICE_TYPE.MOTION_SENSOR: "MOTION_SENSOR",
-    DEVICE_TYPE.KEYPAD: "KEYPAD",
-    DEVICE_TYPE.CAMERA2_PRO: "CAMERA",
-    DEVICE_TYPE.CAMERA2C_PRO: "CAMERA",
-    DEVICE_TYPE.CAMERA3: "CAMERA",
-    DEVICE_TYPE.CAMERA3C: "CAMERA",
-    DEVICE_TYPE.BATTERY_DOORBELL_2: "DOORBELL",
-    DEVICE_TYPE.INDOOR_CAMERA: "CAMERA",
-    DEVICE_TYPE.INDOOR_PT_CAMERA: "CAMERA",
-    DEVICE_TYPE.SOLO_CAMERA: "CAMERA",
-    DEVICE_TYPE.SOLO_CAMERA_PRO: "CAMERA",
-    DEVICE_TYPE.INDOOR_CAMERA_1080: "CAMERA",
-    DEVICE_TYPE.INDOOR_PT_CAMERA_1080: "CAMERA",
-    DEVICE_TYPE.FLOODLIGHT_CAMERA_8422: "CAMERA",
-    DEVICE_TYPE.FLOODLIGHT_CAMERA_8423: "CAMERA",
-    DEVICE_TYPE.FLOODLIGHT_CAMERA_8424: "CAMERA",
-    DEVICE_TYPE.INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT: "CAMERA",
-    DEVICE_TYPE.INDOOR_OUTDOOR_CAMERA_2K: "CAMERA",
-    DEVICE_TYPE.INDOOR_OUTDOOR_CAMERA_1080P: "CAMERA",
-    DEVICE_TYPE.LOCK_BASIC: "LOCK",
-    DEVICE_TYPE.LOCK_ADVANCED: "LOCK",
-    DEVICE_TYPE.LOCK_BASIC_NO_FINGER: "LOCK",
-    DEVICE_TYPE.LOCK_ADVANCED_NO_FINGER: "LOCK",
-    DEVICE_TYPE.LOCK_8503: "LOCK",
-    DEVICE_TYPE.LOCK_8530: "LOCK",
-    DEVICE_TYPE.LOCK_85A3: "LOCK",
-    DEVICE_TYPE.LOCK_8592: "LOCK",
-    DEVICE_TYPE.LOCK_8504: "LOCK",   
-    DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_1080: "CAMERA",
-    DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_2K: "CAMERA",
-    DEVICE_TYPE.SOLO_CAMERA_SPOTLIGHT_SOLAR: "CAMERA",
-    DEVICE_TYPE.BATTERY_DOORBELL_DUAL: "DOORBELL",
-    DEVICE_TYPE.SMART_DROP: "CAMERA",
-    DEVICE_TYPE.DOORBELL_DUAL: "DOORBELL",
-    DEVICE_TYPE.INDOOR_COST_DOWN_CAMERA: "CAMERA",
-    DEVICE_TYPE.CAMERA_GUN: "CAMERA",
-    DEVICE_TYPE.CAMERA_SNAIL: "CAMERA",
-    DEVICE_TYPE.CAMERA_FG: "CAMERA",
-    DEVICE_TYPE.SMART_SAFE_7400: "LOCK",
-    DEVICE_TYPE.SMART_SAFE_7401: "LOCK",
-    DEVICE_TYPE.SMART_SAFE_7402: "LOCK",
-    DEVICE_TYPE.SMART_SAFE_7403: "LOCK"
-}
+class PropertyToEntityDescription(Enum):
+    """Device Property specific entity description"""
+
+    # device camera
+    pictureUrl = EntityDescription(id=auto())
+    camera = EntityDescription(id=auto())
+
+    # device sensor
+    battery = EntityDescription(
+        id=auto(), state_class=SensorStateClass.MEASUREMENT, device_class=SensorDeviceClass.BATTERY, category=EntityCategory.DIAGNOSTIC
+    )
+    batteryTemperature = EntityDescription(id=auto(), device_class=SensorDeviceClass.TEMPERATURE, category=EntityCategory.DIAGNOSTIC)
+    lastChargingDays = EntityDescription(id=auto(), unit="d", category=EntityCategory.DIAGNOSTIC)
+    wifiRssi = EntityDescription(id=auto(), device_class=SensorDeviceClass.SIGNAL_STRENGTH, category=EntityCategory.DIAGNOSTIC)
+    wifiSignalLevel = EntityDescription(id=auto(), icon="mdi:signal", category=EntityCategory.DIAGNOSTIC)
+    personName = EntityDescription(id=auto(), icon="mdi:account-question")
+    rtspStreamUrl = EntityDescription(id=auto(), icon="mdi:movie", category=EntityCategory.DIAGNOSTIC)
+    chargingStatus = EntityDescription(id=auto(), icon="mdi:ev-station", category=EntityCategory.DIAGNOSTIC)
+    snoozeStartTime = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+
+    stream_provider = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    stream_url = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    stream_status = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    codec = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    video_queue_size = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+
+    # device binary sensor
+    motionDetected = EntityDescription(id=auto(), device_class=BinarySensorDeviceClass.MOTION)
+    personDetected = EntityDescription(id=auto(), device_class=BinarySensorDeviceClass.MOTION)
+    petDetected = EntityDescription(id=auto(), device_class=BinarySensorDeviceClass.MOTION)
+    soundDetected = EntityDescription(id=auto(), device_class=BinarySensorDeviceClass.SOUND)
+    cryingDetected = EntityDescription(id=auto(), icon="mdi:emoticon-cry", device_class=BinarySensorDeviceClass.SOUND)
+    sensorOpen = EntityDescription(id=auto(), device_class=BinarySensorDeviceClass.DOOR)
+    batteryLow = EntityDescription(id=auto(), device_class=BinarySensorDeviceClass.BATTERY)
+    ringing = EntityDescription(id=auto(), icon="mdi:bell-ring", device_class=BinarySensorDeviceClass.RUNNING)
+    notificationPerson = EntityDescription(id=auto(), icon="mdi:message-badge", category=EntityCategory.CONFIG)
+    notificationPet = EntityDescription(id=auto(), icon="mdi:message-badge", category=EntityCategory.CONFIG)
+    notificationAllOtherMotion = EntityDescription(id=auto(), icon="mdi:message-badge", category=EntityCategory.CONFIG)
+    notificationCrying = EntityDescription(id=auto(), icon="mdi:message-badge", category=EntityCategory.CONFIG)
+    notificationAllSound = EntityDescription(id=auto(), icon="mdi:message-badge", category=EntityCategory.CONFIG)
+    identityPersonDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    strangerPersonDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    vehicleDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    dogDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    dogLickDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    dogPoopDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    radarMotionDetected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    someoneLoitering = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    packageTaken = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    packageStranded = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    packageDelivered = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    soundDetectionRoundLook = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    deliveryGuard = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    deliveryGuardPackageGuarding = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    snoozeHomebase = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    snoozeMotion = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    snoozeChime = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+
+    # device switch
+    enabled = EntityDescription(id=auto())
+    antitheftDetection = EntityDescription(id=auto(), icon="mdi:key", category=EntityCategory.CONFIG)
+    autoNightvision = EntityDescription(id=auto(), icon="mdi:lightbulb-night", category=EntityCategory.CONFIG)
+    statusLed = EntityDescription(id=auto(), icon="mdi:alarm-light-outline", category=EntityCategory.CONFIG)
+    motionDetection = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    personDetection = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    petDetection = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    cryingDetection = EntityDescription(id=auto(), icon="mdi:emoticon-cry", category=EntityCategory.CONFIG)
+    chimeIndoor = EntityDescription(id=auto(), icon="mdi:bell-ring", category=EntityCategory.CONFIG)
+    motionTracking = EntityDescription(id=auto(), icon="mdi:radar", category=EntityCategory.CONFIG)
+    rtspStream = EntityDescription(id=auto(), icon="mdi:movie", category=EntityCategory.CONFIG)
+    light = EntityDescription(id=auto(), icon="mdi:car-light-high", category=EntityCategory.CONFIG)
+    microphone = EntityDescription(id=auto(), icon="mdi:microphone", category=EntityCategory.CONFIG)
+    speaker = EntityDescription(id=auto(), icon="mdi:volume-high", category=EntityCategory.CONFIG)
+    audioRecording = EntityDescription(id=auto(), icon="mdi:record-circle", category=EntityCategory.CONFIG)
+    snooze = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    snoozeTime = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+
+    # device select
+    powerSource = EntityDescription(id=auto(), icon="mdi:power-plug", category=EntityCategory.DIAGNOSTIC)
+    powerWorkingMode = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    videoStreamingQuality = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    videoRecordingQuality = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    rotationSpeed = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    chimeHomebaseRingtoneVolume = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    motionDetectionType = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    motionDetectionSensitivity = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    speakerVolume = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    nightvision = EntityDescription(id=auto(), icon="mdi:shield-moon", category=EntityCategory.CONFIG)
+
+    # station sensor
+    currentMode = EntityDescription(id=auto(), icon="mdi:security", category=EntityCategory.DIAGNOSTIC)
+    guardMode = EntityDescription(id=auto(), icon="mdi:security", category=EntityCategory.DIAGNOSTIC)
+
+    # station select
+    promptVolume = EntityDescription(id=auto(), icon="mdi:volume-medium", category=EntityCategory.CONFIG)
+    alarmVolume = EntityDescription(id=auto(), icon="mdi:volume-medium", category=EntityCategory.CONFIG)
+
+    # station number
+    alarm = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    alarmArmDelay = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    alarmDelay = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+
+    # lock sensor
+    wrongTryProtectAlert = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    jammedAlert = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    shakeAlert = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    lockStatus = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    leftOpenAlarm = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+
+    # fallback
+    default = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
 
 
-async def wait_for_value(
-    ref_dict: dict, ref_key: str, value, max_counter: int = 50, interval=0.25
-):
-    _LOGGER.debug(f"{DOMAIN} - wait start - {ref_key}")
-    for counter in range(max_counter):
-        if ref_dict.get(ref_key, value) == value:
-            await asyncio.sleep(interval)
-        else:
-            _LOGGER.debug(f"{DOMAIN} - wait finish - {ref_key} - return True")
-            return True
-    _LOGGER.debug(f"{DOMAIN} - wait finish - {ref_key} - return False")
-    return False
+class PlatformToPropertyType(Enum):
+    """Platform specific filters to select properties"""
 
-
-def get_child_value(data, key, default_value=None):
-    value = data
-    for x in key.split("."):
-        try:
-            value = value[x]
-        except Exception as ex1:  # pylint: disable=broad-except
-            try:
-                value = value[int(x)]
-            except Exception as ex1:  # pylint: disable=broad-except
-                value = default_value
-    return value
-
-
-class Device:
-    def __init__(self, serial_number: str, state: dict) -> None:
-        self.serial_number: str = serial_number
-        self.state: dict = state
-        self.name: str = state["name"]
-        self.model: str = state["model"]
-        self.hardware_version: str = state["hardwareVersion"]
-        self.software_version: str = state["softwareVersion"]
-
-        self.properties: dict = None
-        self.properties_metadata: dict = None
-        self.voices: dict = None
-        self.type_raw: str = None
-        self.type: str = None
-        self.category: str = None
-
-        self.state[P2P_LIVESTREAMING_STATUS] = False
-        self.state[RTSP_LIVESTREAMING_STATUS] = False
-        self.is_rtsp_streaming: bool = False
-        self.is_p2p_streaming: bool = False
-        self.is_streaming: bool = False
-        self.stream_source_type: str = ""
-        self.stream_source_address: str = ""
-        self.codec: str = DEFAULT_CODEC
-        self.queue: Queue = Queue()
-
-        self.callback = None
-
-        self.set_global_motion_sensor()
-
-    def set_properties(self, properties: dict):
-        self.state.update(properties)
-
-        self.type_raw = get_child_value(self.state, "type")
-        type = DEVICE_TYPE(self.type_raw)
-        self.type = str(type)
-        self.category = DEVICE_CATEGORY.get(type, "UNKNOWN")
-        self.properties = {}
-
-    def set_properties_metadata(self, properties_metadata: dict):
-        self.properties_metadata = properties_metadata
-
-    def set_voices(self, voices):
-        self.voices = voices
-
-    def is_base_station(self):
-        if self.category in ["STATION"]:
-            return True
-        return False
-
-    def is_camera(self):
-        if self.category in ["CAMERA", "DOORBELL"]:
-            return True
-        return False
-
-    def is_doorbell(self):
-        if self.category in ["DOORBELL"]:
-            return True
-        return False
-
-    def is_motion_sensor(self):
-        if self.category in ["MOTION_SENSOR"]:
-            return True
-        return False
-
-    def is_lock(self):
-        if self.category in ["LOCK"]:
-            return True
-        return False
-
-    def set_streaming_status(self):
-        if self.state[P2P_LIVESTREAMING_STATUS] == P2P_LIVESTREAM_STARTED:
-            self.is_p2p_streaming = True
-        else:
-            self.is_p2p_streaming = False
-
-        if self.state[RTSP_LIVESTREAMING_STATUS] == RTSP_LIVESTREAM_STARTED:
-            self.is_rtsp_streaming = True
-        else:
-            self.is_rtsp_streaming = False
-
-        if self.callback is not None:
-            self.callback()
-
-    def set_codec(self, codec: str):
-        if codec == "unknown":
-            codec = "h264"
-        if codec == "h265":
-            codec = "hevc"
-        self.codec = codec
-
-    def set_streaming_status_callback(self, callback):
-        self.callback = callback
-
-    def set_property(self, property_name, value):
-        self.state[property_name] = value
-
-        self.set_global_motion_sensor()
-        if property_name in STREAMING_EVENT_NAMES:
-            self.set_streaming_status()
-
-    def set_global_motion_sensor(self):
-        motion_detected = bool(get_child_value(self.state, "motionDetected"))
-        person_detected = bool(get_child_value(self.state, "personDetected"))
-        pet_detected = bool(get_child_value(self.state, "petDetected"))
-        self.state["global_motion_sensor"] = (
-            motion_detected or person_detected or pet_detected
-        )
-
-
-class EufyConfig:
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        self.host: str = config_entry.data.get(CONF_HOST)
-        self.port: int = config_entry.data.get(CONF_PORT)
-        self.sync_interval: int = config_entry.options.get(
-            CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL
-        )
-        self.use_rtsp_server_addon: bool = config_entry.options.get(
-            CONF_USE_RTSP_SERVER_ADDON, DEFAULT_USE_RTSP_SERVER_ADDON
-        )
-        self.rtsp_server_address: str = config_entry.options.get(
-            CONF_RTSP_SERVER_ADDRESS, self.host
-        )
-        self.rtsp_server_port: int = config_entry.options.get(
-            CONF_RTSP_SERVER_PORT, DEFAULT_RTSP_SERVER_PORT
-        )
-        self.ffmpeg_analyze_duration: int = config_entry.options.get(
-            CONF_FFMPEG_ANALYZE_DURATION, DEFAULT_FFMPEG_ANALYZE_DURATION
-        )
-        self.auto_start_stream: bool = config_entry.options.get(
-            CONF_AUTO_START_STREAM, DEFAULT_AUTO_START_STREAM
-        )
-        self.fix_binary_sensor_state: bool = config_entry.options.get(
-            CONF_FIX_BINARY_SENSOR_STATE, DEFAULT_FIX_BINARY_SENSOR_STATE
-        )
-        self.map_extra_alarm_modes: bool = config_entry.options.get(
-            CONF_MAP_EXTRA_ALARM_MODES, DEFAULT_MAP_EXTRA_ALARM_MODES
-        )
-        self.name_for_custom1: str = config_entry.options.get(
-            CONF_NAME_FOR_CUSTOM1, DEFAULT_NAME_FOR_CUSTOM1
-        )
-        self.name_for_custom2: str = config_entry.options.get(
-            CONF_NAME_FOR_CUSTOM2, DEFAULT_NAME_FOR_CUSTOM2
-        )
-        self.name_for_custom3: str = config_entry.options.get(
-            CONF_NAME_FOR_CUSTOM3, DEFAULT_NAME_FOR_CUSTOM3
-        )
-        self.generate_ffmpeg_logs: bool = config_entry.options.get(
-            CONF_GENERATE_FFMPEG_LOGS, DEFAULT_GENERATE_FFMPEG_LOGS
-        )
-
-        _LOGGER.debug(f"{DOMAIN} - config class initialized")
-
-
-class CaptchaConfig:
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.required = False
-        self.id = None
-        self.image = None
-        self.requested_at = None
-        self.user_input = None
-        self.result = None
-
-    def set(self, id, image):
-        self.required = True
-        self.id = id
-        self.image = image
-        self.requested_at = datetime.now()
-
-    def set_input(self, captcha):
-        self.user_input = captcha
+    SENSOR = MetadataFilter(readable=True, writeable=False, types=[PropertyType.number, PropertyType.string])
+    BINARY_SENSOR = MetadataFilter(readable=True, writeable=False, types=[PropertyType.boolean])
+    SWITCH = MetadataFilter(readable=True, writeable=True, types=[PropertyType.boolean])
+    SELECT = MetadataFilter(readable=True, writeable=True, types=[PropertyType.number], any_fields=[MessageField.STATES.value])
+    NUMBER = MetadataFilter(readable=True, writeable=True, types=[PropertyType.number], no_fields=[MessageField.STATES.value])

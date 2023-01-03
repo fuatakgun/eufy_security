@@ -43,4 +43,3 @@ jobs:
           body: ${{ steps.semantic_release_info.outputs.notes }}
           draft: false
           prerelease: false
-

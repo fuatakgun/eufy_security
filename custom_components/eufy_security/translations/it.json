@@ -11,7 +11,7 @@
       },
       "reauth_confirm": {
         "title": "Eufy Security: Captcha",
-        "description": "{captcha_image}",
+        "description": "{captcha_img}",
         "data": {
           "captcha": "Captcha"
         }
@@ -34,13 +34,11 @@
           "rtsp_server_address": "Indirizzo IP host per aggiunta RTSP (P2P)",
           "rtsp_server_port": "Porta TCP per aggiunta RTSP (P2P)",
           "ffmpeg_analyze_duration": "Durata analisi video in secondi [da 1 a 5] (P2P)",
-          "auto_start_stream": "Avvia automaticamente lo streaming al clic",
-          "fix_binary_sensor_state": "Correggi gli stati del sensore binario (da Vero/Falso a On/Off)",
-          "map_extra_alarm_modes": "Mappa le modalità di guardia personalizzate in Bypass, Night e Vacation (in ordine)",
+          "generate_ffmpeg_logs": "Genera log FFMPEG",
+          "no_stream_in_hass": "Do not use STREAM module inside Home Assistant (if you do not watch the video inside Home Assistant native streaming or you are using WebRTC, enable this to decrease CPU usage",
           "name_for_custom1": "Sostituisci il nome per la modalità di protezione Personalizzata1",
           "name_for_custom2": "Sostituisci il nome per la modalità di protezione Personalizzata2",
-          "name_for_custom3": "Sostituisci il nome per la modalità di protezione Personalizzata3",
-          "generate_ffmpeg_logs": "Genera log FFMPEG"
+          "name_for_custom3": "Sostituisci il nome per la modalità di protezione Personalizzata3"
         }
       }
     }

@@ -1,234 +1,160 @@
 from __future__ import annotations
 
 import asyncio
+from enum import Enum, auto
 import logging
 
-import voluptuous as vol
-
-from homeassistant.components.alarm_control_panel import AlarmControlPanelEntity
-from homeassistant.components.alarm_control_panel.const import (
-    SUPPORT_ALARM_ARM_AWAY,
-    SUPPORT_ALARM_ARM_HOME,
-    SUPPORT_ALARM_TRIGGER,
-)
-from homeassistant.components.alarm_control_panel.const import (
-    SUPPORT_ALARM_ARM_CUSTOM_BYPASS,  # custom1
-)
-from homeassistant.components.alarm_control_panel.const import (
-    SUPPORT_ALARM_ARM_NIGHT,  # custom2
-)
-from homeassistant.components.alarm_control_panel.const import (
-    SUPPORT_ALARM_ARM_VACATION,  # custom3
+from homeassistant.components.alarm_control_panel import (
+    AlarmControlPanelEntity,
+    AlarmControlPanelEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_HOME,
-    STATE_ALARM_DISARMED,
-    STATE_ALARM_TRIGGERED,
-)
+from homeassistant.const import STATE_ALARM_ARMED_AWAY, STATE_ALARM_ARMED_HOME, STATE_ALARM_DISARMED, STATE_ALARM_TRIGGERED
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.config_validation import make_entity_service_schema
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import (
-    COORDINATOR,
-    DOMAIN,
-    STATE_ALARM_CUSTOM1,
-    STATE_ALARM_CUSTOM2,
-    STATE_ALARM_CUSTOM3,
-    STATE_ALARM_DELAYED,
-    STATE_GUARD_GEO,
-    STATE_GUARD_OFF,
-    STATE_GUARD_SCHEDULE,
-    Device,
-)
+from .const import COORDINATOR, DOMAIN, Schema
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
+from .eufy_security_api.const import MessageField
+from .eufy_security_api.metadata import Metadata
+from .eufy_security_api.util import get_child_value
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-CODES_TO_STATES = {
-    0: STATE_ALARM_ARMED_AWAY,
-    1: STATE_ALARM_ARMED_HOME,
-    2: STATE_GUARD_SCHEDULE,
-    3: STATE_ALARM_CUSTOM1,
-    4: STATE_ALARM_CUSTOM2,
-    5: STATE_ALARM_CUSTOM3,
-    6: STATE_ALARM_DISARMED,
-    47: STATE_GUARD_GEO,
-    63: STATE_ALARM_DISARMED,
-}
 
-OFF_CODE = 6
+class CurrentModeToState(Enum):
+    """Alarm Entity Mode to State"""
+
+    NONE = -1
+    AWAY = 0
+    HOME = 1
+    SCHEDULE = 2
+    CUSTOM_BYPASS = 3
+    NIGHT = 4
+    VACATION = 5
+    GEOFENCE = 47
+    DISARMED = 63
+
+
+class CurrentModeToStateValue(Enum):
+    """Alarm Entity Mode to State Value"""
+
+    NONE = "Unknown"
+    AWAY = STATE_ALARM_ARMED_AWAY
+    HOME = STATE_ALARM_ARMED_HOME
+    CUSTOM_BYPASS = auto()
+    NIGHT = auto()
+    VACATION = auto()
+    DISARMED = STATE_ALARM_DISARMED
+    TRIGGERED = STATE_ALARM_TRIGGERED
+    ALARM_DELAYED = "Alarm delayed"
+
 
 CUSTOM_CODES = [3, 4, 5]
 
-STATES_TO_CODES = {v: k for k, v in CODES_TO_STATES.items()}
 
-ALARM_TRIGGER_SCHEMA = make_entity_service_schema({vol.Required("duration"): cv.Number})
-
-
-async def async_setup_entry(
-    hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
-):
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    """Setup alarm control panel entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
+    product_properties = []
+    for product in coordinator.api.stations.values():
+        if product.has(MessageField.GUARD_MODE.value) is True:
+            product_properties.append(product.metadata[MessageField.CURRENT_MODE.value])
 
-    entities = []
-    for device in coordinator.stations.values():
-        if not device.state.get("guardMode", None) is None:
-            entities.append(
-                EufySecurityAlarmControlPanel(coordinator, config_entry, device)
-            )
-
-    async_add_devices(entities, True)
+    entities = [EufySecurityAlarmControlPanel(coordinator, metadata) for metadata in product_properties]
+    async_add_entities(entities)
     # register entity level services
     platform = entity_platform.async_get_current_platform()
-    platform.async_register_entity_service("alarm_off", {}, "alarm_off")
     platform.async_register_entity_service(
-        "alarm_guard_schedule", {}, "alarm_guard_schedule"
+        "trigger_base_alarm_with_duration", Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value, "async_alarm_trigger_with_duration"
     )
-    platform.async_register_entity_service("alarm_arm_custom1", {}, "alarm_arm_custom1")
-    platform.async_register_entity_service("alarm_arm_custom2", {}, "alarm_arm_custom2")
-    platform.async_register_entity_service("alarm_arm_custom3", {}, "alarm_arm_custom3")
-    platform.async_register_entity_service("alarm_guard_geo", {}, "alarm_guard_geo")
-    platform.async_register_entity_service(
-        "alarm_trigger_with_duration",
-        ALARM_TRIGGER_SCHEMA,
-        "alarm_trigger_with_duration",
-    )
-    platform.async_register_entity_service("reset_alarm", {}, "reset_alarm")
+    platform.async_register_entity_service("reset_alarm", {}, "async_reset_alarm")
+    platform.async_register_entity_service("alarm_arm_custom1", {}, "async_alarm_arm_custom_bypass")
+    platform.async_register_entity_service("alarm_arm_custom2", {}, "async_alarm_arm_night")
+    platform.async_register_entity_service("alarm_arm_custom3", {}, "async_alarm_arm_vacation")
+    platform.async_register_entity_service("geofence", {}, "geofence")
+    platform.async_register_entity_service("schedule", {}, "schedule")
+    platform.async_register_entity_service("chime", Schema.CHIME_SERVICE_SCHEMA.value, "chime")
 
 
-class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity):
-    def __init__(
-        self,
-        coordinator: EufySecurityDataUpdateCoordinator,
-        config_entry: ConfigEntry,
-        device: Device,
-    ) -> None:
-        EufySecurityEntity.__init__(self, coordinator, config_entry, device)
-        AlarmControlPanelEntity.__init__(self)
+class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity):
+    """Base alarm control panel entity for integration"""
+
+    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, metadata: Metadata) -> None:
+        super().__init__(coordinator, metadata)
+        self._attr_name = f"{self.product.name}"
+        self._attr_icon = None
         self._attr_code_arm_required = False
-
-        if self.coordinator.config.map_extra_alarm_modes is True:
-            _LOGGER.debug(f"{DOMAIN} - alarm init - extra modes enabled")
-            self._attr_supported_features = (
-                SUPPORT_ALARM_ARM_HOME
-                | SUPPORT_ALARM_ARM_AWAY
-                | SUPPORT_ALARM_TRIGGER
-                | SUPPORT_ALARM_ARM_CUSTOM_BYPASS
-                | SUPPORT_ALARM_ARM_NIGHT
-                | SUPPORT_ALARM_ARM_VACATION
-            )
-        else:
-            _LOGGER.debug(f"{DOMAIN} - alarm init - extra modes disabled")
-            self._attr_supported_features = (
-                SUPPORT_ALARM_ARM_HOME | SUPPORT_ALARM_ARM_AWAY | SUPPORT_ALARM_TRIGGER
-            )
-
-    async def set_guard_mode(self, target_mode: str):
-        if target_mode == STATE_GUARD_OFF:
-            code = OFF_CODE
-        else:
-            code = STATES_TO_CODES[target_mode]
-
-        await self.coordinator.async_set_guard_mode(self.device.serial_number, code)
-
-    def alarm_disarm(self, code: str | None = None) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.set_guard_mode(STATE_ALARM_DISARMED), self.coordinator.hass.loop
-        ).result()
-
-    def alarm_off(self, code: str | None = None) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.set_guard_mode(STATE_GUARD_OFF), self.coordinator.hass.loop
-        ).result()
-
-    def alarm_arm_home(self, code: str | None = None) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.set_guard_mode(STATE_ALARM_ARMED_HOME), self.coordinator.hass.loop
-        ).result()
-
-    def alarm_arm_away(self, code: str | None = None) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.set_guard_mode(STATE_ALARM_ARMED_AWAY), self.coordinator.hass.loop
-        ).result()
-
-    def alarm_arm_custom_bypass(self, code: str | None = None) -> None:
-        self.alarm_arm_custom1()
-
-    def alarm_arm_night(self, code: str | None = None) -> None:
-        self.alarm_arm_custom2()
-
-    def alarm_arm_vacation(self, code: str | None = None) -> None:
-        self.alarm_arm_custom3()
-
-    def alarm_guard_schedule(self) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.set_guard_mode(STATE_GUARD_SCHEDULE), self.coordinator.hass.loop
-        ).result()
-
-    def alarm_arm_custom1(self) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.set_guard_mode(STATE_ALARM_CUSTOM1), self.coordinator.hass.loop
-        ).result()
-
-    def alarm_arm_custom2(self) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.set_guard_mode(STATE_ALARM_CUSTOM2), self.coordinator.hass.loop
-        ).result()
-
-    def alarm_arm_custom3(self) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.set_guard_mode(STATE_ALARM_CUSTOM3), self.coordinator.hass.loop
-        ).result()
-
-    def alarm_guard_geo(self) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.set_guard_mode(STATE_GUARD_GEO), self.coordinator.hass.loop
-        ).result()
-
-    def alarm_trigger(self, code: str | None = None) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.coordinator.async_trigger_alarm(self.device.serial_number),
-            self.coordinator.hass.loop,
-        ).result()
-
-    def alarm_trigger_with_duration(self, duration: int = 10) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.coordinator.async_trigger_alarm(self.device.serial_number, duration),
-            self.coordinator.hass.loop,
-        ).result()
-
-    def reset_alarm(self) -> None:
-        asyncio.run_coroutine_threadsafe(
-            self.coordinator.async_reset_alarm(self.device.serial_number),
-            self.coordinator.hass.loop,
-        ).result()
+        self._attr_supported_features = (
+            AlarmControlPanelEntityFeature.ARM_HOME
+            | AlarmControlPanelEntityFeature.ARM_AWAY
+            | AlarmControlPanelEntityFeature.TRIGGER
+            | AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
+            | AlarmControlPanelEntityFeature.ARM_NIGHT
+            | AlarmControlPanelEntityFeature.ARM_VACATION
+        )
 
     @property
-    def id(self):
-        return f"{DOMAIN}_{self.device.serial_number}_station"
+    def guard_mode_metadata(self) -> Metadata:
+        """Get guard mode metadata for device"""
+        return self.product.metadata[MessageField.GUARD_MODE.value]
 
-    @property
-    def unique_id(self):
-        return self.id
+    async def _set_guard_mode(self, target_mode: CurrentModeToState):
+        await self.product.set_property(self.guard_mode_metadata, target_mode.value)
 
-    @property
-    def name(self):
-        return self.device.name
+    async def async_alarm_disarm(self, code: str | None = None) -> None:
+        await self._set_guard_mode(CurrentModeToState.DISARMED)
+
+    async def async_alarm_arm_home(self, code: str | None = None) -> None:
+        await self._set_guard_mode(CurrentModeToState.HOME)
+
+    async def async_alarm_arm_away(self, code: str | None = None) -> None:
+        await self._set_guard_mode(CurrentModeToState.AWAY)
+
+    async def async_alarm_arm_custom_bypass(self, code: str | None = None) -> None:
+        await self._set_guard_mode(CurrentModeToState.CUSTOM_BYPASS)
+
+    async def async_alarm_arm_night(self, code: str | None = None) -> None:
+        await self._set_guard_mode(CurrentModeToState.NIGHT)
+
+    async def async_alarm_arm_vacation(self, code: str | None = None) -> None:
+        await self._set_guard_mode(CurrentModeToState.VACATION)
+
+    async def async_alarm_trigger(self, code: str | None = None) -> None:
+        """trigger alarm for a duration on alarm control panel but there is no change in current mode"""
+        await self.product.trigger_alarm()
+
+    async def async_alarm_trigger_with_duration(self, duration: int = 10) -> None:
+        """trigger alarm for a duration on alarm control panel but there is no change in current mode"""
+        await self.product.trigger_alarm(duration)
+
+    async def async_reset_alarm(self) -> None:
+        """reset ongoing alarm but there is no change in current mode"""
+        await self.product.reset_alarm()
+
+    async def geofence(self) -> None:
+        """switch to geofence mode"""
+        await self._set_guard_mode(CurrentModeToState.GEOFENCE)
+
+    async def schedule(self) -> None:
+        """switch to schedule mode"""
+        await self._set_guard_mode(CurrentModeToState.SCHEDULE)
+
+    async def chime(self, ringtone: int) -> None:
+        """chime on alarm control panel"""
+        await self.product.chime(ringtone)
 
     @property
     def state(self):
-        if self.device.state.get("alarmEvent", None) is not None:
-            self.device.state["alarmEvent"] = None
-            return STATE_ALARM_TRIGGERED
-        if self.device.state.get("alarmDelayEvent", None) is not None:
-            self.device.state["alarmDelayEvent"] = None
-            return STATE_ALARM_DELAYED
-        current_mode = self.device.state.get("currentMode")
+        alarm_delayed = get_child_value(self.product.properties, "alarmDelay", 0)
+        if alarm_delayed > 0:
+            return CurrentModeToStateValue.ALARM_DELAYED.value
+        triggered = get_child_value(self.product.properties, "alarm")
+        if triggered is True:
+            return CurrentModeToStateValue.TRIGGERED.value
+        current_mode = get_child_value(self.product.properties, self.metadata.name, -1)
         if current_mode in CUSTOM_CODES:
             position = CUSTOM_CODES.index(current_mode)
             if position == 0:
@@ -237,4 +163,4 @@ class EufySecurityAlarmControlPanel(EufySecurityEntity, AlarmControlPanelEntity)
                 return self.coordinator.config.name_for_custom2
             if position == 2:
                 return self.coordinator.config.name_for_custom3
-        return CODES_TO_STATES[current_mode]
+        return CurrentModeToStateValue[CurrentModeToState(current_mode).name].value
