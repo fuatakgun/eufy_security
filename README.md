@@ -311,4 +311,3 @@ To schedule the time, please use this link: https://calendly.com/fuatakgun/offic
 ![image](https://user-images.githubusercontent.com/11085566/210081967-46926dad-55de-4a36-b4ba-a4b6ae99c7ac.png)
 
 https://user-images.githubusercontent.com/11085566/210083674-bbf082ab-5f20-4d1c-ab61-e687c7ce7506.mp4
-
