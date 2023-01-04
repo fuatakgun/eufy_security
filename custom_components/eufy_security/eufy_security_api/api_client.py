@@ -197,6 +197,12 @@ class ApiClient:
         command = product_type.name + "." + command_type.name
         await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, ringtone=ringtone))
 
+    async def reboot(self, product_type: ProductType, serial_no: str) -> None:
+        """Process reboot call"""
+        command_type = OutgoingMessageType.reboot
+        command = product_type.name + "." + command_type.name
+        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
+
     async def snooze(
         self, product_type: ProductType, serial_no: str, snooze_time: int, snooze_chime: bool, snooze_motion: bool, snooze_homebase: bool
     ) -> None:

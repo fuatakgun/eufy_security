@@ -238,6 +238,14 @@ trigger_base_alarm_with_duration:
           min: 0
           max: 300
 
+reboot:
+  name: Reboot station
+  description: Reboot station
+  target:
+    entity:
+      domain: alarm_control_panel
+      integration: eufy_security
+
 chime:
   name: Chime on Base Station
   description: Only supported if no doorbell device is registered at the station where the chime is to be performed

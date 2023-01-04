@@ -111,12 +111,12 @@ class Product:
     @property
     def is_camera(self):
         """checks if Product is camera"""
-        return True if ProductCommand.start_livestream.name in self.commands else False
+        return True if ProductCommand.start_livestream.value.command in self.commands else False
 
     @property
     def is_safe_lock(self):
         """checks if Product is safe lock"""
-        return True if ProductCommand.verify_p_i_n.name in self.commands else False
+        return True if ProductCommand.verify_pin.value.command in self.commands else False
 
     def has(self, property_name: str) -> bool:
         """Checks if product has required property"""
@@ -139,3 +139,7 @@ class Station(Product):
     async def chime(self, ringtone: int) -> None:
         """Quick response message to camera"""
         await self.api.chime(self.product_type, self.serial_no, ringtone)
+
+    async def reboot(self) -> None:
+        """Reboot station"""
+        await self.api.reboot(self.product_type, self.serial_no)

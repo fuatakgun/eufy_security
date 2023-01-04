@@ -94,6 +94,7 @@ class OutgoingMessageType(Enum):
         MessageField.PIN.value: MessageField.BIND_AT_RUNTIME,
     }
     unlock = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
+    reboot = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
 
 
 class OutgoingMessage:

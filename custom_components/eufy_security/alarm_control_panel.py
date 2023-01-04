@@ -78,6 +78,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("geofence", {}, "geofence")
     platform.async_register_entity_service("schedule", {}, "schedule")
     platform.async_register_entity_service("chime", Schema.CHIME_SERVICE_SCHEMA.value, "chime")
+    platform.async_register_entity_service("reboot", {}, "async_reboot")
 
 
 class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity):
@@ -146,6 +147,10 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
     async def chime(self, ringtone: int) -> None:
         """chime on alarm control panel"""
         await self.product.chime(ringtone)
+
+    async def reboot(self) -> None:
+        """reboot"""
+        await self.product.reboot()
 
     @property
     def state(self):

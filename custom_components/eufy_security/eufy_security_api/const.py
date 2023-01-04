@@ -109,7 +109,7 @@ class PropertyType(Enum):
 
 
 class ProductCommand(Enum):
-    """Important Product Commands"""
+    """Important Product Commands - Product function to description+remote command"""
 
     start_livestream = CommandDescription("Start P2P Stream", "start_livestream")
     stop_livestream = CommandDescription("Stop P2P Stream", "stop_livestream")
@@ -122,4 +122,5 @@ class ProductCommand(Enum):
     ptz_360 = CommandDescription("PTZ 360", "pan_and_tilt")
     trigger_alarm = CommandDescription("Trigger Alarm")
     reset_alarm = CommandDescription("Reset Alarm")
-    verify_p_i_n = CommandDescription("Verify Pin")
+    verify_pin = CommandDescription("Verify Pin", "verify_p_i_n")
+    reboot = CommandDescription("Reboot", "stationReboot")
