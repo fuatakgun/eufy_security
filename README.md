@@ -165,6 +165,27 @@ cards:
           entity: camera.entrance
 ``` 
 
+If your camera supports pan and tilt, you can add respective commands to webrtc interface.
+
+```
+type: custom:webrtc-camera
+entity: camera.garden
+ptz:
+  service: eufy_security.ptz
+  data_left:
+    entity_id: camera.garden
+    direction: LEFT
+  data_right:
+    entity_id: camera.garden
+    direction: RIGHT
+  data_up:
+    entity_id: camera.garden
+    direction: UP
+  data_down:
+    entity_id: camera.garden
+    direction: DOWN
+```
+
 # Features
 
 - There are many sensors available out there, if you need an additional one, raise a request and share your `Debug (device)` and `Debug (station)` sensor attributes so I can extract these sensors. If these sensors cannot be extracted from state of device, please mention it explicitly.
