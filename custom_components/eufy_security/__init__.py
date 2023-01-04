@@ -23,7 +23,7 @@ async def async_setup(hass: HomeAssistant, config: Config):
         _LOGGER.debug(f"{DOMAIN} - send_message - call.data: {call.data}")
         message = call.data.get("message")
         _LOGGER.debug(f"{DOMAIN} - end_message - message: {message}")
-        await coordinator.api.send_message(message)
+        await coordinator.send_message(message)
 
     async def handle_force_sync(call):
         coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
@@ -31,7 +31,7 @@ async def async_setup(hass: HomeAssistant, config: Config):
 
     async def handle_log_level(call):
         coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
-        await coordinator.api.set_log_level(call.data.get("log_level"))
+        await coordinator.set_log_level(call.data.get("log_level"))
 
     hass.services.async_register(DOMAIN, "force_sync", handle_force_sync)
     hass.services.async_register(DOMAIN, "send_message", handle_send_message)
@@ -52,6 +52,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         coordinator.platforms.append(platform.value)
         hass.async_add_job(hass.config_entries.async_forward_entry_setup(config_entry, platform.value))
 
+    async def update(event_time_utc):
+        await coordinator.async_refresh()
+
+    async_track_time_interval(hass, update, timedelta(seconds=coordinator.config.sync_interval))    
+
     config_entry.add_update_listener(async_reload_entry)
     return True
 
@@ -65,7 +70,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         )
     )
     if unloaded:
-        await coordinator.api.disconnect()
+        await coordinator.disconnect()
         hass.data[DOMAIN] = {}
 
     return unloaded

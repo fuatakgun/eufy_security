@@ -1,12 +1,12 @@
 """Module to initialize coordinator"""
 from datetime import timedelta
 import logging
-
+import json
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import aiohttp_client
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import DOMAIN
 from .eufy_security_api.api_client import ApiClient
@@ -31,12 +31,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         )
         self._platforms = []
         self.data = {}
-        self.api = ApiClient(self.config, aiohttp_client.async_get_clientsession(self.hass))
+        self._api = ApiClient(self.config, aiohttp_client.async_get_clientsession(self.hass))
 
     async def initialize(self):
         """Initialize the integration"""
         try:
-            await self.api.connect()
+            await self._api.connect()
         except CaptchaRequiredException as exc:
             self.config.captcha_id = exc.captcha_id
             self.config.captcha_img = exc.captcha_img
@@ -54,6 +54,33 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialized platforms list"""
         return self._platforms
 
+    @property
+    def devices(self) -> dict:
+        return self._api.devices
+
+    @property
+    def stations(self) -> dict:
+        return self._api.stations
+
+    async def set_mfa_and_connect(self, mfa_input: str):
+        await self._api.set_mfa_and_connect(mfa_input)
+
+    async def set_captcha_and_connect(self, captcha_id: str, captcha_input: str):
+        await self._api.set_captcha_and_connect(captcha_id, captcha_input)
+
+    async def send_message(self, message: dict) -> None:
+        """send message to websocket api"""
+        _LOGGER.debug(f"send_message - {message}")
+        await self._api.send_message(json.dumps(message))
+
+    async def set_log_level(self, log_level: str) -> None:
+        """set log level of websocket server"""
+        await self._api.set_log_level(log_level)
+
     async def _update_local(self):
-        await self.api.poll_refresh()
+        await self._api.poll_refresh()
         return self.data
+
+    async def disconnect(self):
+        """disconnect from api"""
+        await self._api.disconnect()

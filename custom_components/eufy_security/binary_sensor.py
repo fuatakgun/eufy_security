@@ -21,14 +21,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     """Setup binary sensor entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = get_product_properties_by_filter(
-        [coordinator.api.devices.values(), coordinator.api.stations.values()], PlatformToPropertyType[Platform.BINARY_SENSOR.name].value
+        [coordinator.devices.values(), coordinator.stations.values()], PlatformToPropertyType[Platform.BINARY_SENSOR.name].value
     )
     entities = [EufySecurityBinarySensor(coordinator, metadata) for metadata in product_properties]
 
-    for device in coordinator.api.devices.values():
+    for device in coordinator.devices.values():
         entities.append(EufySecurityProductEntity(coordinator, device))
 
-    for device in coordinator.api.stations.values():
+    for device in coordinator.stations.values():
         entities.append(EufySecurityProductEntity(coordinator, device))
     async_add_entities(entities)
 

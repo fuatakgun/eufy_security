@@ -80,4 +80,6 @@ class WebSocketClient:
 
     async def send_message(self, message):
         """Send message to websocket"""
+        if self.socket is None:
+            raise WebSocketConnectionError()
         await self.socket.send_str(message)

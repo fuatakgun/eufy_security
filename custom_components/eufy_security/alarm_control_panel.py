@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from enum import Enum, auto
 import logging
 
@@ -61,7 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     """Setup alarm control panel entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = []
-    for product in coordinator.api.stations.values():
+    for product in coordinator.stations.values():
         if product.has(MessageField.GUARD_MODE.value) is True:
             product_properties.append(product.metadata[MessageField.CURRENT_MODE.value])
 

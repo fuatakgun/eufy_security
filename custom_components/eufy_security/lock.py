@@ -23,7 +23,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     """Setup lock entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     properties = []
-    for product in coordinator.api.devices.values():
+    for product in coordinator.devices.values():
         if product.has(MessageField.LOCKED.value) is True:
             properties.append(product.metadata[MessageField.LOCKED.value])
 

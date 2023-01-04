@@ -71,13 +71,13 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             coordinator = self.hass.data[DOMAIN][COORDINATOR]
             if coordinator.config.mfa_required is True:
                 mfa_input = user_input[ConfigField.mfa_input.name]
-                await coordinator.api.set_mfa_and_connect(mfa_input)
+                await coordinator.set_mfa_and_connect(mfa_input)
             else:
                 captcha_id = coordinator.config.captcha_id
                 captcha_input = user_input[ConfigField.captcha_input.name]
                 coordinator.config.captcha_id = None
                 coordinator.config.captcha_img = None
-                await coordinator.api.set_captcha_and_connect(captcha_id, captcha_input)
+                await coordinator.set_captcha_and_connect(captcha_id, captcha_input)
 
             if self._async_current_entries():
                 await self.hass.config_entries.async_reload(self.context["entry_id"])

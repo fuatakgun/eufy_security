@@ -41,21 +41,29 @@ class ApiClient:
     """Client to communicate with eufy-security-ws over websocket connection"""
 
     def __init__(self, config, session: aiohttp.ClientSession) -> None:
-        self.config = config
-        self.session: aiohttp.ClientSession = session
-        self.loop = asyncio.get_event_loop()
-        self.client: WebSocketClient = WebSocketClient(
-            self.config.host, self.config.port, self.session, self._on_open, self._on_message, self._on_close, self._on_error
+        self._config = config
+        self._client: WebSocketClient = WebSocketClient(
+            self._config.host, self._config.port, session, self._on_open, self._on_message, self._on_close, self._on_error
         )
-        self.result_futures: dict[str, asyncio.Future] = {}
-        self.devices: dict = None
-        self.stations: dict = None
-        self.captcha_future: asyncio.Future[dict] = self.loop.create_future()
-        self.mfa_future: asyncio.Future[dict] = self.loop.create_future()
+        self._result_futures: dict[str, asyncio.Future] = {}
+        self._devices: dict = None
+        self._stations: dict = None
+        self._captcha_future: asyncio.Future[dict] = asyncio.get_event_loop().create_future()
+        self._mfa_future: asyncio.Future[dict] = asyncio.get_event_loop().create_future()
+
+    @property
+    def devices(self) -> dict:
+        """ initialized devices """
+        return self._devices
+
+    @property
+    def stations(self) -> dict:
+        """ initialized stations """
+        return self._stations
 
     async def ws_connect(self):
         """set initial websocket connection"""
-        await self.client.connect()
+        await self._client.connect()
 
     async def connect(self):
         """Set up web socket connection and set products"""
@@ -63,28 +71,37 @@ class ApiClient:
         await self._set_schema(SCHEMA_VERSION)
         await self._set_products()
 
+    async def _check_interactive_mode(self):
+        # driver is not connected, wait for captcha event
+        try:
+            _LOGGER.debug(f"_start_listening 2")
+            await asyncio.wait_for(self._captcha_future, timeout=10)
+            event = self._captcha_future.result()
+            raise CaptchaRequiredException(event.data[MessageField.CAPTCHA_ID.value], event.data[MessageField.CAPTCHA_IMG.value])
+        except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError):
+            pass
+        _LOGGER.debug(f"_start_listening 2")
+        # driver is not connected and captcha exception is not thrown, wait for mfa event
+        try:
+            _LOGGER.debug(f"_start_listening 3")
+            await asyncio.wait_for(self._mfa_future, timeout=5)
+            event = self._mfa_future.result()
+            raise MultiFactorCodeRequiredException()
+        except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError) as exc:
+            _LOGGER.debug(f"_start_listening 4")
+            await self._connect_driver()
+            raise DriverNotConnectedError() from exc
+
     async def _set_products(self) -> None:
+        _LOGGER.debug(f"_start_listening 1")
+        self._captcha_future = asyncio.get_event_loop().create_future()
+        self._mfa_future = asyncio.get_event_loop().create_future()
         result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_listening))
         if result[MessageField.STATE.value][EventSourceType.driver.name][MessageField.CONNECTED.value] is False:
-            try:
-                await asyncio.wait_for(self.captcha_future, timeout=5)
-                event = self.captcha_future.result()
-                raise CaptchaRequiredException(event.data[MessageField.CAPTCHA_ID.value], event.data[MessageField.CAPTCHA_IMG.value])
-            except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError):
-                pass
+            await self._check_interactive_mode()
 
-            # driver is not connected and there is no captcha event, so it is probably mfa
-            # reconnect driver to get mfa event
-            try:
-                await asyncio.wait_for(self.mfa_future, timeout=5)
-                event = self.mfa_future.result()
-                raise MultiFactorCodeRequiredException()
-            except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError) as exc:
-                await self._connect_driver()
-                raise DriverNotConnectedError() from exc
-
-        self.devices = await self._get_product(ProductType.device, result[MessageField.STATE.value]["devices"])
-        self.stations = await self._get_product(ProductType.station, result[MessageField.STATE.value]["stations"])
+        self._devices = await self._get_product(ProductType.device, result[MessageField.STATE.value]["devices"])
+        self._stations = await self._get_product(ProductType.station, result[MessageField.STATE.value]["stations"])
 
     async def _get_product(self, product_type: ProductType, products: list) -> dict:
         response = {}
@@ -100,7 +117,7 @@ class ApiClient:
                     is_p2p_streaming = await self._get_is_p2p_streaming(product_type, serial_no)
                     voices = await self._get_voices(product_type, serial_no)
                     product = Camera(
-                        self, serial_no, properties, metadata, commands, self.config, is_rtsp_streaming, is_p2p_streaming, voices
+                        self, serial_no, properties, metadata, commands, self._config, is_rtsp_streaming, is_p2p_streaming, voices
                     )
                 else:
                     product = Device(self, serial_no, properties, metadata, commands)
@@ -282,7 +299,7 @@ class ApiClient:
         if "livestream video data" not in message_str and "livestream audio data" not in message_str:
             _LOGGER.debug(f"_on_message - {message_str}")
         if message[MessageField.TYPE.value] == IncomingMessageType.result.name:
-            future = self.result_futures.get(message.get(MessageField.MESSAGE_ID.value, -1), None)
+            future = self._result_futures.get(message.get(MessageField.MESSAGE_ID.value, -1), None)
 
             if future is None:
                 return
@@ -308,7 +325,7 @@ class ApiClient:
     async def _handle_event(self, event: Event):
         if event.data[MessageField.SOURCE.value] in [EventSourceType.station.name, EventSourceType.device.name]:
             # handle device or statino specific events through specific instances
-            plural_product = event.data[MessageField.SOURCE.value] + "s"
+            plural_product = "_" + event.data[MessageField.SOURCE.value] + "s"
             try:
                 product = self.__dict__[plural_product][event.data[MessageField.SERIAL_NUMBER.value]]
                 await product.process_event(event)
@@ -323,9 +340,9 @@ class ApiClient:
     async def _process_driver_event(self, event: Event):
         """Process driver level events"""
         if event.type == EventNameToHandler.captcha_request.value:
-            self.captcha_future.set_result(event)
+            self._captcha_future.set_result(event)
         if event.type == EventNameToHandler.verify_code.value:
-            self.mfa_future.set_result(event)
+            self._mfa_future.set_result(event)
 
     async def _on_open(self) -> None:
         _LOGGER.debug("on_open - executed")
@@ -338,18 +355,18 @@ class ApiClient:
         raise WebSocketConnectionErrorException(error)
 
     async def _send_message_get_response(self, message: OutgoingMessage) -> dict:
-        future: "asyncio.Future[dict]" = self.loop.create_future()
-        self.result_futures[message.id] = future
+        future: "asyncio.Future[dict]" = asyncio.get_event_loop().create_future()
+        self._result_futures[message.id] = future
         await self.send_message(message.content)
         try:
             return await future
         finally:
-            self.result_futures.pop(message.id)
+            self._result_futures.pop(message.id)
 
     async def send_message(self, message: dict) -> None:
         """send message to websocket api"""
         _LOGGER.debug(f"send_message - {message}")
-        await self.client.send_message(json.dumps(message))
+        await self._client.send_message(json.dumps(message))
 
     async def poll_refresh(self) -> None:
         """Poll cloud data for latest changes"""
@@ -359,7 +376,7 @@ class ApiClient:
 
     async def disconnect(self):
         """Disconnect the web socket and destroy it"""
-        await self.client.disconnect()
+        await self._client.disconnect()
 
 
 class IncomingMessageType(Enum):

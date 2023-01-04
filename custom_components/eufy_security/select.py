@@ -25,7 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = get_product_properties_by_filter(
-        [coordinator.api.devices.values(), coordinator.api.stations.values()], PlatformToPropertyType[Platform.SELECT.name].value
+        [coordinator.devices.values(), coordinator.stations.values()], PlatformToPropertyType[Platform.SELECT.name].value
     )
     entities = [EufySelectEntity(coordinator, metadata) for metadata in product_properties]
     async_add_entities(entities)

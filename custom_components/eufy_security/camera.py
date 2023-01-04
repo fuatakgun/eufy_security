@@ -34,7 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     """Setup camera entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = []
-    for product in coordinator.api.devices.values():
+    for product in coordinator.devices.values():
         if product.is_camera is True:
             product_properties.append(Metadata.parse(product, {"name": "camera", "label": "Camera"}))
 

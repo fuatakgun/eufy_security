@@ -30,9 +30,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     """Setup sensor entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = get_product_properties_by_filter(
-        [coordinator.api.devices.values(), coordinator.api.stations.values()], PlatformToPropertyType[Platform.SENSOR.name].value
+        [coordinator.devices.values(), coordinator.stations.values()], PlatformToPropertyType[Platform.SENSOR.name].value
     )
-    for camera in coordinator.api.devices.values():
+    for camera in coordinator.devices.values():
         if camera.is_camera is True:
             for metadata in CameraSensor:
                 product_properties.append(Metadata.parse(camera, {"name": metadata.name, "label": metadata.value}))

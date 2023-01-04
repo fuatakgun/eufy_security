@@ -18,23 +18,22 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     """Setup binary sensor entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = []
-    for product in coordinator.api.devices.values():
-        if product.is_camera is True:
-            for command in ProductCommand:
-                handler_func = getattr(product, f"{command.name}", None)
-                if handler_func is None:
-                    continue
-                if command.value.command is not None:
-                    if command.value.command == "is_rtsp_enabled":
-                        if product.is_rtsp_enabled is False:
-                            continue
-                    else:
-                        if command.value.command not in product.commands:
-                            continue
+    for product in list(coordinator.devices.values()) + list(coordinator.stations.values()):
+        for command in ProductCommand:
+            handler_func = getattr(product, f"{command.name}", None)
+            if handler_func is None:
+                continue
+            if command.value.command is not None:
+                if command.value.command == "is_rtsp_enabled":
+                    if product.is_rtsp_enabled is False:
+                        continue
+                else:
+                    if command.value.command not in product.commands:
+                        continue
 
-                product_properties.append(
-                    Metadata.parse(product, {"name": command.name, "label": command.value.description, "command": command.value})
-                )
+            product_properties.append(
+                Metadata.parse(product, {"name": command.name, "label": command.value.description, "command": command.value})
+            )
 
     entities = [EufySecurityButtonEntity(coordinator, metadata) for metadata in product_properties]
     async_add_entities(entities)
