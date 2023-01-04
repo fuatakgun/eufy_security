@@ -23,6 +23,8 @@ from .eufy_security_api.util import get_child_value
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
+KEYPAD_OFF_CODE = 6
+
 
 class CurrentModeToState(Enum):
     """Alarm Entity Mode to State"""
@@ -155,6 +157,8 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         if triggered is True:
             return CurrentModeToStateValue.TRIGGERED.value
         current_mode = get_child_value(self.product.properties, self.metadata.name, -1)
+        if current_mode == KEYPAD_OFF_CODE:
+            return CurrentModeToStateValue[CurrentModeToState.DISARMED].value
         if current_mode in CUSTOM_CODES:
             position = CUSTOM_CODES.index(current_mode)
             if position == 0:
