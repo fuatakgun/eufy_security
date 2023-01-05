@@ -161,8 +161,9 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         if triggered is True:
             return CurrentModeToStateValue.TRIGGERED.value
         current_mode = get_child_value(self.product.properties, self.metadata.name, -1)
+        current_mode = KEYPAD_OFF_CODE
         if current_mode == KEYPAD_OFF_CODE:
-            return CurrentModeToStateValue[CurrentModeToState.DISARMED].value
+            return CurrentModeToStateValue[CurrentModeToState.DISARMED.name].value
         if current_mode in CUSTOM_CODES:
             position = CUSTOM_CODES.index(current_mode)
             if position == 0:
