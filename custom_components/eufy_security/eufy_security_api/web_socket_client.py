@@ -48,10 +48,12 @@ class WebSocketClient:
 
     async def disconnect(self):
         """Close web socket connection"""
-        await self.socket.close()
-        self.socket = None
-        self.task.cancel()
-        self.task = None
+        if self.socket is not None:
+            await self.socket.close()
+            self.socket = None
+        if self.task is not None:
+            self.task.cancel()
+            self.task = None
 
     async def _on_open(self) -> None:
         if self.open_callback is not None:

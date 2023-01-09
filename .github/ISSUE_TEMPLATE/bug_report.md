@@ -32,6 +32,8 @@ A clear and concise description of what you expected to happen.
 Go to Settings -> System -> Repairs -> Click on 3 dots (...) -> System Information and get Version and Installation Type to below fields;
 - Home Assistant Installation Type (OS - Supvervised - Core): 
 - Home Assistant Core Version: 
+- Eufy Security Add-on Version: 
+- Eufy Security Integration Version:
 
 Hardware Information;
 - Camera Model:
@@ -41,7 +43,7 @@ Hardware Information;
 
 
 - Debug Logs from Home Assistant (https://github.com/fuatakgun/eufy_security/discussions/624)
-
+- 
 
 - Logs from Eufy Security Add-on (either from Add-ons page of Home Assistant or Docker output):
 
