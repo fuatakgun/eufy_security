@@ -56,22 +56,26 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     @property
     def devices(self) -> dict:
+        """get devices from API"""
         return self._api.devices
 
     @property
     def stations(self) -> dict:
+        """get stations from API"""
         return self._api.stations
 
     async def set_mfa_and_connect(self, mfa_input: str):
+        """set mfa and connect"""
         await self._api.set_mfa_and_connect(mfa_input)
 
     async def set_captcha_and_connect(self, captcha_id: str, captcha_input: str):
+        """set captcha and connect"""
         await self._api.set_captcha_and_connect(captcha_id, captcha_input)
 
-    async def send_message(self, message: dict) -> None:
+    async def send_message(self, message: str) -> None:
         """send message to websocket api"""
         _LOGGER.debug(f"send_message - {message}")
-        await self._api.send_message(json.dumps(message))
+        await self._api.send_message(message)
 
     async def set_log_level(self, log_level: str) -> None:
         """set log level of websocket server"""

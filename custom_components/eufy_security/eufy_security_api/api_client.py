@@ -16,6 +16,7 @@ from .camera import Camera
 from .const import (
     SCHEMA_VERSION,
     EventNameToHandler,
+    EventSourceType,
     MessageField,
     ProductCommand,
     ProductType,
@@ -53,12 +54,12 @@ class ApiClient:
 
     @property
     def devices(self) -> dict:
-        """ initialized devices """
+        """initialized devices"""
         return self._devices
 
     @property
     def stations(self) -> dict:
-        """ initialized stations """
+        """initialized stations"""
         return self._stations
 
     async def ws_connect(self):
@@ -74,36 +75,36 @@ class ApiClient:
     async def _check_interactive_mode(self):
         # driver is not connected, wait for captcha event
         try:
-            _LOGGER.debug(f"_start_listening 2")
+            _LOGGER.debug(f"_check_interactive_mode 1")
             await asyncio.wait_for(self._captcha_future, timeout=10)
             event = self._captcha_future.result()
             raise CaptchaRequiredException(event.data[MessageField.CAPTCHA_ID.value], event.data[MessageField.CAPTCHA_IMG.value])
         except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError):
             pass
-        _LOGGER.debug(f"_start_listening 2")
+        _LOGGER.debug(f"_check_interactive_mode 2")
         # driver is not connected and captcha exception is not thrown, wait for mfa event
         try:
-            _LOGGER.debug(f"_start_listening 3")
+            _LOGGER.debug(f"_check_interactive_mode 3")
             await asyncio.wait_for(self._mfa_future, timeout=5)
             event = self._mfa_future.result()
             raise MultiFactorCodeRequiredException()
         except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError) as exc:
-            _LOGGER.debug(f"_start_listening 4")
+            _LOGGER.debug(f"_check_interactive_mode 4")
             await self._connect_driver()
             raise DriverNotConnectedError() from exc
 
     async def _set_products(self) -> None:
-        _LOGGER.debug(f"_start_listening 1")
+        _LOGGER.debug(f"_set_products 1")
         self._captcha_future = asyncio.get_event_loop().create_future()
         self._mfa_future = asyncio.get_event_loop().create_future()
-        result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_listening))
+        result = await self._start_listening()
         if result[MessageField.STATE.value][EventSourceType.driver.name][MessageField.CONNECTED.value] is False:
             await self._check_interactive_mode()
 
-        self._devices = await self._get_product(ProductType.device, result[MessageField.STATE.value]["devices"])
-        self._stations = await self._get_product(ProductType.station, result[MessageField.STATE.value]["stations"])
+        self._devices = await self._get_products(ProductType.device, result[MessageField.STATE.value]["devices"])
+        self._stations = await self._get_products(ProductType.station, result[MessageField.STATE.value]["stations"])
 
-    async def _get_product(self, product_type: ProductType, products: list) -> dict:
+    async def _get_products(self, product_type: ProductType, products: list) -> dict:
         response = {}
         for serial_no in products:
             product: Product = None
@@ -139,80 +140,116 @@ class ApiClient:
         await asyncio.sleep(10)
         await self._set_products()
 
-    # general api commands
-    async def _set_captcha(self, captcha_id: str, captcha_input: str) -> None:
-        command_type = OutgoingMessageType.set_captcha
-        command = EventSourceType.driver.name + "." + command_type.name
-        await self._send_message_get_response(
-            OutgoingMessage(command_type, command=command, captcha_id=captcha_id, captcha_input=captcha_input)
-        )
-
-    async def _set_mfa_code(self, mfa_input: str) -> None:
-        command_type = OutgoingMessageType.set_verify_code
-        command = EventSourceType.driver.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, verify_code=mfa_input))
-
-    async def _connect_driver(self) -> None:
-        command_type = OutgoingMessageType.driver_connect
-        command = EventSourceType.driver.name + "." + "connect"
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command))
+    # server level commands
+    async def _start_listening(self):
+        return await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_listening))
 
     async def _set_schema(self, schema_version: int) -> None:
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_api_schema, schema_version=schema_version))
 
+    # driver level commands
+    async def _connect_driver(self) -> None:
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.connect))
+
     async def set_log_level(self, log_level: str) -> None:
         """set log level of websocket server"""
-        command_type = OutgoingMessageType.set_log_level
-        command = EventSourceType.driver.name + "." + "connect"
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, log_level=log_level))
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_log_level, log_level=log_level))
 
-    # device and station functions
-    async def _get_is_rtsp_streaming(self, product_type: ProductType, serial_no: str) -> bool:
-        command_type = OutgoingMessageType.is_rtsp_livestreaming
-        command = product_type.name + "." + command_type.name
-        result = await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
-        return result[MessageField.LIVE_STREAMING.value]
+    async def poll_refresh(self) -> None:
+        """Poll cloud data for latest changes"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.poll_refresh))
 
-    async def _get_is_p2p_streaming(self, product_type: ProductType, serial_no: str) -> bool:
-        command_type = OutgoingMessageType.is_livestreaming
-        command = product_type.name + "." + command_type.name
-        result = await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
-        return result[MessageField.LIVE_STREAMING.value]
+    async def _set_captcha(self, captcha_id: str, captcha_input: str) -> None:
+        await self._send_message_get_response(
+            OutgoingMessage(OutgoingMessageType.set_captcha, captcha_id=captcha_id, captcha_input=captcha_input)
+        )
 
+    async def _set_mfa_code(self, mfa_input: str) -> None:
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_verify_code, verify_code=mfa_input))
+
+    # product (both device and station) level commands
+    async def _get_metadata(self, product_type: ProductType, serial_no: str) -> dict:
+        result = await self._send_message_get_response(
+            OutgoingMessage(OutgoingMessageType.get_properties_metadata, domain=product_type.name, serial_no=serial_no)
+        )
+        return result[MessageField.PROPERTIES.value]
+
+    async def _get_properties(self, product_type: ProductType, serial_no: str) -> dict:
+        result = await self._send_message_get_response(
+            OutgoingMessage(OutgoingMessageType.get_properties, domain=product_type.name, serial_no=serial_no)
+        )
+        return result[MessageField.PROPERTIES.value]
+
+    async def _get_commands(self, product_type: ProductType, serial_no: str) -> dict:
+        result = await self._send_message_get_response(
+            OutgoingMessage(OutgoingMessageType.get_commands, domain=product_type.name, serial_no=serial_no)
+        )
+        return result[MessageField.COMMANDS.value]
+
+    async def set_property(self, product_type: ProductType, serial_no: str, name: str, value: Any) -> None:
+        """Process set property call"""
+        await self._send_message_get_response(
+            OutgoingMessage(OutgoingMessageType.set_property, domain=product_type.name, serial_no=serial_no, name=name, value=value)
+        )
+
+    async def trigger_alarm(self, product_type: ProductType, serial_no: str, duration: int) -> None:
+        """Process trigger alarm call"""
+        await self._send_message_get_response(
+            OutgoingMessage(OutgoingMessageType.trigger_alarm, domain=product_type.name, serial_no=serial_no, seconds=duration)
+        )
+
+    async def reset_alarm(self, product_type: ProductType, serial_no: str) -> None:
+        """Process reset alarm call"""
+        await self._send_message_get_response(
+            OutgoingMessage(OutgoingMessageType.reset_alarm, domain=product_type.name, serial_no=serial_no)
+        )
+
+    # device level commands
     async def pan_and_tilt(self, product_type: ProductType, serial_no: str, direction: int) -> None:
         """Process start pan tilt rotate zoom"""
-        command_type = OutgoingMessageType.pan_and_tilt
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, direction=direction))
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.pan_and_tilt, serial_no=serial_no, direction=direction))
+
+    async def start_rtsp_livestream(self, product_type: ProductType, serial_no: str) -> None:
+        """Process start rtsp livestream call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_rtsp_livestream, serial_no=serial_no))
+
+    async def stop_rtsp_livestream(self, product_type: ProductType, serial_no: str) -> None:
+        """Process stop rtsp livestream call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.stop_rtsp_livestream, serial_no=serial_no))
+
+    async def _get_is_rtsp_streaming(self, product_type: ProductType, serial_no: str) -> bool:
+        result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.is_rtsp_livestreaming, serial_no=serial_no))
+        return result[MessageField.LIVE_STREAMING.value]
+
+    async def start_livestream(self, product_type: ProductType, serial_no: str) -> None:
+        """Process start p2p livestream call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_livestream, serial_no=serial_no))
+
+    async def stop_livestream(self, product_type: ProductType, serial_no: str) -> None:
+        """Process stop p2p livestream call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.stop_livestream, serial_no=serial_no))
+
+    async def _get_is_p2p_streaming(self, product_type: ProductType, serial_no: str) -> bool:
+        result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.is_livestreaming, serial_no=serial_no))
+        return result[MessageField.LIVE_STREAMING.value]
+
+    async def _get_voices(self, product_type: ProductType, serial_no: str) -> dict:
+        result = await self._send_message_get_response(
+            OutgoingMessage(OutgoingMessageType.get_voices, domain=product_type.name, serial_no=serial_no)
+        )
+        return result[MessageField.VOICES.value]
 
     async def quick_response(self, product_type: ProductType, serial_no: str, voice_id: int) -> None:
         """Process quick response for doorbell"""
-        command_type = OutgoingMessageType.quick_response
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, voice_id=voice_id))
-
-    async def chime(self, product_type: ProductType, serial_no: str, ringtone: int) -> None:
-        """Process chme call"""
-        command_type = OutgoingMessageType.chime
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, ringtone=ringtone))
-
-    async def reboot(self, product_type: ProductType, serial_no: str) -> None:
-        """Process reboot call"""
-        command_type = OutgoingMessageType.reboot
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.quick_response, serial_no=serial_no, voice_id=voice_id))
 
     async def snooze(
         self, product_type: ProductType, serial_no: str, snooze_time: int, snooze_chime: bool, snooze_motion: bool, snooze_homebase: bool
     ) -> None:
         """Process snooze for devices ans stations"""
-        command_type = OutgoingMessageType.snooze
-        command = product_type.name + "." + command_type.name
         await self._send_message_get_response(
             OutgoingMessage(
-                command_type,
-                command=command,
+                OutgoingMessageType.snooze,
                 serial_no=serial_no,
                 snooze_time=snooze_time,
                 snooze_chime=snooze_chime,
@@ -223,81 +260,21 @@ class ApiClient:
 
     async def verify_pin(self, product_type: ProductType, serial_no: str, pin: str) -> None:
         """verify pin for safe product"""
-        command_type = OutgoingMessageType.verify_pin
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, pin=pin))
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.verify_pin, serial_no=serial_no, pin=pin))
 
     async def unlock(self, product_type: ProductType, serial_no: str) -> None:
         """unlock for safe product"""
-        command_type = OutgoingMessageType.unlock
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.unlock, serial_no=serial_no))
 
-    async def start_rtsp_livestream(self, product_type: ProductType, serial_no: str) -> None:
-        """Process start rtsp livestream call"""
-        command_type = OutgoingMessageType.start_rtsp_livestream
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
+    # station level commands
 
-    async def stop_rtsp_livestream(self, product_type: ProductType, serial_no: str) -> None:
-        """Process stop rtsp livestream call"""
-        command_type = OutgoingMessageType.stop_rtsp_livestream
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
+    async def chime(self, product_type: ProductType, serial_no: str, ringtone: int) -> None:
+        """Process chme call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.chime, serial_no=serial_no, ringtone=ringtone))
 
-    async def start_livestream(self, product_type: ProductType, serial_no: str) -> None:
-        """Process start p2p livestream call"""
-        command_type = OutgoingMessageType.start_livestream
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
-
-    async def stop_livestream(self, product_type: ProductType, serial_no: str) -> None:
-        """Process stop p2p livestream call"""
-        command_type = OutgoingMessageType.stop_livestream
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
-
-    async def trigger_alarm(self, product_type: ProductType, serial_no: str, duration: int) -> None:
-        """Process trigger alarm call"""
-        command_type = OutgoingMessageType.trigger_alarm
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, seconds=duration))
-
-    async def reset_alarm(self, product_type: ProductType, serial_no: str) -> None:
-        """Process reset alarm call"""
-        command_type = OutgoingMessageType.reset_alarm
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
-
-    async def set_property(self, product_type: ProductType, serial_no: str, name: str, value: Any) -> None:
-        """Process set property call"""
-        command_type = OutgoingMessageType.set_property
-        command = product_type.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no, name=name, value=value))
-
-    async def _get_voices(self, product_type: ProductType, serial_no: str) -> dict:
-        command_type = OutgoingMessageType.get_voices
-        command = product_type.name + "." + command_type.name
-        result = await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
-        return result[MessageField.VOICES.value]
-
-    async def _get_properties(self, product_type: ProductType, serial_no: str) -> dict:
-        command_type = OutgoingMessageType.get_properties
-        command = product_type.name + "." + command_type.name
-        result = await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
-        return result[MessageField.PROPERTIES.value]
-
-    async def _get_metadata(self, product_type: ProductType, serial_no: str) -> dict:
-        command_type = OutgoingMessageType.get_properties_metadata
-        command = product_type.name + "." + command_type.name
-        result = await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
-        return result[MessageField.PROPERTIES.value]
-
-    async def _get_commands(self, product_type: ProductType, serial_no: str) -> dict:
-        command_type = OutgoingMessageType.get_commands
-        command = product_type.name + "." + command_type.name
-        result = await self._send_message_get_response(OutgoingMessage(command_type, command=command, serial_no=serial_no))
-        return result[MessageField.COMMANDS.value]
+    async def reboot(self, product_type: ProductType, serial_no: str) -> None:
+        """Process reboot call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.reboot, serial_no=serial_no))
 
     async def _on_message(self, message: dict) -> None:
         message_str = str(message)[0:200]
@@ -333,7 +310,7 @@ class ApiClient:
             # handle device or statino specific events through specific instances
             plural_product = "_" + event.data[MessageField.SOURCE.value] + "s"
             try:
-                product = self.__dict__[plural_product][event.data[MessageField.SERIAL_NUMBER.value]]
+                product = self.__dict__[plural_product][event.data[MessageField.SERIAL_NO.value]]
                 await product.process_event(event)
             except (KeyError, TypeError) as exc:
                 raise DeviceNotInitializedYetException(event) from exc
@@ -374,12 +351,6 @@ class ApiClient:
         _LOGGER.debug(f"send_message - {message}")
         await self._client.send_message(json.dumps(message))
 
-    async def poll_refresh(self) -> None:
-        """Poll cloud data for latest changes"""
-        command_type = OutgoingMessageType.poll_refresh
-        command = EventSourceType.driver.name + "." + command_type.name
-        await self._send_message_get_response(OutgoingMessage(command_type, command=command))
-
     async def disconnect(self):
         """Disconnect the web socket and destroy it"""
         await self._client.disconnect()
@@ -391,12 +362,3 @@ class IncomingMessageType(Enum):
     version = "version"
     result = "result"
     event = "event"
-
-
-class EventSourceType(Enum):
-    """Event type"""
-
-    station = "station"
-    device = "device"
-    driver = "driver"
-    server = "server"

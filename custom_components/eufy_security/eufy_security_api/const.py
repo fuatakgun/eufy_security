@@ -13,8 +13,10 @@ class MessageField(Enum):
     """Incoming or outgoing message field types"""
 
     # general fields
+    DUMMY = "dummy"
     MESSAGE_ID = "messageId"
     ERROR_CODE = "errorCode"
+    DOMAIN = "domain"
     COMMAND = "command"
     TYPE = "type"
     SUCCESS = "success"
@@ -23,8 +25,8 @@ class MessageField(Enum):
     SOURCE = "source"
     SCHEMA_VERSION = "schemaVersion"
     LOG_LEVEL = "level"
-    BIND_AT_RUNTIME = "bindAtRuntime"
-    SERIAL_NUMBER = "serialNumber"
+    RUNTIME = "runtime"
+    SERIAL_NO = "serialNumber"
     PROPERTIES = "properties"
     COMMANDS = "commands"
     NAME = "name"
@@ -75,6 +77,10 @@ class MessageField(Enum):
     SNOOZE_MOTION = "snoozeMotion"
     SNOOZE_HOMEBASE = "snoozeHomebase"
 
+    # get events
+    MAX_RESULTS = "maxResults"
+    DEVICE_SERIAL_NO = "deviceSN"
+
 
 # https://bropat.github.io/eufy-security-ws/#/api_events?id=device-level-events
 class EventNameToHandler(Enum):
@@ -124,3 +130,13 @@ class ProductCommand(Enum):
     reset_alarm = CommandDescription("Reset Alarm")
     verify_pin = CommandDescription("Verify Pin", "verify_p_i_n")
     reboot = CommandDescription("Reboot", "stationReboot")
+
+
+class EventSourceType(Enum):
+    """Event type"""
+
+    station = "station"
+    device = "device"
+    driver = "driver"
+    server = "server"
+    product = "product"

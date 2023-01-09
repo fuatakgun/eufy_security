@@ -2,7 +2,7 @@ from enum import Enum, auto
 import logging
 import uuid
 
-from .const import MessageField
+from .const import MessageField, EventSourceType
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -32,69 +32,60 @@ class OutgoingMessageToParameter(Enum):
 class OutgoingMessageType(Enum):
     """Outgoing message types"""
 
-    driver_connect = {MessageField.COMMAND.value: auto()}
-    set_api_schema = {MessageField.COMMAND.value: auto(), MessageField.SCHEMA_VERSION.value: MessageField.BIND_AT_RUNTIME}
-    set_log_level = {MessageField.COMMAND.value: auto(), MessageField.LOG_LEVEL.value: MessageField.BIND_AT_RUNTIME}
-    start_listening = {MessageField.COMMAND.value: auto()}
-    get_properties_metadata = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    get_properties = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    get_commands = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    poll_refresh = {MessageField.COMMAND.value: auto()}
-    set_property = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.NAME.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.VALUE.value: MessageField.BIND_AT_RUNTIME,
-    }
-    trigger_alarm = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.SECONDS.value: MessageField.BIND_AT_RUNTIME,
-    }
-    pan_and_tilt = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.DIRECTION.value: MessageField.BIND_AT_RUNTIME,
-    }
-    reset_alarm = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    start_rtsp_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    stop_rtsp_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    is_rtsp_livestreaming = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    start_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    stop_livestream = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    is_livestreaming = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
+    # server level commands
+    start_listening = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.server}
+    set_api_schema = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.server, MessageField.SCHEMA_VERSION: None}
+
+    # driver level commands
+    connect = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.driver}
+    set_log_level = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.driver, MessageField.LOG_LEVEL: None}
+    poll_refresh = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.driver}
     set_captcha = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.CAPTCHA_ID.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.CAPTCHA_IMG.value: MessageField.BIND_AT_RUNTIME,
+        MessageField.DUMMY: auto(),
+        MessageField.DOMAIN: EventSourceType.driver,
+        MessageField.CAPTCHA_ID: None,
+        MessageField.CAPTCHA_IMG: None,
     }
-    set_verify_code = {MessageField.COMMAND.value: auto(), MessageField.VERIFY_CODE.value: MessageField.BIND_AT_RUNTIME}
-    get_voices = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    quick_response = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.VOICE_ID.value: MessageField.BIND_AT_RUNTIME,
+    set_verify_code = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.driver, MessageField.VERIFY_CODE: None}
+    get_video_events = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.driver, MessageField.MAX_RESULTS: None}
+
+    # product (both device and station) level commands
+    get_properties_metadata = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.product}
+    get_properties = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.product}
+    get_commands = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.product}
+    set_property = {
+        MessageField.DUMMY: auto(),
+        MessageField.DOMAIN: EventSourceType.product,
+        MessageField.NAME: None,
+        MessageField.VALUE: None,
     }
+    trigger_alarm = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.product, MessageField.SECONDS: None}
+    reset_alarm = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.product}
+
+    # device level commands
+    pan_and_tilt = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device, MessageField.DIRECTION: None}
+    start_rtsp_livestream = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
+    stop_rtsp_livestream = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
+    is_rtsp_livestreaming = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
+    start_livestream = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
+    stop_livestream = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
+    is_livestreaming = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
+    get_voices = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
+    quick_response = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device, MessageField.VOICE_ID: None}
     snooze = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.SNOOZE_TIME.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.SNOOZE_CHIME.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.SNOOZE_MOTION.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.SNOOZE_HOMEBASE.value: MessageField.BIND_AT_RUNTIME,
+        MessageField.DUMMY: auto(),
+        MessageField.DOMAIN: EventSourceType.device,
+        MessageField.SNOOZE_TIME: None,
+        MessageField.SNOOZE_CHIME: None,
+        MessageField.SNOOZE_MOTION: None,
+        MessageField.SNOOZE_HOMEBASE: None,
     }
-    chime = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.RINGTONE.value: MessageField.BIND_AT_RUNTIME,
-    }
-    verify_pin = {
-        MessageField.COMMAND.value: auto(),
-        MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME,
-        MessageField.PIN.value: MessageField.BIND_AT_RUNTIME,
-    }
-    unlock = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
-    reboot = {MessageField.COMMAND.value: auto(), MessageField.SERIAL_NUMBER.value: MessageField.BIND_AT_RUNTIME}
+    verify_pin = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device, MessageField.PIN: None}
+    unlock = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
+
+    # station level commands
+    chime = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.station, MessageField.RINGTONE: None}
+    reboot = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.station}
 
 
 class OutgoingMessage:
@@ -102,13 +93,24 @@ class OutgoingMessage:
 
     def __init__(self, message_type: OutgoingMessageType, **kwargs) -> None:
         self._type = message_type
-        self._message = self.type.value.copy()
-        self._message[MessageField.COMMAND.value] = kwargs.get("command", self.type.name)
-        self._message[MessageField.MESSAGE_ID.value] = kwargs.get("id", self.command + "." + uuid.uuid4().hex)
+        self._message = {}
 
-        for key, value in self._message.items():
-            if value == MessageField.BIND_AT_RUNTIME:
-                self._message[key] = kwargs.get(OutgoingMessageToParameter[key].value)
+        for key in message_type.value.keys():
+            try:
+                self._message[key.value] = kwargs.get(OutgoingMessageToParameter[key.value].value)
+            except KeyError:
+                pass
+
+        default_domain = message_type.value[MessageField.DOMAIN]
+        if default_domain in [EventSourceType.product, EventSourceType.station, EventSourceType.device]:
+            self._message[MessageField.SERIAL_NO.value] = kwargs.get(OutgoingMessageToParameter[MessageField.SERIAL_NO.value].value)
+
+        domain = default_domain.value if default_domain != EventSourceType.product else kwargs.get(MessageField.DOMAIN.value, "")
+        command = self.type.name if domain == EventSourceType.server.value else domain + "." + self.type.name
+        _LOGGER.debug(f"domain - {domain} - {default_domain} - {command} - {kwargs} - {self._message}")
+        self._message[MessageField.COMMAND.value] = command
+        self._message[MessageField.MESSAGE_ID.value] = self.command + "." + uuid.uuid4().hex
+        _LOGGER.debug(self._message)
 
     @property
     def id(self) -> str:
