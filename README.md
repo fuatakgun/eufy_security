@@ -114,12 +114,14 @@ If you use your own docker service, please run it like this `docker run -it RTSP
 Note: Custom Name 1, Custom Name 2, and Custom Name 3 are labels used to represent the first, second, and third custom guards (modes) you've created in the Eufy Security app. You can trigger your custom guards using the built-in alarm panel card like so:
 
 ```
-arm_custom_bypass -> will trigger your first custom guard defined in Eufy security app (ordered by 'created date')
+arm_custom_bypass -> triggers your first custom guard defined in Eufy security app (ordered by 'created date')
 arm_night -> trigger second custom guard
 arm_vacation -> trigger third custom guard
 ```
 
-These built-in alarm panel services do not correspond with any default Eufy guards, so they are re-purposed to allow further flexibility to trigger custom security modes.  See discussion in #145 for more details.
+For example, you create a "bedtime" mode in Eufy Security app, by default there would be no way to trigger that using the alarm panel card. However, using this integration, you can call the `arm_custom_bypass` service from the alarm panel, which will enable your "bedtime" mode. You can adjust the display name of this mode using Step 8 above.
+
+These built-in alarm panel services do not correspond with any default Eufy guards, so they are re-purposed to allow further flexibility to trigger custom security modes using this integration.  See discussion in #145 for more details.
 
 ![image](https://user-images.githubusercontent.com/11085566/210082270-4de06bbe-0d10-4dde-9fd3-cb12d6758b67.png)
 
