@@ -54,24 +54,7 @@ So, let's start.
 
 ## 1. Installing Eufy Security Add-On
 
-If you use your own docker service, please run it like this `docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -e COUNTRY=country_code -e TRUSTED_DEVICE_NAME=your_device_name -p 3000:3000 bropat/eufy-security-ws:X.Y.Z`. To find out current supported add-on version, please get values for X.Y.Z from here (https://github.com/fuatakgun/eufy_security_addon/blob/main/config.json#L3) and jump into Step 6.
-
-1- Add `Eufy Security Add-On Repository` to Add-On Store. Please follow steps located here (https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons) and use this repository URL (https://github.com/fuatakgun/eufy_security_addon)
-
-2- Search `Eufy Security` on Add-on Store (https://your-instance.duckdns.org/hassio/store)
-
-3- Install `Eufy Security Add-on` 
-
-4- When installation is completed, go to `Configuration` page of Add-on and put Username (email), Password, Country (2 letter code), Event Duration in Seconds and Trusted Device Name.
-
-5- Hit `Start` and wait for it to be started.
-
-6- Check `Logs`, you have to see something like this;
-```
-2022-12-27 20:09:16.339  INFO  Eufy Security server listening on host 0.0.0.0, port 3000 
-2022-12-27 20:09:26.569  INFO  Connected to station T8010NXXX on host 87.240.219.ZZZ and port 29946 
-2022-12-27 20:09:26.601  INFO  Connected to station T8410PXXX on host 87.240.219.YYY and port 18969 
-```
+Please follow the guideline from here: https://github.com/bropat/hassio-eufy-security-ws
 
 ## 2. Install RTSP Simple Server Add-on - Required for P2P Based Video Streaming - Not Required for RTSP Based Video Streaming
 
