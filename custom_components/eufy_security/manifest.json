@@ -1,13 +1,13 @@
 {
   "domain": "eufy_security",
   "name": "Eufy Security",
-  "documentation": "https://github.com/fuatakgun/eufy_security",
-  "issue_tracker": "https://github.com/fuatakgun/eufy_security/issues",
-  "dependencies": ["ffmpeg", "stream"],
-  "config_flow": true,
-  "version": "6.2.0",
   "codeowners": ["@fuatakgun"],
-  "requirements": ["websocket-client==1.4.2", "aiortsp==1.3.6"],
+  "config_flow": true,
+  "dependencies": ["ffmpeg", "stream"],
+  "documentation": "https://github.com/fuatakgun/eufy_security",
+  "integration_type": "hub",
   "iot_class": "cloud_push",
-  "integration_type": "hub"
+  "issue_tracker": "https://github.com/fuatakgun/eufy_security/issues",
+  "requirements": ["websocket-client==1.4.2", "aiortsp==1.3.6"],
+  "version": "6.2.0"
 }

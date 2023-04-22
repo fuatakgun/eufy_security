@@ -54,24 +54,7 @@ So, let's start.
 
 ## 1. Installing Eufy Security Add-On
 
-If you use your own docker service, please run it like this `docker run -it -e USERNAME=email@address.com -e PASSWORD=password_goes_here -e COUNTRY=country_code -e TRUSTED_DEVICE_NAME=your_device_name -p 3000:3000 bropat/eufy-security-ws:X.Y.Z`. To find out current supported add-on version, please get values for X.Y.Z from here (https://github.com/fuatakgun/eufy_security_addon/blob/main/config.json#L3) and jump into Step 6.
-
-1- Add `Eufy Security Add-On Repository` to Add-On Store. Please follow steps located here (https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons) and use this repository URL (https://github.com/fuatakgun/eufy_security_addon)
-
-2- Search `Eufy Security` on Add-on Store (https://your-instance.duckdns.org/hassio/store)
-
-3- Install `Eufy Security Add-on` 
-
-4- When installation is completed, go to `Configuration` page of Add-on and put Username (email), Password, Country (2 letter code), Event Duration in Seconds and Trusted Device Name.
-
-5- Hit `Start` and wait for it to be started.
-
-6- Check `Logs`, you have to see something like this;
-```
-2022-12-27 20:09:16.339  INFO  Eufy Security server listening on host 0.0.0.0, port 3000 
-2022-12-27 20:09:26.569  INFO  Connected to station T8010NXXX on host 87.240.219.ZZZ and port 29946 
-2022-12-27 20:09:26.601  INFO  Connected to station T8410PXXX on host 87.240.219.YYY and port 18969 
-```
+Please follow the guideline from here: https://github.com/bropat/hassio-eufy-security-ws
 
 ## 2. Install RTSP Simple Server Add-on - Required for P2P Based Video Streaming - Not Required for RTSP Based Video Streaming
 
@@ -109,7 +92,19 @@ If you use your own docker service, please run it like this `docker run -it RTSP
 
 7- If you have installed `RTSP Simple Server Add-On`, please put its `IP Address` and `Port` into Integration Configuration page.
 
-8- You can also configure `Cloud Scan Interval`, Video Analyze Duration, `Custom Name 1`, `Custom Name 2` and `Custom Name 3`
+8- You can also configure `Cloud Scan Interval`, Video Analyze Duration, `Custom Name 1`, `Custom Name 2` and `Custom Name 3` 
+
+Note: Custom Name 1, Custom Name 2, and Custom Name 3 are labels used to represent the first, second, and third custom guards (modes) you've created in the Eufy Security app. You can trigger your custom guards using the built-in alarm panel card like so:
+
+```
+arm_custom_bypass -> triggers your first custom guard defined in Eufy security app (ordered by 'created date')
+arm_night -> trigger second custom guard
+arm_vacation -> trigger third custom guard
+```
+
+For example, you create a "bedtime" mode in Eufy Security app, by default there would be no way to trigger that using the alarm panel card. However, using this integration, you can call the `arm_custom_bypass` service from the alarm panel, which will enable your "bedtime" mode. You can adjust the display name of this mode using Step 8 above.
+
+These built-in alarm panel services do not correspond with any default Eufy guards, so they are re-purposed to allow further flexibility to trigger custom security modes using this integration.  See discussion in #145 for more details.
 
 ![image](https://user-images.githubusercontent.com/11085566/210082270-4de06bbe-0d10-4dde-9fd3-cb12d6758b67.png)
 
@@ -209,7 +204,7 @@ ptz:
   - `arm_home` - Switch to Home state
   - `arm_away` - Switch to Away state
   - `disarm` - Disarm the panel
-  - `alarm_arm_custom1` - Switch to custom 1
+  - `alarm_arm_custom1` - Switch to custom 1, which relates to the first, second, and third custom guards (or modes) you have created in the Eufy Security app. 
   - `alarm_arm_custom2` - Switch to custom 2
   - `alarm_arm_custom3` - Switch to custom 3
   - `geofence` - Switch to geofencing, this might not impact the state of panel given that it will chage its state based on geolocation via eufy app
