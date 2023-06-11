@@ -13,7 +13,15 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 class Product:
     """Product"""
 
-    def __init__(self, api, product_type: ProductType, serial_no: str, properties: dict, metadata: dict, commands: []) -> None:
+    def __init__(
+        self,
+        api,
+        product_type: ProductType,
+        serial_no: str,
+        properties: dict,
+        metadata: dict,
+        commands: [],
+    ) -> None:
         self.api = api
         self.product_type = product_type
         self.serial_no = serial_no
@@ -44,6 +52,7 @@ class Product:
 
     def _set_metadata(self, metadata: dict) -> None:
         self.metadata = {}
+
         for key, value in metadata.items():
             metadata = Metadata.parse(self, value)
 
@@ -58,7 +67,9 @@ class Product:
 
     async def set_property(self, metadata, value: Any):
         """Process set property call"""
-        await self.api.set_property(self.product_type, self.serial_no, metadata.name, value)
+        await self.api.set_property(
+            self.product_type, self.serial_no, metadata.name, value
+        )
 
     async def trigger_alarm(self, duration: int = 10):
         """Process trigger alarm call"""
@@ -68,9 +79,22 @@ class Product:
         """Process reset alarm call"""
         await self.api.reset_alarm(self.product_type, self.serial_no)
 
-    async def snooze(self, snooze_time: int, snooze_chime: bool, snooze_motion: bool, snooze_homebase: bool) -> None:
+    async def snooze(
+        self,
+        snooze_time: int,
+        snooze_chime: bool,
+        snooze_motion: bool,
+        snooze_homebase: bool,
+    ) -> None:
         """Process snooze call"""
-        await self.api.snooze(self.product_type, self.serial_no, snooze_time, snooze_chime, snooze_motion, snooze_homebase)
+        await self.api.snooze(
+            self.product_type,
+            self.serial_no,
+            snooze_time,
+            snooze_chime,
+            snooze_motion,
+            snooze_homebase,
+        )
         await self.api.poll_refresh()
 
     async def unlock(self, code: str) -> bool:
@@ -103,7 +127,9 @@ class Product:
             callback_func()
 
     async def _handle_property_changed(self, event: Event):
-        self.properties[event.data[MessageField.NAME.value]] = event.data[MessageField.VALUE.value]
+        self.properties[event.data[MessageField.NAME.value]] = event.data[
+            MessageField.VALUE.value
+        ]
 
     async def _handle_pin_verified(self, event: Event):
         self.pin_verified_future.set_result(event)
@@ -111,12 +137,18 @@ class Product:
     @property
     def is_camera(self):
         """checks if Product is camera"""
-        return True if ProductCommand.start_livestream.value.command in self.commands else False
+        return (
+            True
+            if ProductCommand.start_livestream.value.command in self.commands
+            else False
+        )
 
     @property
     def is_safe_lock(self):
         """checks if Product is safe lock"""
-        return True if ProductCommand.verify_pin.value.command in self.commands else False
+        return (
+            True if ProductCommand.verify_pin.value.command in self.commands else False
+        )
 
     def has(self, property_name: str) -> bool:
         """Checks if product has required property"""
@@ -126,15 +158,23 @@ class Product:
 class Device(Product):
     """Device as Physical Product"""
 
-    def __init__(self, api, serial_no: str, properties: dict, metadata: dict, commands: []) -> None:
-        super().__init__(api, ProductType.device, serial_no, properties, metadata, commands)
+    def __init__(
+        self, api, serial_no: str, properties: dict, metadata: dict, commands: []
+    ) -> None:
+        super().__init__(
+            api, ProductType.device, serial_no, properties, metadata, commands
+        )
 
 
 class Station(Product):
     """Station as Physical Product"""
 
-    def __init__(self, api, serial_no: str, properties: dict, metadata: dict, commands: []) -> None:
-        super().__init__(api, ProductType.station, serial_no, properties, metadata, commands)
+    def __init__(
+        self, api, serial_no: str, properties: dict, metadata: dict, commands: []
+    ) -> None:
+        super().__init__(
+            api, ProductType.station, serial_no, properties, metadata, commands
+        )
 
     async def chime(self, ringtone: int) -> None:
         """Quick response message to camera"""

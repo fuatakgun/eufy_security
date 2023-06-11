@@ -38,6 +38,7 @@ class OutgoingMessageType(Enum):
 
     # driver level commands
     connect = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.driver}
+    disconnect = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.driver}
     set_log_level = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.driver, MessageField.LOG_LEVEL: None}
     poll_refresh = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.driver}
     set_captcha = {

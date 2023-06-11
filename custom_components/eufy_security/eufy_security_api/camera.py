@@ -32,7 +32,9 @@ class StreamProvider(Enum):
     """Stream provider"""
 
     RTSP = "{rtsp_stream_url}"  # replace with rtsp url from device
-    P2P = "rtsp://{server_address}:{server_port}/{serial_no}"  # replace with stream name
+    P2P = (
+        "rtsp://{server_address}:{server_port}/{serial_no}"  # replace with stream name
+    )
 
 
 class PTZCommand(Enum):
@@ -127,7 +129,9 @@ class Camera(Device):
         _LOGGER.debug("_is_stream_url_ready - 1")
         with contextlib.suppress(Exception):
             while True:
-                async with RTSPReader(self.stream_url.replace("rtsp://", "rtspt://")) as reader:
+                async with RTSPReader(
+                    self.stream_url.replace("rtsp://", "rtspt://")
+                ) as reader:
                     _LOGGER.debug("_is_stream_url_ready - 2 - reader opened")
                     async for pkt in reader.iter_packets():
                         _LOGGER.debug(f"_is_stream_url_ready - 3 - received {len(pkt)}")
@@ -141,7 +145,9 @@ class Camera(Device):
         self.set_stream_prodiver(StreamProvider.P2P)
         self.stream_status = StreamStatus.PREPARING
         await self.api.start_livestream(self.product_type, self.serial_no)
-        self.p2p_stream_thread = threading.Thread(target=self.p2p_stream_handler.setup, daemon=True)
+        self.p2p_stream_thread = threading.Thread(
+            target=self.p2p_stream_handler.setup, daemon=True
+        )
         self.p2p_stream_thread.start()
         await wait_for_value(self.p2p_stream_handler.__dict__, "port", None)
 
@@ -149,7 +155,9 @@ class Camera(Device):
             await self._start_ffmpeg()
 
         with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(self.p2p_started_event.wait(), STREAM_TIMEOUT_SECONDS)
+            await asyncio.wait_for(
+                self.p2p_started_event.wait(), STREAM_TIMEOUT_SECONDS
+            )
 
         if self.p2p_started_event.is_set() is False:
             return False
@@ -190,27 +198,39 @@ class Camera(Device):
         await self.api.stop_rtsp_livestream(self.product_type, self.serial_no)
 
     async def ptz(self, direction: str) -> None:
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand[direction].value)
+        await self.api.pan_and_tilt(
+            self.product_type, self.serial_no, PTZCommand[direction].value
+        )
 
     async def ptz_up(self) -> None:
         """Look up"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.UP.value)
+        await self.api.pan_and_tilt(
+            self.product_type, self.serial_no, PTZCommand.UP.value
+        )
 
     async def ptz_down(self) -> None:
         """Look down"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.DOWN.value)
+        await self.api.pan_and_tilt(
+            self.product_type, self.serial_no, PTZCommand.DOWN.value
+        )
 
     async def ptz_left(self) -> None:
         """Look left"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.LEFT.value)
+        await self.api.pan_and_tilt(
+            self.product_type, self.serial_no, PTZCommand.LEFT.value
+        )
 
     async def ptz_right(self) -> None:
         """Look right"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.RIGHT.value)
+        await self.api.pan_and_tilt(
+            self.product_type, self.serial_no, PTZCommand.RIGHT.value
+        )
 
     async def ptz_360(self) -> None:
         """Look around 360 degrees"""
-        await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.ROTATE360.value)
+        await self.api.pan_and_tilt(
+            self.product_type, self.serial_no, PTZCommand.ROTATE360.value
+        )
 
     async def quick_response(self, voice_id: int) -> None:
         """Quick response message to camera"""
@@ -224,12 +244,21 @@ class Camera(Device):
     @property
     def is_rtsp_enabled(self) -> bool:
         """Returns True if RTSP stream is configured and enabled for camera"""
-        return False if self.is_rtsp_supported is False else self.properties.get(MessageField.RTSP_STREAM.value)
+        return (
+            False
+            if self.is_rtsp_supported is False
+            else self.properties.get(MessageField.RTSP_STREAM.value)
+        )
 
     @property
     def rtsp_stream_url(self) -> str:
         """Returns RTSP stream URL from physical device"""
         return self.properties.get(MessageField.RTSP_STREAM_URL.value)
+
+    @property
+    def picture_base64(self) -> str:
+        """Returns picture bytes in base64 format"""
+        return self.properties.get(MessageField.PICTURE.value)
 
     def set_stream_prodiver(self, stream_provider: StreamProvider) -> None:
         """Set stream provider for camera instance"""

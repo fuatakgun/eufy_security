@@ -98,6 +98,8 @@ class ApiClient:
         self._captcha_future = asyncio.get_event_loop().create_future()
         self._mfa_future = asyncio.get_event_loop().create_future()
         result = await self._start_listening()
+        _LOGGER.debug(f"_set_products 2")
+
         if result[MessageField.STATE.value][EventSourceType.driver.name][MessageField.CONNECTED.value] is False:
             await self._check_interactive_mode()
 
@@ -148,6 +150,9 @@ class ApiClient:
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_api_schema, schema_version=schema_version))
 
     # driver level commands
+    async def _disconnect_driver(self) -> None:
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.disconnect))
+
     async def _connect_driver(self) -> None:
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.connect))
 

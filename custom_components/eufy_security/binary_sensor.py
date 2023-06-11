@@ -17,13 +17,21 @@ from .util import get_device_info, get_product_properties_by_filter
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Setup binary sensor entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = get_product_properties_by_filter(
-        [coordinator.devices.values(), coordinator.stations.values()], PlatformToPropertyType[Platform.BINARY_SENSOR.name].value
+        [coordinator.devices.values(), coordinator.stations.values()],
+        PlatformToPropertyType[Platform.BINARY_SENSOR.name].value,
     )
-    entities = [EufySecurityBinarySensor(coordinator, metadata) for metadata in product_properties]
+    entities = [
+        EufySecurityBinarySensor(coordinator, metadata)
+        for metadata in product_properties
+    ]
 
     for device in coordinator.devices.values():
         entities.append(EufySecurityProductEntity(coordinator, device))
@@ -36,7 +44,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 class EufySecurityBinarySensor(BinarySensorEntity, EufySecurityEntity):
     """Base binary sensor entity for integration"""
 
-    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, metadata: Metadata) -> None:
+    def __init__(
+        self, coordinator: EufySecurityDataUpdateCoordinator, metadata: Metadata
+    ) -> None:
         super().__init__(coordinator, metadata)
 
     @property
@@ -48,14 +58,20 @@ class EufySecurityBinarySensor(BinarySensorEntity, EufySecurityEntity):
 class EufySecurityProductEntity(BinarySensorEntity, CoordinatorEntity):
     """Debug entity for integration"""
 
-    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, product: Product) -> None:
+    def __init__(
+        self, coordinator: EufySecurityDataUpdateCoordinator, product: Product
+    ) -> None:
         super().__init__(coordinator)
         self.product = product
         self.product.set_state_update_listener(coordinator.async_update_listeners)
 
-        self._attr_unique_id = f"{DOMAIN}_{self.product.product_type.value}_{self.product.serial_no}_debug"
+        self._attr_unique_id = (
+            f"{DOMAIN}_{self.product.product_type.value}_{self.product.serial_no}_debug"
+        )
         self._attr_should_poll = False
-        self._attr_name = f"{self.product.name} Debug ({self.product.product_type.value})"
+        self._attr_name = (
+            f"{self.product.name} Debug ({self.product.product_type.value})"
+        )
 
     @property
     def is_on(self):
@@ -65,7 +81,11 @@ class EufySecurityProductEntity(BinarySensorEntity, CoordinatorEntity):
     @property
     def extra_state_attributes(self):
         return {
-            "properties": self.product.properties,
+            "properties": {
+                i: self.product.properties[i]
+                for i in self.product.properties
+                if i != "picture"
+            },
             # "metadata": self.product.metadata_org,
             "commands": self.product.commands,
             "voices": self.product.voices if self.product.is_camera else None,

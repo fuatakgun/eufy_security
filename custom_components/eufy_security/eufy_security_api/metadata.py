@@ -1,7 +1,10 @@
 from dataclasses import dataclass, field
+import logging
 
 from .const import MessageField, PropertyType
 from typing import Any
+
+_LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 @dataclass
@@ -23,6 +26,7 @@ class Metadata:
     @classmethod
     def parse(cls, product: Any, data: dict):
         """generate Metadata from data dictionary"""
+
         return cls(
             name=data[MessageField.NAME.value],
             label=data[MessageField.LABEL.value],
