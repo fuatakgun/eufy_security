@@ -45,10 +45,10 @@ class Product:
 
     def _set_properties(self, properties: dict) -> None:
         self.properties = properties
-        self.name = properties[MessageField.NAME.value]
-        self.model = properties[MessageField.MODEL.value]
-        self.hardware_version = properties[MessageField.HARDWARE_VERSION.value]
-        self.software_version = properties[MessageField.SOFTWARE_VERSION.value]
+        self.name = properties.get(MessageField.NAME.value, "UNSUPPORTED")
+        self.model = properties.get(MessageField.MODEL.value, "UNSUPPORTED")
+        self.hardware_version = properties.get(MessageField.HARDWARE_VERSION.value, "UNSUPPORTED")
+        self.software_version = properties.get(MessageField.SOFTWARE_VERSION.value, "UNSUPPORTED")
 
     def _set_metadata(self, metadata: dict) -> None:
         self.metadata = {}
