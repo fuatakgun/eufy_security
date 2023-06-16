@@ -30,69 +30,41 @@ from .eufy_security_api.util import wait_for_value_to_equal
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Setup camera entities."""
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     product_properties = []
     for product in coordinator.devices.values():
         if product.is_camera is True:
-            product_properties.append(
-                Metadata.parse(product, {"name": "camera", "label": "Camera"})
-            )
+            product_properties.append(Metadata.parse(product, {"name": "camera", "label": "Camera"}))
 
-    entities = [
-        EufySecurityCamera(coordinator, metadata) for metadata in product_properties
-    ]
+    entities = [EufySecurityCamera(coordinator, metadata) for metadata in product_properties]
     async_add_entities(entities)
 
     # register entity level services
     platform = entity_platform.async_get_current_platform()
     platform.async_register_entity_service("generate_image", {}, "_generate_image")
-    platform.async_register_entity_service(
-        "start_p2p_livestream", {}, "_start_livestream"
-    )
-    platform.async_register_entity_service(
-        "stop_p2p_livestream", {}, "_stop_livestream"
-    )
-    platform.async_register_entity_service(
-        "start_rtsp_livestream", {}, "_start_rtsp_livestream"
-    )
-    platform.async_register_entity_service(
-        "stop_rtsp_livestream", {}, "_stop_rtsp_livestream"
-    )
-    platform.async_register_entity_service(
-        "ptz", Schema.PTZ_SERVICE_SCHEMA.value, "_async_ptz"
-    )
+    platform.async_register_entity_service("start_p2p_livestream", {}, "_start_livestream")
+    platform.async_register_entity_service("stop_p2p_livestream", {}, "_stop_livestream")
+    platform.async_register_entity_service("start_rtsp_livestream", {}, "_start_rtsp_livestream")
+    platform.async_register_entity_service("stop_rtsp_livestream", {}, "_stop_rtsp_livestream")
+    platform.async_register_entity_service("ptz", Schema.PTZ_SERVICE_SCHEMA.value, "_async_ptz")
     platform.async_register_entity_service("ptz_up", {}, "_async_ptz_up")
     platform.async_register_entity_service("ptz_down", {}, "_async_ptz_down")
     platform.async_register_entity_service("ptz_left", {}, "_async_ptz_left")
     platform.async_register_entity_service("ptz_right", {}, "_async_ptz_right")
     platform.async_register_entity_service("ptz_360", {}, "_async_ptz_360")
 
-    platform.async_register_entity_service(
-        "trigger_camera_alarm_with_duration",
-        Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value,
-        "_async_alarm_trigger",
-    )
+    platform.async_register_entity_service("trigger_camera_alarm_with_duration", Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value, "_async_alarm_trigger")
     platform.async_register_entity_service("reset_alarm", {}, "_async_reset_alarm")
-    platform.async_register_entity_service(
-        "quick_response",
-        Schema.QUICK_RESPONSE_SERVICE_SCHEMA.value,
-        "_async_quick_response",
-    )
+    platform.async_register_entity_service("quick_response", Schema.QUICK_RESPONSE_SERVICE_SCHEMA.value, "_async_quick_response")
     platform.async_register_entity_service("snooze", Schema.SNOOZE.value, "_snooze")
 
 
 class EufySecurityCamera(Camera, EufySecurityEntity):
     """Base camera entity for integration"""
 
-    def __init__(
-        self, coordinator: EufySecurityDataUpdateCoordinator, metadata: Metadata
-    ) -> None:
+    def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, metadata: Metadata) -> None:
         Camera.__init__(self)
         EufySecurityEntity.__init__(self, coordinator, metadata)
         self._attr_supported_features = CameraEntityFeature.STREAM
@@ -137,9 +109,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         return await super().async_create_stream()
 
     async def _start_hass_streaming(self):
-        await wait_for_value_to_equal(
-            self.product.__dict__, "stream_status", StreamStatus.STREAMING
-        )
+        await wait_for_value_to_equal(self.product.__dict__, "stream_status", StreamStatus.STREAMING)
         await self._stop_hass_streaming()
         await self.async_create_stream()
         if self.stream is not None:
@@ -167,45 +137,29 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def _get_image_from_stream_url(self, width, height):
         while True:
-            result = await ffmpeg.async_get_image(
-                self.hass, await self.stream_source(), width=width, height=height
-            )
+            result = await ffmpeg.async_get_image(self.hass, await self.stream_source(), width=width, height=height)
             if result is not None:
                 _LOGGER.debug(f"_get_image_from_stream_url - received {len(result)}")
                 return result
             _LOGGER.debug(f"_get_image_from_stream_url - is_empty {result is None}")
             await asyncio.sleep(STREAM_SLEEP_SECONDS)
 
-    async def async_camera_image(
-        self, width: int | None = None, height: int | None = None
-    ) -> bytes | None:
+    async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
         _LOGGER.debug(f"image 1 - {self.is_streaming} - {self.stream}")
         if self.is_streaming is True:
             if self.stream is not None:
                 with contextlib.suppress(asyncio.TimeoutError):
-                    self._last_image = await asyncio.wait_for(
-                        self._get_image_from_stream_url(width, height),
-                        STREAM_TIMEOUT_SECONDS,
-                    )
+                    self._last_image = await asyncio.wait_for(self._get_image_from_stream_url(width, height), STREAM_TIMEOUT_SECONDS)
                     # self._last_image = await asyncio.wait_for(self._get_image_from_hass_stream(width, height), STREAM_TIMEOUT_SECONDS)
-                _LOGGER.debug(
-                    f"image 2 with hass stream - is_empty  {self._last_image is None}"
-                )
+                _LOGGER.debug(f"image 2 with hass stream - is_empty  {self._last_image is None}")
             else:
                 with contextlib.suppress(asyncio.TimeoutError):
-                    self._last_image = await asyncio.wait_for(
-                        self._get_image_from_stream_url(width, height),
-                        STREAM_TIMEOUT_SECONDS,
-                    )
-                _LOGGER.debug(
-                    f"image 2 without hass stream - is_empty {self._last_image is None}"
-                )
+                    self._last_image = await asyncio.wait_for(self._get_image_from_stream_url(width, height), STREAM_TIMEOUT_SECONDS)
+                _LOGGER.debug(f"image 2 without hass stream - is_empty {self._last_image is None}")
 
         else:
             if self.product.picture_base64 is not None:
-                self._last_image = bytearray(
-                    self.product.picture_base64["data"]["data"]
-                )
+                self._last_image = bytearray(self.product.picture_base64["data"]["data"])
 
         _LOGGER.debug(f"async_camera_image 5 - is_empty {self._last_image is None}")
         if self._last_image is not None:
@@ -282,13 +236,5 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def _async_quick_response(self, voice_id: int) -> None:
         await self.product.quick_response(voice_id)
 
-    async def _snooze(
-        self,
-        snooze_time: int,
-        snooze_chime: bool,
-        snooze_motion: bool,
-        snooze_homebase: bool,
-    ) -> None:
-        await self.product.snooze(
-            snooze_time, snooze_chime, snooze_motion, snooze_homebase
-        )
+    async def _snooze(self, snooze_time: int, snooze_chime: bool, snooze_motion: bool, snooze_homebase: bool) -> None:
+        await self.product.snooze(snooze_time, snooze_chime, snooze_motion, snooze_homebase)

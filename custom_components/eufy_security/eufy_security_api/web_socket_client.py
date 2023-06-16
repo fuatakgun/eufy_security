@@ -6,7 +6,7 @@ import traceback
 
 import aiohttp
 
-from .exceptions import WebSocketConnectionError
+from .exceptions import WebSocketConnectionException
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -41,7 +41,7 @@ class WebSocketClient:
         try:
             self.socket = await self.session.ws_connect(f"ws://{self.host}:{self.port}", autoclose=False, autoping=True, heartbeat=60)
         except Exception as exc:
-            raise WebSocketConnectionError() from exc
+            raise WebSocketConnectionException() from exc
         self.task = self.loop.create_task(self._process_messages())
         self.task.add_done_callback(self._on_close)
         await self._on_open()
@@ -68,7 +68,6 @@ class WebSocketClient:
             if self.message_callback is not None:
                 await self.message_callback(message.json())
         except:
-            # printing stack trace
             traceback.print_exc()
 
     async def _on_error(self, error: Text = "Unspecified") -> None:
@@ -78,10 +77,10 @@ class WebSocketClient:
     def _on_close(self, future="") -> None:
         self.socket = None
         if self.close_callback is not None:
-            self.close_callback()
+            self.close_callback(future)
 
     async def send_message(self, message):
         """Send message to websocket"""
         if self.socket is None:
-            raise WebSocketConnectionError()
+            raise WebSocketConnectionException("Connection to add-on was broken. please reload the integration!")
         await self.socket.send_str(message)

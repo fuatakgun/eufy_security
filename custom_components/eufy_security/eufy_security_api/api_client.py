@@ -25,13 +25,13 @@ from .event import Event
 from .exceptions import (
     CaptchaRequiredException,
     DeviceNotInitializedYetException,
-    DriverNotConnectedError,
+    DriverNotConnectedException,
     FailedCommandException,
     IncompatibleVersionException,
     MultiFactorCodeRequiredException,
     UnexpectedMessageTypeException,
     UnknownEventSourceException,
-    WebSocketConnectionErrorException,
+    WebSocketConnectionException,
 )
 from .outgoing_message import OutgoingMessage, OutgoingMessageType
 from .product import Device, Product, Station
@@ -41,11 +41,10 @@ from .web_socket_client import WebSocketClient
 class ApiClient:
     """Client to communicate with eufy-security-ws over websocket connection"""
 
-    def __init__(self, config, session: aiohttp.ClientSession) -> None:
+    def __init__(self, config, session: aiohttp.ClientSession, on_error_callback) -> None:
         self._config = config
-        self._client: WebSocketClient = WebSocketClient(
-            self._config.host, self._config.port, session, self._on_open, self._on_message, self._on_close, self._on_error
-        )
+        self._client: WebSocketClient = WebSocketClient(self._config.host, self._config.port, session, self._on_open, self._on_message, self._on_close, self._on_error)
+        self._on_error_callback = on_error_callback
         self._result_futures: dict[str, asyncio.Future] = {}
         self._devices: dict = None
         self._stations: dict = None
@@ -91,7 +90,7 @@ class ApiClient:
         except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError) as exc:
             _LOGGER.debug(f"_check_interactive_mode 4")
             await self._connect_driver()
-            raise DriverNotConnectedError() from exc
+            raise DriverNotConnectedException() from exc
 
     async def _set_products(self) -> None:
         _LOGGER.debug(f"_set_products 1")
@@ -119,9 +118,7 @@ class ApiClient:
                     is_rtsp_streaming = await self._get_is_rtsp_streaming(product_type, serial_no)
                     is_p2p_streaming = await self._get_is_p2p_streaming(product_type, serial_no)
                     voices = await self._get_voices(product_type, serial_no)
-                    product = Camera(
-                        self, serial_no, properties, metadata, commands, self._config, is_rtsp_streaming, is_p2p_streaming, voices
-                    )
+                    product = Camera(self, serial_no, properties, metadata, commands, self._config, is_rtsp_streaming, is_p2p_streaming, voices)
                 else:
                     product = Device(self, serial_no, properties, metadata, commands)
             else:
@@ -165,49 +162,35 @@ class ApiClient:
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.poll_refresh))
 
     async def _set_captcha(self, captcha_id: str, captcha_input: str) -> None:
-        await self._send_message_get_response(
-            OutgoingMessage(OutgoingMessageType.set_captcha, captcha_id=captcha_id, captcha_input=captcha_input)
-        )
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_captcha, captcha_id=captcha_id, captcha_input=captcha_input))
 
     async def _set_mfa_code(self, mfa_input: str) -> None:
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_verify_code, verify_code=mfa_input))
 
     # product (both device and station) level commands
     async def _get_metadata(self, product_type: ProductType, serial_no: str) -> dict:
-        result = await self._send_message_get_response(
-            OutgoingMessage(OutgoingMessageType.get_properties_metadata, domain=product_type.name, serial_no=serial_no)
-        )
+        result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.get_properties_metadata, domain=product_type.name, serial_no=serial_no))
         return result[MessageField.PROPERTIES.value]
 
     async def _get_properties(self, product_type: ProductType, serial_no: str) -> dict:
-        result = await self._send_message_get_response(
-            OutgoingMessage(OutgoingMessageType.get_properties, domain=product_type.name, serial_no=serial_no)
-        )
+        result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.get_properties, domain=product_type.name, serial_no=serial_no))
         return result[MessageField.PROPERTIES.value]
 
     async def _get_commands(self, product_type: ProductType, serial_no: str) -> dict:
-        result = await self._send_message_get_response(
-            OutgoingMessage(OutgoingMessageType.get_commands, domain=product_type.name, serial_no=serial_no)
-        )
+        result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.get_commands, domain=product_type.name, serial_no=serial_no))
         return result[MessageField.COMMANDS.value]
 
     async def set_property(self, product_type: ProductType, serial_no: str, name: str, value: Any) -> None:
         """Process set property call"""
-        await self._send_message_get_response(
-            OutgoingMessage(OutgoingMessageType.set_property, domain=product_type.name, serial_no=serial_no, name=name, value=value)
-        )
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_property, domain=product_type.name, serial_no=serial_no, name=name, value=value))
 
     async def trigger_alarm(self, product_type: ProductType, serial_no: str, duration: int) -> None:
         """Process trigger alarm call"""
-        await self._send_message_get_response(
-            OutgoingMessage(OutgoingMessageType.trigger_alarm, domain=product_type.name, serial_no=serial_no, seconds=duration)
-        )
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.trigger_alarm, domain=product_type.name, serial_no=serial_no, seconds=duration))
 
     async def reset_alarm(self, product_type: ProductType, serial_no: str) -> None:
         """Process reset alarm call"""
-        await self._send_message_get_response(
-            OutgoingMessage(OutgoingMessageType.reset_alarm, domain=product_type.name, serial_no=serial_no)
-        )
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.reset_alarm, domain=product_type.name, serial_no=serial_no))
 
     # device level commands
     async def pan_and_tilt(self, product_type: ProductType, serial_no: str, direction: int) -> None:
@@ -239,29 +222,16 @@ class ApiClient:
         return result[MessageField.LIVE_STREAMING.value]
 
     async def _get_voices(self, product_type: ProductType, serial_no: str) -> dict:
-        result = await self._send_message_get_response(
-            OutgoingMessage(OutgoingMessageType.get_voices, domain=product_type.name, serial_no=serial_no)
-        )
+        result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.get_voices, domain=product_type.name, serial_no=serial_no))
         return result[MessageField.VOICES.value]
 
     async def quick_response(self, product_type: ProductType, serial_no: str, voice_id: int) -> None:
         """Process quick response for doorbell"""
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.quick_response, serial_no=serial_no, voice_id=voice_id))
 
-    async def snooze(
-        self, product_type: ProductType, serial_no: str, snooze_time: int, snooze_chime: bool, snooze_motion: bool, snooze_homebase: bool
-    ) -> None:
+    async def snooze(self, product_type: ProductType, serial_no: str, snooze_time: int, snooze_chime: bool, snooze_motion: bool, snooze_homebase: bool) -> None:
         """Process snooze for devices ans stations"""
-        await self._send_message_get_response(
-            OutgoingMessage(
-                OutgoingMessageType.snooze,
-                serial_no=serial_no,
-                snooze_time=snooze_time,
-                snooze_chime=snooze_chime,
-                snooze_motion=snooze_motion,
-                snooze_homebase=snooze_homebase,
-            )
-        )
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.snooze, serial_no=serial_no, snooze_time=snooze_time, snooze_chime=snooze_chime, snooze_motion=snooze_motion, snooze_homebase=snooze_homebase))
 
     async def verify_pin(self, product_type: ProductType, serial_no: str, pin: str) -> None:
         """verify pin for safe product"""
@@ -296,13 +266,9 @@ class ApiClient:
                 future.set_result(message[IncomingMessageType.result.name])
                 return
 
-            future.set_exception(
-                FailedCommandException(message[MessageField.MESSAGE_ID.value], message[MessageField.ERROR_CODE.value], message)
-            )
+            future.set_exception(FailedCommandException(message[MessageField.MESSAGE_ID.value], message[MessageField.ERROR_CODE.value], message))
         elif message[MessageField.TYPE.value] == IncomingMessageType.event.name:
-            event: Event = Event(
-                type=message[IncomingMessageType.event.name][IncomingMessageType.event.name], data=message[IncomingMessageType.event.name]
-            )
+            event: Event = Event(type=message[IncomingMessageType.event.name][IncomingMessageType.event.name], data=message[IncomingMessageType.event.name])
             await self._handle_event(event)
         elif message[MessageField.TYPE.value] == IncomingMessageType.version.name:
             if SCHEMA_VERSION > message["maxSchemaVersion"]:
@@ -335,12 +301,16 @@ class ApiClient:
     async def _on_open(self) -> None:
         _LOGGER.debug("on_open - executed")
 
-    def _on_close(self) -> None:
-        _LOGGER.debug("on_close - executed")
+    def _on_close(self, future="") -> None:
+        _LOGGER.debug(f"on_close - executed - {future} = {future.exception()}")
+        self._on_error_callback(future)
+        if future.exception() is not None:
+            _LOGGER.debug(f"on_close - executed - {future.exception()}")
+            raise future.exception()
 
     async def _on_error(self, error: str) -> None:
         _LOGGER.error(f"on_error - {error}")
-        raise WebSocketConnectionErrorException(error)
+        raise WebSocketConnectionException(error)
 
     async def _send_message_get_response(self, message: OutgoingMessage) -> dict:
         future: "asyncio.Future[dict]" = asyncio.get_event_loop().create_future()

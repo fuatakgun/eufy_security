@@ -8,6 +8,8 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 SCHEMA_VERSION = 17
 
+UNSUPPORTED = "Unsupported"
+
 
 class MessageField(Enum):
     """Incoming or outgoing message field types"""

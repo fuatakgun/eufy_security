@@ -8,11 +8,7 @@ class BaseEufySecurityException(Exception):
     """Base exception for module."""
 
 
-class WebSocketConnectionError(BaseEufySecurityException):
-    """Websocket connection exception"""
-
-
-class DriverNotConnectedError(BaseEufySecurityException):
+class DriverNotConnectedException(BaseEufySecurityException):
     """Driver connection exception"""
 
 
@@ -25,7 +21,7 @@ class FailedCommandException(BaseEufySecurityException):
         self.error_code = error_code
 
 
-class WebSocketConnectionErrorException(BaseEufySecurityException):
+class WebSocketConnectionException(BaseEufySecurityException):
     """Web socket connection exception."""
 
     def __init__(self, msg: str) -> None:
@@ -36,9 +32,7 @@ class IncompatibleVersionException(BaseEufySecurityException):
     """Incompatible version exception."""
 
     def __init__(self, supported_version: int, required_version: int) -> None:
-        super().__init__(
-            f"Eufy-Security-WS max supported version {supported_version} is lower than expected version {required_version}, update the add-on"
-        )
+        super().__init__(f"Eufy-Security-WS max supported version {supported_version} is lower than expected version {required_version}, update the add-on")
         self.supported_version = supported_version
         self.required_version = required_version
 
