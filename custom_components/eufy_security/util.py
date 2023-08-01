@@ -60,7 +60,6 @@ def get_device_info(product):
         "identifiers": {(DOMAIN, product.serial_no)},
         "name": product.name,
         "model": product.model,
-        "hardware": product.hardware_version,
-        "software": product.software_version,
+        "sw_version": product.software_version,
         "manufacturer": NAME,
     }
