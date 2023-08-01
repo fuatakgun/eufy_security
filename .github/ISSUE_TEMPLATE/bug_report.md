@@ -42,15 +42,15 @@ Hardware Information;
 - Live Streaming Protocol (RTSP/P2P): 
 
 
-- Debug Logs from Home Assistant (https://github.com/fuatakgun/eufy_security/discussions/624)
-- 
+- Debug Logs from Home Assistant (https://github.com/fuatakgun/eufy_security/discussions/624) - Without this, I will automatically resolve this issue
+  
 
 - Logs from Eufy Security Add-on (either from Add-ons page of Home Assistant or Docker output):
 
 
-- Would you share your device with me in case further debugging required? (Yes/No): 
+- Would you share your device with me in case further debugging required? (Yes/No):
 
 
 **Additional context**
 
-Add any other context about the problem goes here.
+Add any other context about the problem goes here. Mainly, share everything as log files and use screenshots as last resort.
