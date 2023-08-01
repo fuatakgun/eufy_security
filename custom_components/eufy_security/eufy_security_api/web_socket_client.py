@@ -41,7 +41,7 @@ class WebSocketClient:
         try:
             self.socket = await self.session.ws_connect(f"ws://{self.host}:{self.port}", autoclose=False, autoping=True, heartbeat=60)
         except Exception as exc:
-            raise WebSocketConnectionException() from exc
+            raise WebSocketConnectionException("Connection to add-on was broken. please reload the integration!") from exc
         self.task = self.loop.create_task(self._process_messages())
         self.task.add_done_callback(self._on_close)
         await self._on_open()

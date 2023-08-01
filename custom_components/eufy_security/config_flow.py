@@ -109,7 +109,7 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def _test_credentials(self, host, port):  # pylint: disable=unused-argument
         try:
             config = Config(host=host, port=port)
-            api_client: ApiClient = ApiClient(config, aiohttp_client.async_get_clientsession(self.hass))
+            api_client: ApiClient = ApiClient(config, aiohttp_client.async_get_clientsession(self.hass), None)
             await api_client.ws_connect()
             await api_client.disconnect()
             return True

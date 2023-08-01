@@ -2,8 +2,10 @@ Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congra
 
 - [Gratitude](#gratitude)
 - [How is this working?](#how-is-this-working)
+  - [RTSP Based Streaming - When your devices support RTSP](#rtsp-based-streaming---when-your-devices-support-rtsp)
 - [Supported or Known Working devices](#supported-or-known-working-devices)
 - [Installation](#installation)
+    - [Important: You must set Streaming Quality to LOW and Streaming Codec to LOW in all possible places, otherwise Home Assistant will not be able to handle video generation and/or playing.](#important-you-must-set-streaming-quality-to-low-and-streaming-codec-to-low-in-all-possible-places-otherwise-home-assistant-will-not-be-able-to-handle-video-generation-andor-playing)
   - [1. Installing Eufy Security Add-On](#1-installing-eufy-security-add-on)
   - [2. Install RTSP Simple Server Add-on - Required for P2P Based Video Streaming - Not Required for RTSP Based Video Streaming](#2-install-rtsp-simple-server-add-on---required-for-p2p-based-video-streaming---not-required-for-rtsp-based-video-streaming)
   - [3. Installing Eufy Security Integration](#3-installing-eufy-security-integration)
@@ -24,13 +26,45 @@ Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congra
 
 # How is this working?
 
-- @bropat built `eufy-security-ws` using `eufy-security-client` to imitate mobile app and web portal functionalities and I had wrapped `eufy-security-ws` as `eufy_security_addon` so we can use it as Home Assistant Add-on.
+- @bropat built `eufy-security-ws` using `eufy-security-client` to imitate mobile app and web portal functionalities and wrapped `eufy-security-ws` as `hassio-eufy-security-ws` so we can use it as Home Assistant Add-on.
 - Add-on requires email address, password, country code, event duration in seconds and trusted device name.
 - Every time add-on is started, it forces all other sessions to log off, so you must create a secondary account and share your home/devices with secondary account including admin rights and you must use secondary account credentials on add-on page. Please login once to eufy mobile app with this secondary account to be sure that devices are available.
 - Country code is very crucial to connect to correct regional servers. If your main account has setup in US and if you are trying to login into your secondary account in DE country, your device data would not be found in EU servers. So please pay attention to put correct country code. (Source: Alpha 2 country code https://en.wikipedia.org/wiki/ISO_3166-1#Officially_assigned_code_elements)
 - Event duration in seconds correspond to how long (in seconds) entities in home assistant would stay in active. As an example, when camera notices a person, add-on would receive a push notification from eufy and home assistant integration will active person detected sensor and person detected sensor will stay on state for `event duration in seconds` long.
 - Trusted device name is a required identifier for eufy systems to record this add-on as mobile client, so you can differentiate the connection from this add-on in multi factor authentication (two factor authentication) page.
 - As we already called out earlier, add-on heavily relies on push notifications, so you must enable all kind of push notifications (motion detected, person detected, lock events, alarm events etc) in your mobile app. These notifications are not user based but device based so after enabling all these notifications, your main account will probably bloated with many push notifications. In android, there is a setting to disable specific notifications, please use it. 
+
+## RTSP Based Streaming - When your devices support RTSP
+
+```mermaid
+sequenceDiagram
+    Home Assistant ->> Eufy-Security-WS: Call Start RTSP Stream
+    Eufy-Security-WS ->> Device/Station: Call Start RTSP Stream
+    Device/Station ->> Eufy-Security-WS: Return RTSP Stream URL
+    Eufy-Security-WS ->> Home Assistant: Return RTSP Stream URL
+    Home Assistant ->> Device/Station: (Native) Watch Video
+    WebRTC (go2rtc) ->> Device/Station: Get RTSP Stream Bytes
+    WebRTC (go2rtc) ->> WebRTC (go2rtc): Generate WebRTC Video
+    Home Assistant ->> WebRTC (go2rtc): (WebRTC) Watch Video
+```
+
+P2P Based Streaming - When we have to generate the stream in hard way
+
+```mermaid
+sequenceDiagram
+    Home Assistant ->> Eufy-Security-WS: Call Start Live Stream
+    Eufy-Security-WS ->> Device/Station: Call Start Live Stream
+    Device/Station ->> Eufy-Security-WS: Return data bytes from stream
+    Eufy-Security-WS ->> Home Assistant: Return data bytes from stream
+    Home Assistant ->> Random TCP Port: Write data bytes from stream
+    Random TCP Port ->> FFMPEG Process : Write individiual bytes of stream
+    FFMPEG Process ->> RTSP Simple Server: Generate Video Stream via codec
+    RTSP Simple Server ->> RTSP Simple Server: Generate RTSP Stream (rtsp://127.0.0.1:9554/SERIALNO)
+    Home Assistant ->> RTSP Simple Server: (Native) Watch Video
+    WebRTC (go2rtc) ->> RTSP Simple Server: Get RTSP Stream Bytes
+    WebRTC (go2rtc) ->> WebRTC (go2rtc): Generate WebRTC Video
+    Home Assistant ->> WebRTC (go2rtc): (WebRTC) Watch Video
+```
 
 # Supported or Known Working devices
 
@@ -49,6 +83,8 @@ If you are intending to use this integration for video streaming purposes and if
 If you are intending to use this integration for video streaming purposes and if your camera supports RTSP, you will probabaly enjoy reliable stream because generating RTSP stream is responsibility of hardware and it is very much reliable than P2P based streaming. There is no need to convert incoming P2P bytes into RTSP stream. There are some modified version of Android apk of Eufy Security out there which could enable RTSP stream for unsupported devices but I have not tried it. Moreover, I do not own personally a P2P required device, that is because, many times, I cannot replicate your issues locally and we need to work together to debug these issues.
 
 Lastly, your camera would not start streaming magically by itself, you have to call `turn_on` or `turn_off` services of respective camera entities. So, when you first install everything, you would not have any video until you call these functions. Moreover, P2P streaming might stop randomly because of low level issues, you can restart it again with `turn_off` and `turn_on`. You can trigger your automations on camera states (idle, preparing, streaming).
+
+### Important: You must set Streaming Quality to LOW and Streaming Codec to LOW in all possible places, otherwise Home Assistant will not be able to handle video generation and/or playing. ###
 
 So, let's start.
 
