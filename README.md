@@ -47,7 +47,7 @@ sequenceDiagram
     Home Assistant ->> WebRTC (go2rtc): (WebRTC) Watch Video
 ```
 
-P2P Based Streaming - When we have to generate the stream in hard way
+## P2P Based Streaming - When we have to generate the stream in hard way
 
 ```mermaid
 sequenceDiagram
