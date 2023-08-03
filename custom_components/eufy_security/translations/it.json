@@ -13,7 +13,7 @@
         "title": "Eufy Security: Captcha",
         "description": "{captcha_img}",
         "data": {
-          "captcha": "Captcha"
+          "captcha_input": "Captcha"
         }
       }
     },
@@ -30,7 +30,6 @@
         "title": "Eufy Security: Configurazione",
         "data": {
           "sync_interval": "Intervallo scansione cloud in secondi [da 1 a 9999]",
-          "use_rtsp_server_addon": "Usa componente aggiuntivo RTSP (P2P)",
           "rtsp_server_address": "Indirizzo IP host per aggiunta RTSP (P2P)",
           "rtsp_server_port": "Porta TCP per aggiunta RTSP (P2P)",
           "ffmpeg_analyze_duration": "Durata analisi video in secondi [da 1 a 5] (P2P)",

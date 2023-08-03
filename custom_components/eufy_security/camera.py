@@ -73,6 +73,8 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         # camera image
         self._last_url = None
         self._last_image = None
+        if self.product.picture_base64 is not None:
+            self._last_image = bytearray(self.product.picture_base64["data"]["data"])
 
         # ffmpeg entities
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]
@@ -126,15 +128,6 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         """Return true if the device is recording."""
         return self.product.stream_status == StreamStatus.STREAMING
 
-    async def _get_image_from_hass_stream(self, width, height):
-        while True:
-            result = await self.stream.async_get_image(width, height)
-            if result is not None:
-                _LOGGER.debug(f"_get_image_from_hass_stream - received {len(result)}")
-                return result
-            _LOGGER.debug(f"_get_image_from_hass_stream - is_empty {result is None}")
-            await asyncio.sleep(STREAM_SLEEP_SECONDS)
-
     async def _get_image_from_stream_url(self, width, height):
         while True:
             result = await ffmpeg.async_get_image(self.hass, await self.stream_source(), width=width, height=height)
@@ -147,19 +140,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
         _LOGGER.debug(f"image 1 - {self.is_streaming} - {self.stream}")
         if self.is_streaming is True:
-            if self.stream is not None:
-                with contextlib.suppress(asyncio.TimeoutError):
-                    self._last_image = await asyncio.wait_for(self._get_image_from_stream_url(width, height), STREAM_TIMEOUT_SECONDS)
-                    # self._last_image = await asyncio.wait_for(self._get_image_from_hass_stream(width, height), STREAM_TIMEOUT_SECONDS)
-                _LOGGER.debug(f"image 2 with hass stream - is_empty  {self._last_image is None}")
-            else:
-                with contextlib.suppress(asyncio.TimeoutError):
-                    self._last_image = await asyncio.wait_for(self._get_image_from_stream_url(width, height), STREAM_TIMEOUT_SECONDS)
-                _LOGGER.debug(f"image 2 without hass stream - is_empty {self._last_image is None}")
-
-        else:
-            if self.product.picture_base64 is not None:
-                self._last_image = bytearray(self.product.picture_base64["data"]["data"])
+            with contextlib.suppress(asyncio.TimeoutError):
+                self._last_image = await asyncio.wait_for(self._get_image_from_stream_url(width, height), STREAM_TIMEOUT_SECONDS)
+            _LOGGER.debug(f"image 2 - is_empty {self._last_image is None}")
 
         _LOGGER.debug(f"async_camera_image 5 - is_empty {self._last_image is None}")
         if self._last_image is not None:

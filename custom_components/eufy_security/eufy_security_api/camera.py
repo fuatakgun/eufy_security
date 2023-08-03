@@ -161,24 +161,27 @@ class Camera(Device):
         self.set_stream_prodiver(StreamProvider.RTSP)
         self.stream_status = StreamStatus.PREPARING
         await self.api.start_rtsp_livestream(self.product_type, self.serial_no)
-        with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(self.rtsp_started_event.wait(), 5)
 
-        if self.rtsp_started_event.is_set() is False:
+        try:
+            await asyncio.wait_for(self.rtsp_started_event.wait(), 5)
+        except asyncio.TimeoutError:
             return False
 
         try:
+            self.stream_status = StreamStatus.STREAMING
             await asyncio.wait_for(self._is_stream_url_ready(), 5)
+            _LOGGER.debug(f"start_rtsp_livestream - 2 - try success - {self.stream_status}")
+            return True
         except asyncio.TimeoutError:
+            _LOGGER.debug("start_rtsp_livestream - 2 - try timeout")
             return False
-        self.stream_status = StreamStatus.STREAMING
-        return True
 
     async def stop_rtsp_livestream(self):
         """Process stop rtsp livestream call"""
         await self.api.stop_rtsp_livestream(self.product_type, self.serial_no)
 
     async def ptz(self, direction: str) -> None:
+        """Parameterized PTZ function"""
         await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand[direction].value)
 
     async def ptz_up(self) -> None:
@@ -228,17 +231,17 @@ class Camera(Device):
     def set_stream_prodiver(self, stream_provider: StreamProvider) -> None:
         """Set stream provider for camera instance"""
         self.stream_provider = stream_provider
+        url = self.stream_provider.value
 
         if self.stream_provider == StreamProvider.RTSP:
-            url = self.stream_provider.value
-            if self.is_rtsp_enabled is True:
-                self.stream_url = url.replace("{rtsp_stream_url}", self.rtsp_stream_url)
-            else:
+            if self.is_rtsp_enabled is False:
                 if self.is_rtsp_supported is False:
                     raise CameraRTSPStreamNotSupported(self.name)
                 raise CameraRTSPStreamNotEnabled(self.name)
+
+            self.stream_url = url.replace("{rtsp_stream_url}", self.rtsp_stream_url)
+
         elif self.stream_provider == StreamProvider.P2P:
-            url = self.stream_provider.value
             _LOGGER.debug(f"{self.p2p_stream_handler.port}")
             url = url.replace("{serial_no}", str(self.serial_no))
             url = url.replace("{server_address}", str(self.config.rtsp_server_address))

@@ -13,7 +13,7 @@
         "title": "Eufy Security: Captcha",
         "description": "{captcha_img}",
         "data": {
-          "captcha": "Captcha"
+          "captcha_input": "Captcha"
         }
       }
     },

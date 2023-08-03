@@ -33,6 +33,7 @@ PLATFORMS: list[str] = [
     Platform.NUMBER,
     Platform.CAMERA,
     Platform.BUTTON,
+    Platform.IMAGE,
 ]
 
 
@@ -61,9 +62,7 @@ class PropertyToEntityDescription(Enum):
     camera = EntityDescription(id=auto())
 
     # device sensor
-    battery = EntityDescription(
-        id=auto(), state_class=SensorStateClass.MEASUREMENT, device_class=SensorDeviceClass.BATTERY, category=EntityCategory.DIAGNOSTIC
-    )
+    battery = EntityDescription(id=auto(), state_class=SensorStateClass.MEASUREMENT, device_class=SensorDeviceClass.BATTERY, category=EntityCategory.DIAGNOSTIC)
     batteryTemperature = EntityDescription(id=auto(), device_class=SensorDeviceClass.TEMPERATURE, category=EntityCategory.DIAGNOSTIC)
     lastChargingDays = EntityDescription(id=auto(), unit="d", category=EntityCategory.DIAGNOSTIC)
     wifiRssi = EntityDescription(id=auto(), device_class=SensorDeviceClass.SIGNAL_STRENGTH, category=EntityCategory.DIAGNOSTIC)

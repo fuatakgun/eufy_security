@@ -135,6 +135,7 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                             vol.Required(ConfigField.mfa_input.name): str,
                         }
                     ),
+                    description_placeholders={"captcha_img": 'Enter Multi Factor Authentication Code'},
                 )
             else:
                 return self.async_show_form(

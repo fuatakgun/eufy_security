@@ -2,7 +2,6 @@ Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congra
 
 - [Gratitude](#gratitude)
 - [How is this working?](#how-is-this-working)
-  - [RTSP Based Streaming - When your devices support RTSP](#rtsp-based-streaming---when-your-devices-support-rtsp)
 - [Supported or Known Working devices](#supported-or-known-working-devices)
 - [Installation](#installation)
     - [Important: You must set Streaming Quality to LOW and Streaming Codec to LOW in all possible places, otherwise Home Assistant will not be able to handle video generation and/or playing.](#important-you-must-set-streaming-quality-to-low-and-streaming-codec-to-low-in-all-possible-places-otherwise-home-assistant-will-not-be-able-to-handle-video-generation-andor-playing)
@@ -33,7 +32,7 @@ Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congra
 - Trusted device name is a required identifier for Eufy systems to record this add-on as mobile client, so you can differentiate the connection from this add-on in multi factor authentication (two factor authentication) page.
 - As we already called out earlier, add-on heavily relies on push notifications, so you must enable all kind of push notifications (motion detected, person detected, lock events, alarm events etc) in your mobile app. These notifications are not user based but device based so after enabling all these notifications, your main account will probably bloated with many push notifications. In android, there is a setting to disable specific notifications, please use it.
 
-## RTSP Based Streaming - When your devices support RTSP
+RTSP Based Streaming - When your devices support RTSP
 
 ```mermaid
 sequenceDiagram
@@ -47,7 +46,7 @@ sequenceDiagram
     Home Assistant ->> WebRTC (go2rtc): (WebRTC) Watch Video
 ```
 
-## P2P Based Streaming - When we have to generate the stream in hard way
+P2P Based Streaming - When we have to generate the stream in hard way
 
 ```mermaid
 sequenceDiagram
