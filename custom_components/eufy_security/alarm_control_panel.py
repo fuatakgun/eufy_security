@@ -38,7 +38,6 @@ class CurrentModeToState(Enum):
     GEOFENCE = 47
     DISARMED = 63
 
-
 class CurrentModeToStateValue(Enum):
     """Alarm Entity Mode to State Value"""
 
@@ -103,6 +102,11 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         """Get guard mode metadata for device"""
         return self.product.metadata[MessageField.GUARD_MODE.value]
 
+    @property
+    def guard_mode(self) -> Metadata:
+        """Get guard mode for device"""
+        return get_child_value(self.product.properties, MessageField.GUARD_MODE.value)
+
     async def _set_guard_mode(self, target_mode: CurrentModeToState):
         await self.product.set_property(self.guard_mode_metadata, target_mode.value)
 
@@ -160,7 +164,15 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         triggered = get_child_value(self.product.properties, "alarm")
         if triggered is True:
             return CurrentModeToStateValue.TRIGGERED.value
-        current_mode = get_child_value(self.product.properties, self.metadata.name, -1)
+        current_mode = get_child_value(self.product.properties, self.metadata.name, CurrentModeToState.NONE.value)
+
+        if current_mode == CurrentModeToState.NONE.value:
+            try:
+                _LOGGER.debug(f"alarm_control_panel current_mode {current_mode} is missing, defaulting to guard_mode {self.guard_mode}")
+                current_mode = CurrentModeToState(self.guard_mode)
+            except ValueError:
+                pass
+
         if current_mode == KEYPAD_OFF_CODE:
             return CurrentModeToStateValue[CurrentModeToState.DISARMED.name].value
         if current_mode in CUSTOM_CODES:
