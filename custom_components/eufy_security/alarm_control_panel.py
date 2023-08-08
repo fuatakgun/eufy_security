@@ -82,7 +82,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("reboot", {}, "async_reboot")
     platform.async_register_entity_service("alarm_off", {}, "async_alarm_off")
 
-
  
 
 class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity):
@@ -100,7 +99,7 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
             | AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
             | AlarmControlPanelEntityFeature.ARM_NIGHT
             | AlarmControlPanelEntityFeature.ARM_VACATION
-            
+  
         )
 
     @property
