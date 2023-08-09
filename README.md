@@ -161,17 +161,8 @@ cards:
       - entity: camera.entrance
         state: idle
     card:
-      show_state: true
-      show_name: true
-      type: picture-entity
-      entity: camera.entrance
-      camera_image: camera.entrance
-      tap_action:
-        action: call-service
-        service: camera.turn_on
-        data: {}
-        target:
-          entity_id: camera.entrance
+      type: picture
+      image_entity: image.entrance_event_image
   - type: conditional
     conditions:
       - entity: camera.entrance
@@ -250,7 +241,7 @@ ptz:
 
 # Example Automation
 
-## Start streaming on camera, when there is a motion, this would generate a new thumbnail on Home Assistant
+## Send notification with thumbnail from home assistant
 
 Replace `camera.entrance` with your own entity name.
 
@@ -281,23 +272,11 @@ action:
           - condition: trigger
             id: sensor
         sequence:
-          - service: eufy_security.start_p2p_livestream
-            data: {}
-            target:
-              entity_id: camera.entrance
-          - service: eufy_security.generate_image
-            data: {}
-            target:
-              entity_id: camera.entrance
-          - service: eufy_security.stop_p2p_livestream
-            data: {}
-            target:
-              entity_id: camera.entrance
           - service: notify.mobile_app_fuatx3pro
             data:
               message: Motion detected
               data:
-                image: /api/camera_proxy/camera.entrance
+                image: /api/image_proxy/image.entrance_event_image
                 actions:
                   - action: ALARM
                     title: Alarm
