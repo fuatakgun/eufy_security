@@ -172,17 +172,15 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         triggered = get_child_value(self.product.properties, "alarm")
         if triggered is True:
             return CurrentModeToStateValue.TRIGGERED.value
-        current_mode = get_child_value(self.product.properties, self.metadata.name, CurrentModeToState.NONE.value)
+        current_mode = get_child_value(self.product.properties, self.metadata.name, CurrentModeToState(self.guard_mode))
 
         if current_mode == CurrentModeToState.NONE.value:
             try:
                 _LOGGER.debug(f"alarm_control_panel current_mode {current_mode} is missing, defaulting to guard_mode {self.guard_mode}")
-                current_mode = CurrentModeToState(self.guard_mode)
-            except ValueError:
-                pass
+                does_state_exist = CurrentModeToStateValue[CurrentModeToState(current_mode).name].value
+            except ValueError, KeyError:
+                current_mode = CurrentModeToState.NONE.value
 
-        #if current_mode == KEYPAD_OFF_CODE:
-        #    return CurrentModeToStateValue[CurrentModeToState.DISARMED.name].value
         if current_mode in CUSTOM_CODES:
             position = CUSTOM_CODES.index(current_mode)
             if position == 0:
