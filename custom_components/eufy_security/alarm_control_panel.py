@@ -8,7 +8,7 @@ from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_ALARM_ARMED_AWAY, STATE_ALARM_ARMED_HOME, STATE_ALARM_DISARMED, STATE_ALARM_TRIGGERED
+from homeassistant.const import STATE_ALARM_ARMED_AWAY, STATE_ALARM_ARMED_HOME, STATE_ALARM_DISARMED, STATE_ALARM_TRIGGERED, STATE_OFF
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -22,7 +22,7 @@ from .eufy_security_api.util import get_child_value
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-KEYPAD_OFF_CODE = 6
+#KEYPAD_OFF_CODE = 6
 
 
 class CurrentModeToState(Enum):
@@ -35,6 +35,7 @@ class CurrentModeToState(Enum):
     CUSTOM_BYPASS = 3
     NIGHT = 4
     VACATION = 5
+    OFF = 6
     GEOFENCE = 47
     DISARMED = 63
 
@@ -48,6 +49,7 @@ class CurrentModeToStateValue(Enum):
     NIGHT = auto()
     VACATION = auto()
     DISARMED = STATE_ALARM_DISARMED
+    OFF = STATE_OFF
     TRIGGERED = STATE_ALARM_TRIGGERED
     ALARM_DELAYED = "Alarm delayed"
 
@@ -78,7 +80,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("schedule", {}, "schedule")
     platform.async_register_entity_service("chime", Schema.CHIME_SERVICE_SCHEMA.value, "chime")
     platform.async_register_entity_service("reboot", {}, "async_reboot")
+    platform.async_register_entity_service("alarm_off", {}, "async_alarm_off")
 
+ 
 
 class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity):
     """Base alarm control panel entity for integration"""
@@ -95,6 +99,7 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
             | AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
             | AlarmControlPanelEntityFeature.ARM_NIGHT
             | AlarmControlPanelEntityFeature.ARM_VACATION
+  
         )
 
     @property
@@ -112,6 +117,9 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
 
     async def async_alarm_disarm(self, code: str | None = None) -> None:
         await self._set_guard_mode(CurrentModeToState.DISARMED)
+
+    async def async_alarm_off(self, code: str | None = None) -> None:
+        await self._set_guard_mode(CurrentModeToState.OFF)
 
     async def async_alarm_arm_home(self, code: str | None = None) -> None:
         await self._set_guard_mode(CurrentModeToState.HOME)
@@ -173,8 +181,8 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
             except ValueError:
                 pass
 
-        if current_mode == KEYPAD_OFF_CODE:
-            return CurrentModeToStateValue[CurrentModeToState.DISARMED.name].value
+        #if current_mode == KEYPAD_OFF_CODE:
+        #    return CurrentModeToStateValue[CurrentModeToState.DISARMED.name].value
         if current_mode in CUSTOM_CODES:
             position = CUSTOM_CODES.index(current_mode)
             if position == 0:
