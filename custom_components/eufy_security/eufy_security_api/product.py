@@ -37,7 +37,7 @@ class Product:
 
     def _set_properties(self, properties: dict) -> None:
         self.properties = properties
-        _LOGGER.debug(f"_set_properties -{self.serial_no} - {properties}")
+        _LOGGER.debug(f"_set_properties -{self.serial_no} - {str(properties)[0:5000]}")
         self.name = properties.get(MessageField.NAME.value, "UNSUPPORTED")
         self.model = properties.get(MessageField.MODEL.value, "UNSUPPORTED")
         self.hardware_version = properties.get(MessageField.HARDWARE_VERSION.value, "UNSUPPORTED")

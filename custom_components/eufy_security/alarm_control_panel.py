@@ -82,7 +82,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("reboot", {}, "async_reboot")
     platform.async_register_entity_service("alarm_off", {}, "async_alarm_off")
 
- 
+
 
 class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity):
     """Base alarm control panel entity for integration"""
@@ -99,7 +99,7 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
             | AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
             | AlarmControlPanelEntityFeature.ARM_NIGHT
             | AlarmControlPanelEntityFeature.ARM_VACATION
-  
+
         )
 
     @property
@@ -169,20 +169,16 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         alarm_delayed = get_child_value(self.product.properties, "alarmDelay", 0)
         if alarm_delayed > 0:
             return CurrentModeToStateValue.ALARM_DELAYED.value
+
         triggered = get_child_value(self.product.properties, "alarm")
         if triggered is True:
             return CurrentModeToStateValue.TRIGGERED.value
-        current_mode = get_child_value(self.product.properties, self.metadata.name, CurrentModeToState.NONE.value)
 
-        if current_mode == CurrentModeToState.NONE.value:
-            try:
-                _LOGGER.debug(f"alarm_control_panel current_mode {current_mode} is missing, defaulting to guard_mode {self.guard_mode}")
-                current_mode = CurrentModeToState(self.guard_mode)
-            except ValueError:
-                pass
+        current_mode = get_child_value(self.product.properties, self.metadata.name, False)
+        if current_mode is False:
+            _LOGGER.debug(f"{self.product.name} current mode is missing, fallback to guardmode {self.guard_mode}")
+        current_mode = get_child_value(self.product.properties, self.metadata.name, CurrentModeToState(self.guard_mode))
 
-        #if current_mode == KEYPAD_OFF_CODE:
-        #    return CurrentModeToStateValue[CurrentModeToState.DISARMED.name].value
         if current_mode in CUSTOM_CODES:
             position = CUSTOM_CODES.index(current_mode)
             if position == 0:
@@ -191,4 +187,9 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
                 return self.coordinator.config.name_for_custom2
             if position == 2:
                 return self.coordinator.config.name_for_custom3
-        return CurrentModeToStateValue[CurrentModeToState(current_mode).name].value
+        try:
+            state = CurrentModeToStateValue[CurrentModeToState(current_mode).name].value
+        except KeyError:
+            _LOGGER.debug(f"{self.product.name} current mode is missing, fallback to Unknown with guard mode {self.guard_mode}")
+            state = CurrentModeToStateValue.NONE.value
+        return state
