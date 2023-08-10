@@ -74,7 +74,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         self._last_url = None
         self._last_image = None
         if self.product.picture_base64 is not None:
-            self._last_image = bytearray(self.product.picture_base64["data"]["data"])
+            self._last_image = self.product.picture_bytes
 
         # ffmpeg entities
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]

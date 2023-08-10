@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-import datetime
 
 from base64 import b64decode
 from homeassistant.components.image import ImageEntity, ImageEntityDescription
@@ -42,16 +41,17 @@ class EufySecurityImage(ImageEntity, EufySecurityEntity):
         ImageEntity.__init__(self, coordinator.hass)
         EufySecurityEntity.__init__(self, coordinator, metadata)
         self._attr_name = f"{self.product.name} Event Image"
-        self._attr_image_last_updated = None
 
         # camera image
         self._last_image = None
 
+    @property
+    def image_last_updated(self) -> datetime | None:
+        """The time when the image was last updated."""
+        return self.product.image_last_updated
+
     async def async_image(self) -> bytes | None:
         """Return bytes of image."""
         if self.product.picture_base64 is not None:
-            value = bytearray(self.product.picture_base64["data"]["data"])
-            if value != self._last_image:
-                self._attr_image_last_updated = datetime.datetime.now(datetime.timezone.utc)
-            self._last_image = value
+            self._last_image = self.product.picture_bytes
         return self._last_image
