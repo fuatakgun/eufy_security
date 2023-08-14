@@ -1,6 +1,7 @@
 import logging
 
 from homeassistant.helpers import entity_platform
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, PropertyToEntityDescription
@@ -27,6 +28,7 @@ class EufySecurityEntity(CoordinatorEntity):
         self._attr_name = f"{self.product.name} {metadata.label}"
         self._attr_device_class = self.description.device_class
         self._attr_entity_category = self.description.category
+        self._attr_entity_registry_enabled_default = False if self._attr_entity_category == EntityCategory.DIAGNOSTIC else True
 
     @property
     def product(self) -> Product:
