@@ -151,7 +151,7 @@ Native Home Assistant streaming is fairly slow (maybe not?), so you are highly a
 
 Below code will show camera picture while camera is not streaming and webrtc card while camera is streaming (conditional cards). Please replace `camera.entrance` with your camera entity name.
 
-```
+```yaml
 square: false
 columns: 1
 type: grid
@@ -187,7 +187,7 @@ cards:
 
 If your camera supports pan and tilt, you can add respective commands to webrtc interface.
 
-```
+```yaml
 type: custom:webrtc-camera
 entity: camera.garden
 ptz:
@@ -239,13 +239,13 @@ ptz:
   - `lock` and `unlock` for locks
   - `unlock` with code for safes
 
-# Example Automation
+# Example Automations
 
 ## Send notification with thumbnail from home assistant
 
 Replace `camera.entrance` with your own entity name.
 
-```
+```yaml
 alias: Capture Image on Trigger, Send Mobile Notification with Actions, Snooze or Alarm via Actions
 description: ""
 trigger:
@@ -306,9 +306,25 @@ action:
 mode: single
 ```
 
+### Alternative trigger condition
+
+This trigger condition starts the automation right when the event picture updates. In some installations it's more reliable and a bit quicker. If the previous automation gives you outdated images or causes problems, try this different trigger and condition instead:
+
+```yaml
+trigger:
+  - platform: state
+    entity_id:
+      - image.entrance_cam
+    id: sensor
+condition:
+  - condition: template
+    value_template: >-
+      {{ as_timestamp(states.image.entrance_cam.last_changed) == as_timestamp(states.image.entrance_cam.last_updated) }}
+```
+
 ## Unlock safe with code
 
-```
+```yaml
 service: lock.unlock
 data:
   code: "testtest"
