@@ -126,8 +126,9 @@ class PropertyToEntityDescription(Enum):
     microphone = EntityDescription(id=auto(), icon="mdi:microphone", category=EntityCategory.CONFIG)
     speaker = EntityDescription(id=auto(), icon="mdi:volume-high", category=EntityCategory.CONFIG)
     audioRecording = EntityDescription(id=auto(), icon="mdi:record-circle", category=EntityCategory.CONFIG)
-    snooze = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
-    snoozeTime = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    snooze = EntityDescription(id=auto(), icon="mdi:alarm-snooze", category=EntityCategory.CONFIG)
+    snoozeTime = EntityDescription(id=auto(), icon="mdi:alarm-snooze", category=EntityCategory.CONFIG)
+    loiteringDetection = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
 
     # device select
     powerSource = EntityDescription(id=auto(), icon="mdi:power-plug", category=EntityCategory.DIAGNOSTIC)
