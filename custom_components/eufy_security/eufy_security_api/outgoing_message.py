@@ -65,6 +65,7 @@ class OutgoingMessageType(Enum):
 
     # device level commands
     pan_and_tilt = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device, MessageField.DIRECTION: None}
+    calibrate = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
     start_rtsp_livestream = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
     stop_rtsp_livestream = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
     is_rtsp_livestreaming = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}

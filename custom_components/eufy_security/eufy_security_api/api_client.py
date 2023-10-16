@@ -201,6 +201,10 @@ class ApiClient:
         """Process start rtsp livestream call"""
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_rtsp_livestream, serial_no=serial_no))
 
+    async def calibrate(self, product_type: ProductType, serial_no: str) -> None:
+        """Process calibrate camera call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.calibrate, serial_no=serial_no))
+
     async def stop_rtsp_livestream(self, product_type: ProductType, serial_no: str) -> None:
         """Process stop rtsp livestream call"""
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.stop_rtsp_livestream, serial_no=serial_no))

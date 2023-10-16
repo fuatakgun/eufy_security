@@ -93,6 +93,14 @@ ptz_left:
       domain: camera
       integration: eufy_security
 
+calibrate:
+  name: Calibrate camera
+  description: Calibrate supported cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+
 generate_image:
   name: Generate Image for Camera
   description: Generate Image for Camera
@@ -210,7 +218,7 @@ geofence:
     entity:
       domain: alarm_control_panel
       integration: eufy_security
-      
+
 alarm_off:
   name: Turn Alarm off for Alarm Panel
   description: Turn Alarm off for Alarm Panel
@@ -218,7 +226,7 @@ alarm_off:
     entity:
       domain: alarm_control_panel
       integration: eufy_security
-      
+
 schedule:
   name: Switch to schedule mode
   description: Switch to schedule mode

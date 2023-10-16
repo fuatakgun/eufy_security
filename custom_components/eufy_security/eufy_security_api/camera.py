@@ -208,6 +208,10 @@ class Camera(Device):
         """Look around 360 degrees"""
         await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.ROTATE360.value)
 
+    async def calibrate(self) -> None:
+        """Calibrate camera"""
+        await self.api.calibrate(self.product_type, self.serial_no)
+
     async def quick_response(self, voice_id: int) -> None:
         """Quick response message to camera"""
         await self.api.quick_response(self.product_type, self.serial_no, voice_id)

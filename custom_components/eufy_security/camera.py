@@ -54,6 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("ptz_left", {}, "_async_ptz_left")
     platform.async_register_entity_service("ptz_right", {}, "_async_ptz_right")
     platform.async_register_entity_service("ptz_360", {}, "_async_ptz_360")
+    platform.async_register_entity_service("calibrate", {}, "_async_calibrate")
 
     platform.async_register_entity_service("trigger_camera_alarm_with_duration", Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value, "_async_alarm_trigger")
     platform.async_register_entity_service("reset_alarm", {}, "_async_reset_alarm")
@@ -212,6 +213,9 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def _async_ptz_360(self) -> None:
         await self.product.ptz_360()
+
+    async def _async_calibrate(self) -> None:
+        await self.product.calibrate()
 
     async def _generate_image(self) -> None:
         await self.async_camera_image()
