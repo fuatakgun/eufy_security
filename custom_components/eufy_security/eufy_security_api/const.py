@@ -6,7 +6,7 @@ from .command_description import CommandDescription
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-SCHEMA_VERSION = 18
+SCHEMA_VERSION = 19
 
 UNSUPPORTED = "Unsupported"
 

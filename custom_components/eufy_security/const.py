@@ -141,6 +141,10 @@ class PropertyToEntityDescription(Enum):
     motionDetectionSensitivity = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
     speakerVolume = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
     nightvision = EntityDescription(id=auto(), icon="mdi:shield-moon", category=EntityCategory.CONFIG)
+    lightSettingsManualLightingActiveMode = EntityDescription(id=auto(), icon="mdi:cog-play", category=EntityCategory.CONFIG)
+    lightSettingsBrightnessManual = EntityDescription(id=auto(), icon="mdi:brightness-percent", category=EntityCategory.CONFIG)
+    lightSettingsManualDailyLighting = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    lightSettingsScheduleDynamicLighting = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
 
     # station sensor
     currentMode = EntityDescription(id=auto(), icon="mdi:security", category=EntityCategory.DIAGNOSTIC)
