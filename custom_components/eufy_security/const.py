@@ -22,6 +22,7 @@ NAME = "Eufy Security"
 DOMAIN = "eufy_security"
 VERSION = "1.0.0"
 COORDINATOR = "coordinator"
+DISCONNECTED = "eufy-security-ws-disconnected"
 
 PLATFORMS: list[str] = [
     Platform.BINARY_SENSOR,

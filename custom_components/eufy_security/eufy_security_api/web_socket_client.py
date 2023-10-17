@@ -76,6 +76,7 @@ class WebSocketClient:
 
     def _on_close(self, future="") -> None:
         self.socket = None
+        _LOGGER.debug(f"websocket client _on_close {self.socket is not None}")
         if self.close_callback is not None:
             self.close_callback(future)
 
@@ -84,3 +85,7 @@ class WebSocketClient:
         if self.socket is None:
             raise WebSocketConnectionException("Connection to add-on was broken. please reload the integration!")
         await self.socket.send_str(message)
+
+    @property
+    def available(self) -> bool:
+        return self.socket is not None

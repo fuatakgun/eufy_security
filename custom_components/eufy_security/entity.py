@@ -20,8 +20,6 @@ class EufySecurityEntity(CoordinatorEntity):
         super().__init__(coordinator)
         self.metadata: Metadata = metadata
         self.product.set_state_update_listener(coordinator.async_update_listeners)
-        # self.product.set_state_update_listener(self.async_write_ha_state)
-        # platform = entity_platform.async_get_current_platform().domain
         self._attr_unique_id = f"{DOMAIN}_{self.product.serial_no}_{self.product.product_type.value}_{metadata.name}"
         self._attr_should_poll = False
         self._attr_icon = self.description.icon
@@ -46,3 +44,7 @@ class EufySecurityEntity(CoordinatorEntity):
     @property
     def device_info(self):
         return get_device_info(self.product)
+
+    @property
+    def available(self) -> bool:
+        return self.coordinator.available

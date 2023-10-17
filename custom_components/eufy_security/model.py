@@ -42,6 +42,7 @@ class ConfigField(Enum):
 class Config:
     """Integration config options"""
 
+    entry: ConfigEntry = None
     host: str = ConfigField.host.value
     port: int = ConfigField.port.value
     sync_interval: int = ConfigField.sync_interval.value
@@ -64,6 +65,7 @@ class Config:
         """Generate config instance from config entry"""
         data_keys = ["host", "port"]
         config = cls()
+        config.entry = config_entry
         for key in config.__dict__:
             if key in data_keys:
                 if config_entry.data.get(key, None) is not None:

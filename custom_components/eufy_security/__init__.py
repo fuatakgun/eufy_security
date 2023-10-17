@@ -39,7 +39,6 @@ async def async_setup(hass: HomeAssistant, config: Config):
 
     return True
 
-
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """setup config entry"""
     if hass.data.get(DOMAIN) is None:
@@ -54,29 +53,33 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     async def update(event_time_utc):
         await coordinator.async_refresh()
-
-    async_track_time_interval(hass, update, timedelta(seconds=coordinator.config.sync_interval))    
-
     config_entry.add_update_listener(async_reload_entry)
-    return True
+    async_track_time_interval(hass, update, timedelta(seconds=coordinator.config.sync_interval))
 
+    return True
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """unload active entities"""
+    _LOGGER.debug(f"async_unload_entry 1")
     coordinator = hass.data[DOMAIN][COORDINATOR]
     unloaded = all(
         await asyncio.gather(
             *[hass.config_entries.async_forward_entry_unload(config_entry, platform) for platform in coordinator.platforms]
         )
     )
+
     if unloaded:
         await coordinator.disconnect()
         hass.data[DOMAIN] = {}
 
+    _LOGGER.debug(f"async_unload_entry 2")
     return unloaded
-
 
 async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
     """reload integration"""
+    _LOGGER.debug(f"async_reload_entry 1")
     await async_unload_entry(hass, config_entry)
+    _LOGGER.debug(f"async_reload_entry 2")
     await async_setup_entry(hass, config_entry)
+    _LOGGER.debug(f"async_reload_entry 3")
+

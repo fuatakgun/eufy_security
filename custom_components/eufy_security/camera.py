@@ -102,10 +102,6 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         finally:
             await stream.close()
 
-    @property
-    def available(self) -> bool:
-        return True
-
     async def async_create_stream(self):
         if self.coordinator.config.no_stream_in_hass is True:
             return None
@@ -128,6 +124,10 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     def is_streaming(self) -> bool:
         """Return true if the device is recording."""
         return self.product.stream_status == StreamStatus.STREAMING
+
+    @property
+    def available(self) -> bool:
+        return True
 
     async def _get_image_from_stream_url(self, width, height):
         while True:

@@ -306,7 +306,8 @@ class ApiClient:
 
     def _on_close(self, future="") -> None:
         _LOGGER.debug(f"on_close - executed - {future} = {future.exception()}")
-        self._on_error_callback(future)
+        if self._on_error_callback is not None:
+            self._on_error_callback(future)
         if future.exception() is not None:
             _LOGGER.debug(f"on_close - executed - {future.exception()}")
             raise future.exception()
@@ -331,7 +332,15 @@ class ApiClient:
 
     async def disconnect(self):
         """Disconnect the web socket and destroy it"""
+        self._on_error_callback = None
         await self._client.disconnect()
+        self._client = None
+
+    @property
+    def available(self) -> bool:
+        return self._client.available
+
+
 
 
 class IncomingMessageType(Enum):
