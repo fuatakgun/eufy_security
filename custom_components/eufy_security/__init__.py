@@ -93,7 +93,5 @@ async def async_remove_config_entry_device(hass: HomeAssistant, config_entry: Co
         _LOGGER.debug(f"async_remove_config_entry_device error exists {serial_no}")
         hass.components.persistent_notification.create(f"Device is still accessible on account, cannot be deleted!", title="Eufy Security - Error", notification_id="eufy_security_delete_device_error")
         return False
-    del coordinator.devices[serial_no]
-    del coordinator.stations[serial_no]
     _LOGGER.debug(f"async_remove_config_entry_device deleted {serial_no}")
     return True
