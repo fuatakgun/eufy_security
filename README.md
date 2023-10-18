@@ -274,6 +274,11 @@ action:
           - condition: trigger
             id: sensor
         sequence:
+          - delay:
+            hours: 0
+            minutes: 0
+            seconds: 3
+            milliseconds: 0
           - service: notify.mobile_app_fuatx3pro
             data:
               message: Motion detected
