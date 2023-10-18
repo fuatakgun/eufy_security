@@ -5,8 +5,9 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config, HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.event import async_track_time_interval
-
 from .const import COORDINATOR, DOMAIN, PLATFORMS
 from .coordinator import EufySecurityDataUpdateCoordinator
 
@@ -83,3 +84,16 @@ async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     await async_setup_entry(hass, config_entry)
     _LOGGER.debug(f"async_reload_entry 3")
 
+async def async_remove_config_entry_device(hass: HomeAssistant, config_entry: ConfigEntry, device_entry: DeviceEntry) -> bool:
+    """Remove a config entry from a device."""
+    serial_no = next(iter(device_entry.identifiers))[1]
+    _LOGGER.debug(f"async_remove_config_entry_device device_entry {serial_no}")
+    coordinator = hass.data[DOMAIN][COORDINATOR]
+    if serial_no in coordinator.devices or serial_no in coordinator.stations:
+        _LOGGER.debug(f"async_remove_config_entry_device error exists {serial_no}")
+        hass.components.persistent_notification.create(f"Device is still accessible on account, cannot be deleted!", title="Eufy Security - Error", notification_id="eufy_security_delete_device_error")
+        return False
+    del coordinator.devices[serial_no]
+    del coordinator.stations[serial_no]
+    _LOGGER.debug(f"async_remove_config_entry_device deleted {serial_no}")
+    return True

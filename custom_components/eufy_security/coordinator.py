@@ -99,7 +99,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     def _on_error(self, error):
         """raise notification on frontend when exception happens"""
-        self.hass.components.persistent_notification.create(f"Connection to Eufy Security add-on is broken, retrying in background!", title="Eufy Security - Error", notification_id="eufy_security_error")
+        self.hass.components.persistent_notification.create(f"Connection to Eufy Security add-on is broken, retrying in background!", title="Eufy Security - Error", notification_id="eufy_security_addon_connection_error")
         self.hass.bus.async_listen_once(DISCONNECTED, self._async_reload)
         self.hass.bus.async_fire(DISCONNECTED, None)
 
