@@ -72,6 +72,8 @@ class PropertyToEntityDescription(Enum):
     rtspStreamUrl = EntityDescription(id=auto(), icon="mdi:movie", category=EntityCategory.DIAGNOSTIC)
     chargingStatus = EntityDescription(id=auto(), icon="mdi:ev-station", category=EntityCategory.DIAGNOSTIC)
     snoozeStartTime = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    snooze = EntityDescription(id=auto(), icon="mdi:alarm-snooze")
+    snoozeTime = EntityDescription(id=auto(), icon="mdi:alarm-snooze")
 
     stream_provider = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     stream_url = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
@@ -127,8 +129,6 @@ class PropertyToEntityDescription(Enum):
     microphone = EntityDescription(id=auto(), icon="mdi:microphone", category=EntityCategory.CONFIG)
     speaker = EntityDescription(id=auto(), icon="mdi:volume-high", category=EntityCategory.CONFIG)
     audioRecording = EntityDescription(id=auto(), icon="mdi:record-circle", category=EntityCategory.CONFIG)
-    snooze = EntityDescription(id=auto(), icon="mdi:alarm-snooze", category=EntityCategory.CONFIG)
-    snoozeTime = EntityDescription(id=auto(), icon="mdi:alarm-snooze", category=EntityCategory.CONFIG)
     loiteringDetection = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
     motionDetectionTypePet = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
     motionDetectionTypeVehicle = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
