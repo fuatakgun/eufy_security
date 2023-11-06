@@ -119,7 +119,7 @@ If you use your own docker service, please run it like this `docker run -it RTSP
 
 3- Install `Eufy Security` integration, restart your Home Assistant instance.
 
-4- Check `Settings -> Devices & Services` page (https://your-instance.duckdns.org/config/integrations), click on `Add Integration` and search for `Eufy Security`. If you do not see it, first validate that it is installed via HACS and you had restarted it, later try with another browser. Integrations list might be already cached in your browser.
+4- Install `Eufy Security` service from the previous step by navigating to `Settings -> Devices & Services` page (https://your-instance.duckdns.org/config/integrations). Click on `Add Integration` and search for `Eufy Security`. If you do not see it, first validate that it is installed via HACS and you had restarted it, later try with another browser. Integrations list might be already cached in your browser.
 
 5- Put `Eufy Security Add-on IP Address` (127.0.0.1 for Supervised installation) and `configured port` (default 3000) and click Submit.
 
