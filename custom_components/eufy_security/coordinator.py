@@ -91,7 +91,6 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def disconnect(self):
         """disconnect from api"""
         await self._api.disconnect()
-        self._api = None
 
     async def _async_reload(self, _):
         await asyncio.sleep(5)
