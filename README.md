@@ -1,5 +1,5 @@
 Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congratulations on being a brave heart and trying this version.
-
+ 
 - [Gratitude](#gratitude)
 - [How is this working?](#how-is-this-working)
 - [Supported or Known Working devices](#supported-or-known-working-devices)
