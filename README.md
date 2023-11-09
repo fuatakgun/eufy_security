@@ -10,8 +10,9 @@ Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congra
   - [3. Installing Eufy Security Integration](#3-installing-eufy-security-integration)
   - [4. Setting up your dashboard for camera](#4-setting-up-your-dashboard-for-camera)
 - [Features](#features)
-- [Example Automation](#example-automation)
-  - [Start streaming on camera, when there is a motion, this would generate a new thumbnail on Home Assistant](#start-streaming-on-camera-when-there-is-a-motion-this-would-generate-a-new-thumbnail-on-home-assistant)
+- [Example Automations](#example-automations)
+  - [Send notification with thumbnail from home assistant](#send-notification-with-thumbnail-from-home-assistant)
+    - [Alternative trigger condition](#alternative-trigger-condition)
   - [Unlock safe with code](#unlock-safe-with-code)
 - [Debugging Issues](#debugging-issues)
 - [Show Off](#show-off)
@@ -342,6 +343,7 @@ target:
 # Debugging Issues
 
 First, check all issues (open or close) to find out if there was any similar question rather than duplicating it.
+Focus on enabling push notification settings, lowering camera streaming/recording quality and removing any network level isoloation/restriction. Most of the issues could be eliminated via these.
 Later on, if you find a similar issue, please just put +1 on it, sharing same logs over and over does not help at all.
 Lastly, create your issue following the template. I will probably ask follow up questions later on.
 

@@ -21,7 +21,8 @@
       "auth": "Host/Port is wrong."
     },
     "abort": {
-      "single_instance_allowed": "Only a single instance is allowed."
+      "single_instance_allowed": "Only a single instance is allowed.",
+      "reauth_successful": "Code is received, reloading the integration in background automatically!"
     }
   },
   "options": {

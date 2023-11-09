@@ -129,6 +129,10 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     def available(self) -> bool:
         return True
 
+    @property
+    def extra_state_attributes(self):
+        return {"stream_debug": self.product.stream_debug}
+
     async def _get_image_from_stream_url(self, width, height):
         while True:
             result = await ffmpeg.async_get_image(self.hass, await self.stream_source(), width=width, height=height)

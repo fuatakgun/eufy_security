@@ -83,7 +83,9 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _update_local(self):
         try:
+            _LOGGER.debug(f"coordinator - start update_local")
             await self._api.poll_refresh()
+            _LOGGER.debug(f"coordinator - complete update_local")
             return self.data
         except WebSocketConnectionException as exc:
             raise UpdateFailed(f"Error communicating with Add-on: {exc}") from exc
@@ -91,6 +93,8 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def disconnect(self):
         """disconnect from api"""
         await self._api.disconnect()
+        self._api = None
+        await self.async_shutdown()
 
     async def _async_reload(self, _):
         await asyncio.sleep(5)

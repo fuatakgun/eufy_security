@@ -21,7 +21,8 @@
       "auth": "L'hôte/le port est incorrect."
     },
     "abort": {
-      "single_instance_allowed": "Une seule instance est autorisée."
+      "single_instance_allowed": "Une seule instance est autorisée.",
+      "reauth_successful": "Code is received, reloading the integration in background automatically!"
     }
   },
   "options": {

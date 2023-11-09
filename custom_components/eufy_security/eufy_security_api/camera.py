@@ -75,6 +75,8 @@ class Camera(Device):
         self.p2p_started_event = asyncio.Event()
         self.rtsp_started_event = asyncio.Event()
 
+        self.stream_debug = None
+
     @property
     def is_streaming(self) -> bool:
         """Is Camera in Streaming Status"""
@@ -133,25 +135,36 @@ class Camera(Device):
         """Process start p2p livestream call"""
         self.set_stream_prodiver(StreamProvider.P2P)
         self.stream_status = StreamStatus.PREPARING
+        self.stream_debug = "info - send command to add-on"
         await self.api.start_livestream(self.product_type, self.serial_no)
+        self.stream_debug = "info - command was done, open a local tcp port"
         self.p2p_stream_thread = threading.Thread(target=self.p2p_stream_handler.setup, daemon=True)
         self.p2p_stream_thread.start()
         await wait_for_value(self.p2p_stream_handler.__dict__, "port", None)
+        self.stream_debug = "info - local tcp was setup, checking for codec"
 
         if self.codec is not None:
+            self.stream_debug = "info - codec is known, start ffmpeg consuming tcp port and forwarding to rtsp add-on"
             await self._start_ffmpeg()
+            self.stream_debug = "info - ffmpeg was started"
 
         with contextlib.suppress(asyncio.TimeoutError):
+            self.stream_debug = "info - wait for bytes to arrive from add-on, they will be written to tcp port"
             await asyncio.wait_for(self.p2p_started_event.wait(), STREAM_TIMEOUT_SECONDS)
 
         if self.p2p_started_event.is_set() is False:
+            self.stream_debug = "error - ffmpeg pocess could not connect"
             return False
 
         try:
+            self.stream_debug = "info - check if rtsp url is a valid stream"
             await asyncio.wait_for(self._is_stream_url_ready(), STREAM_TIMEOUT_SECONDS)
         except asyncio.TimeoutError:
+            self.stream_debug = "error - rtsp url was not a valid stream"
             return False
+
         self.stream_status = StreamStatus.STREAMING
+        self.stream_debug = "info - streaming"
         return True
 
     async def stop_livestream(self):
@@ -164,21 +177,29 @@ class Camera(Device):
         """Process start rtsp livestream call"""
         self.set_stream_prodiver(StreamProvider.RTSP)
         self.stream_status = StreamStatus.PREPARING
+        self.stream_debug = "info - send command to add-on"
         await self.api.start_rtsp_livestream(self.product_type, self.serial_no)
 
         try:
             await asyncio.wait_for(self.rtsp_started_event.wait(), 5)
+            self.stream_debug = "info - command was done"
         except asyncio.TimeoutError:
+            self.stream_debug = "error - command was failed"
             return False
 
         try:
             self.stream_status = StreamStatus.STREAMING
+            self.stream_debug = "info - check if rtsp url is a valid stream"
             await asyncio.wait_for(self._is_stream_url_ready(), 5)
             _LOGGER.debug(f"start_rtsp_livestream - 2 - try success - {self.stream_status}")
             return True
         except asyncio.TimeoutError:
+            self.stream_debug = "error - rtsp url was not a valid stream"
             _LOGGER.debug("start_rtsp_livestream - 2 - try timeout")
             return False
+
+        self.stream_debug = "info - streaming"
+        return True
 
     async def stop_rtsp_livestream(self):
         """Process stop rtsp livestream call"""

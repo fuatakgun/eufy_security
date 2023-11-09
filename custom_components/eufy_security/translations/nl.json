@@ -21,7 +21,8 @@
       "auth": "Host/Poort klopt niet."
     },
     "abort": {
-      "single_instance_allowed": "Slechts één exemplaar is toegestaan."
+      "single_instance_allowed": "Slechts één exemplaar is toegestaan.",
+      "reauth_successful": "Code is received, reloading the integration in background automatically!"
     }
   },
   "options": {

@@ -21,7 +21,8 @@
       "auth": "L'host/porta è sbagliato."
     },
     "abort": {
-      "single_instance_allowed": "È consentita una sola istanza."
+      "single_instance_allowed": "È consentita una sola istanza.",
+      "reauth_successful": "Code is received, reloading the integration in background automatically!"
     }
   },
   "options": {

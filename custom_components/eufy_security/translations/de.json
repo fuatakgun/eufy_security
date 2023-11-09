@@ -21,7 +21,8 @@
       "auth": "Host/Port ist falsch."
     },
     "abort": {
-      "single_instance_allowed": "Es ist nur eine einzige Instanz zulässig."
+      "single_instance_allowed": "Es ist nur eine einzige Instanz zulässig.",
+      "reauth_successful": "Code is received, reloading the integration in background automatically!"
     }
   },
   "options": {

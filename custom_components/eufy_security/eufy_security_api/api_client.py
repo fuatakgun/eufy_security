@@ -130,14 +130,14 @@ class ApiClient:
     async def set_captcha_and_connect(self, captcha_id: str, captcha_input: str):
         """Set captcha set products"""
         await self._set_captcha(captcha_id, captcha_input)
-        await asyncio.sleep(10)
-        await self._set_products()
+        await asyncio.sleep(30)
+        # await self._set_products()
 
     async def set_mfa_and_connect(self, mfa_input: str):
         """Set mfa code set products"""
         await self._set_mfa_code(mfa_input)
-        await asyncio.sleep(10)
-        await self._set_products()
+        await asyncio.sleep(30)
+        # await self._set_products()
 
     # server level commands
     async def _start_listening(self):
@@ -256,7 +256,7 @@ class ApiClient:
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.reboot, serial_no=serial_no))
 
     async def _on_message(self, message: dict) -> None:
-        message_str = str(message)[0:5000]
+        message_str = str(message)[0:1000]
         if "livestream video data" not in message_str and "livestream audio data" not in message_str:
             _LOGGER.debug(f"_on_message - {message_str}")
         if message[MessageField.TYPE.value] == IncomingMessageType.result.name:

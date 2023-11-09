@@ -53,9 +53,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         hass.async_add_job(hass.config_entries.async_forward_entry_setup(config_entry, platform.value))
 
     async def update(event_time_utc):
-        await coordinator.async_refresh()
+        local_coordinator = hass.data[DOMAIN][COORDINATOR]
+        await local_coordinator.async_refresh()
+
     config_entry.add_update_listener(async_reload_entry)
-    async_track_time_interval(hass, update, timedelta(seconds=coordinator.config.sync_interval))
+    # async_track_time_interval(hass, update, timedelta(seconds=coordinator.config.sync_interval))
 
     return True
 

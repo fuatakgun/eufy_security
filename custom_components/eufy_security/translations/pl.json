@@ -21,7 +21,8 @@
       "auth": "Host lub Port jest nieprawidłowy."
     },
     "abort": {
-      "single_instance_allowed": "Dozwolona jest tylko jedna instancja."
+      "single_instance_allowed": "Dozwolona jest tylko jedna instancja.",
+      "reauth_successful": "Code is received, reloading the integration in background automatically!"
     }
   },
   "options": {

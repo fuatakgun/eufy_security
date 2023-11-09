@@ -21,7 +21,8 @@
       "auth": "O host/porta está errado."
     },
     "abort": {
-      "single_instance_allowed": "Apenas uma única instância é permitida."
+      "single_instance_allowed": "Apenas uma única instância é permitida.",
+      "reauth_successful": "Code is received, reloading the integration in background automatically!"
     }
   },
   "options": {
