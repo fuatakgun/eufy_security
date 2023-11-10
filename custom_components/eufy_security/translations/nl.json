@@ -2,8 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "Eufy Security: Instellen",
-        "description": "Voer het IP adres en de poort van de Eufy Security Web Socket-instantie in",
+        "title": "Eufy Security: Setup",
+        "description": "Invoeren van het IP adres en de poort van de Eufy Security Web Socket instantie",
         "data": {
           "host": "Host IP adres (bijv. 192.168.178.22)",
           "port": "Poort (bijv. 3000)"
@@ -22,7 +22,7 @@
     },
     "abort": {
       "single_instance_allowed": "Slechts één exemplaar is toegestaan.",
-      "reauth_successful": "Code is received, reloading the integration in background automatically!"
+      "reauth_successful": "De code is ontvangen. De integratie wordt op de achtergrond automatisch geladen!"
     }
   },
   "options": {
@@ -31,14 +31,14 @@
         "title": "Eufy Security: Configuratie",
         "data": {
           "sync_interval": "Cloudscan-interval in seconden [1 tot 9999]",
-          "rtsp_server_address": "Host IP-adres voor RTSP-add-on (P2P)",
-          "rtsp_server_port": "TCP Poort voor de RTSP-extensie (P2P)",
-          "ffmpeg_analyze_duration": "Video-analyseduur in seconden [1 tot 5] (P2P)",
-          "generate_ffmpeg_logs": "Genereer FFMPEG logboeken",
+          "rtsp_server_address": "Host IP-adres voor RTSP add-on (P2P)",
+          "rtsp_server_port": "TCP Poort voor de RTSP add-on (P2P)",
+          "ffmpeg_analyze_duration": "Video-analyse duur in seconden [1 tot 5] (P2P)",
+          "generate_ffmpeg_logs": "Genereer FFMPEG logs",
           "no_stream_in_hass": "Gebruik geen STREAM module binnen Home Assistant (als je de video niet met Home Assistant native streaming bekijkt of je gebruikt WebRTC, zet dit aan om CPU gebruik te verminderen",
-          "name_for_custom1": "Naam negeren voor Custom1 Beveiligings-modus",
-          "name_for_custom2": "Naam negeren voor Custom2 Beveiligings-modus",
-          "name_for_custom3": "Naam negeren voor Custom4 Beveiligings-modus"
+          "name_for_custom1": "Naam overschrijven voor Custom1 beveiligingsmodus",
+          "name_for_custom2": "Naam overschrijven voor Custom2 beveiligingsmodus",
+          "name_for_custom3": "Naam overschrijven voor Custom3 beveiligingsmodus"
         }
       }
     }
