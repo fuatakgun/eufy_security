@@ -33,7 +33,7 @@
           "sync_interval": "Cloud Scan Interval in seconds [1 to 9999]",
           "rtsp_server_address": "Host IP Address for RTSP Add On (P2P)",
           "rtsp_server_port": "TCP Port for RTSP Add On (P2P)",
-          "ffmpeg_analyze_duration": "Video Analzyze Duration in seconds [1 to 5] (P2P)",
+          "ffmpeg_analyze_duration": "Video analyze duration in seconds [1 to 5] (P2P)",
           "generate_ffmpeg_logs": "Generate FFMPEG logs",
           "no_stream_in_hass": "Do not use STREAM module inside Home Assistant (if you do not watch the video inside Home Assistant native streaming or you are using WebRTC, enable this to decrease CPU usage",
           "name_for_custom1": "Override Name for Custom1 Guard Mode",
