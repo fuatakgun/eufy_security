@@ -184,3 +184,4 @@ class PlatformToPropertyType(Enum):
     SWITCH = MetadataFilter(readable=True, writeable=True, types=[PropertyType.boolean])
     SELECT = MetadataFilter(readable=True, writeable=True, types=[PropertyType.number], any_fields=[MessageField.STATES.value])
     NUMBER = MetadataFilter(readable=True, writeable=True, types=[PropertyType.number], no_fields=[MessageField.STATES.value])
+    DEVICE_TRACKER = MetadataFilter(readable=True, writeable=False, types=[PropertyType.boolean])

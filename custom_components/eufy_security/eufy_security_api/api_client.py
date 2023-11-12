@@ -256,9 +256,12 @@ class ApiClient:
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.reboot, serial_no=serial_no))
 
     async def _on_message(self, message: dict) -> None:
-        message_str = str(message)[0:1000]
+        message_str = str(message)[0:5000]
         if "livestream video data" not in message_str and "livestream audio data" not in message_str:
             _LOGGER.debug(f"_on_message - {message_str}")
+        else:
+            # _LOGGER.debug(f"_on_message - livestream data received - {len(str(message))}")
+            pass
         if message[MessageField.TYPE.value] == IncomingMessageType.result.name:
             future = self._result_futures.get(message.get(MessageField.MESSAGE_ID.value, -1), None)
 

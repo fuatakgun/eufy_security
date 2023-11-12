@@ -10,6 +10,9 @@ SCHEMA_VERSION = 19
 
 UNSUPPORTED = "Unsupported"
 
+STREAM_TIMEOUT_SECONDS = 15
+STREAM_SLEEP_SECONDS = 0.25
+
 
 class MessageField(Enum):
     """Incoming or outgoing message field types"""

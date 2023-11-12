@@ -3,8 +3,10 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import traceback
 
 from haffmpeg.camera import CameraMjpeg
+from haffmpeg.tools import ImageFrame
 from base64 import b64decode
 from homeassistant.components import ffmpeg
 from homeassistant.components.camera import Camera, CameraEntityFeature
@@ -79,14 +81,17 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
         # ffmpeg entities
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]
-        self.product.set_ffmpeg(CameraMjpeg(self.ffmpeg.binary))
+        self.product.set_ffmpeg(CameraMjpeg(self.ffmpeg.binary), ImageFrame(self.ffmpeg.binary))
 
     async def stream_source(self) -> str:
+        #for line in traceback.format_stack():
+        #    _LOGGER.debug(f"stream_source - {line.strip()}")
         if self.is_streaming is False:
             return None
         return self.product.stream_url
 
     async def handle_async_mjpeg_stream(self, request):
+        """this is probabaly triggered by user request, turn on"""
         stream_source = await self.stream_source()
         if stream_source is None:
             return await super().handle_async_mjpeg_stream(request)
@@ -160,11 +165,13 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             await self._stop_livestream()
         else:
             await self._start_hass_streaming()
+        self.async_write_ha_state()
 
     async def _stop_livestream(self) -> None:
         """stop byte based livestream on camera"""
         await self._stop_hass_streaming()
         await self.product.stop_livestream()
+        self.async_write_ha_state()
 
     async def _start_rtsp_livestream(self) -> None:
         """start rtsp based livestream on camera"""
@@ -172,11 +179,13 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             await self._stop_rtsp_livestream()
         else:
             await self._start_hass_streaming()
+        self.async_write_ha_state()
 
     async def _stop_rtsp_livestream(self) -> None:
         """stop rtsp based livestream on camera"""
         await self._stop_hass_streaming()
         await self.product.stop_rtsp_livestream()
+        self.async_write_ha_state()
 
     async def _async_alarm_trigger(self, duration: int = 10):
         """trigger alarm for a duration on camera"""
