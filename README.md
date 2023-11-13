@@ -222,7 +222,7 @@ ptz:
   - `generate_image` - This will generate a thumbnail for Home Assistant if camera is already streaming
   - `ptz_up`, `ptz_down`, `ptz_right`, `ptz_left`, `ptz_360` - Pan and Tilt commands
   - `trigger_camera_alarm_with_duration` - Trigger alarm on camera for a given duration
-  - `quick_response` - Send a quick response message for doorbell, you can get `voice_id` information from `Debug (device)` sensor attributes of device.
+  - `quick_response` - Send a quick response message for doorbell, you can get `voice_id` information from `Debug (device)` sensor attributes of device. This can be executed ONLY when camera is live streaming (p2p - not rtsp)
   - `snooze` - Snooze ongoing notification for a given duration.
 - Alarm Panel Services;
   - There is an select entity called Guard Mode, it is one to one mapping of Eufy Security state. Current Mode sensor is showing the current state of home base.
