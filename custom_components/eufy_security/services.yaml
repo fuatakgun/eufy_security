@@ -162,7 +162,7 @@ trigger_camera_alarm_with_duration:
 
 quick_response:
   name: Send quick response
-  description: Send quick response
+  description: Send quick response, this works ONLY when camera is streaming via P2P (not RTSP)
   target:
     entity:
       domain: camera
