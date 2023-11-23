@@ -53,6 +53,7 @@ class Camera(Device):
         self.stream_url: str = None
 
         self.video_queue = asyncio.Queue()
+        self.audio_queue = asyncio.Queue()
         self.config = config
         self.voices = voices
         self.image_last_updated = None
@@ -84,6 +85,7 @@ class Camera(Device):
         _LOGGER.debug(f"_handle_livestream_stopped - {event}")
         self.stream_status = StreamStatus.IDLE
         self.video_queue = asyncio.Queue()
+        self.audio_queue = asyncio.Queue()
 
     async def _handle_rtsp_livestream_started(self, event: Event):
         # automatically find this function for respective event
@@ -99,8 +101,7 @@ class Camera(Device):
         await self.video_queue.put(event.data["buffer"]["data"])
 
     async def _handle_livestream_audio_data_received(self, event: Event):
-        pass
-        #await self.video_queue.put(event.data["buffer"]["data"])
+        await self.audio_queue.put(event.data["buffer"]["data"])
 
     async def _initiate_start_stream(self, stream_type) -> bool:
         self.set_stream_prodiver(stream_type)

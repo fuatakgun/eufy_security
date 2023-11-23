@@ -19,24 +19,24 @@ class P2PStreamer:
     def __init__(self, camera) -> None:
         self.camera = camera
 
-    async def chunk_generator(self):
+    async def chunk_generator(self, queue):
         while True:
             try:
-                item = await asyncio.wait_for(self.camera.video_queue.get(), timeout=2.5)
+                item = await asyncio.wait_for(queue.get(), timeout=2.5)
                 _LOGGER.debug(f"chunk_generator yield data - {len(item)}")
                 yield bytearray(item)
             except TimeoutError as te:
                 _LOGGER.debug(f"chunk_generator timeout Exception %s - traceback: %s", te, traceback.format_exc())
                 raise te
 
-    async def write_bytes(self):
+    async def write_bytes(self, queue):
         url = GO2RTC_API_URL.format(self.camera.config.rtsp_server_address, GO2RTC_API_PORT)
         url = f"{url}?dst={str(self.camera.serial_no)}"
 
         retry = False
         try:
             async with aiohttp.ClientSession() as session:
-                resp = await session.post(url, data = self.chunk_generator(), timeout=aiohttp.ClientTimeout(total=None, connect=5))
+                resp = await session.post(url, data = self.chunk_generator(queue), timeout=aiohttp.ClientTimeout(total=None, connect=5))
                 _LOGGER.debug(f"write_bytes - post response - {resp.status} - {await resp.text()}")
 
         except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError) as ex:
@@ -67,7 +67,9 @@ class P2PStreamer:
         """start streaming thread"""
         # send API command to go2rtc to create a new stream
         await self.create_stream_on_go2rtc()
-        asyncio.get_event_loop().create_task(self.write_bytes())
+        asyncio.get_event_loop().create_task(self.write_bytes(self.camera.video_queue))
+        asyncio.get_event_loop().create_task(self.write_bytes(self.camera.audio_queue))
+
 
     async def stop(self):
         await self.camera.check_and_stop_livestream()
