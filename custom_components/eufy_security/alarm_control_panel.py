@@ -175,8 +175,8 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
             return CurrentModeToStateValue.TRIGGERED.value
 
         current_mode = get_child_value(self.product.properties, self.metadata.name, False)
-        if current_mode is False:
-            _LOGGER.debug(f"{self.product.name} current mode is missing, fallback to guardmode {self.guard_mode}")
+        #if current_mode is False:
+            #_LOGGER.debug(f"{self.product.name} current mode is missing, fallback to guardmode {self.guard_mode}")
         current_mode = get_child_value(self.product.properties, self.metadata.name, CurrentModeToState(self.guard_mode))
 
         if current_mode in CUSTOM_CODES:
@@ -190,6 +190,6 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         try:
             state = CurrentModeToStateValue[CurrentModeToState(current_mode).name].value
         except KeyError:
-            _LOGGER.debug(f"{self.product.name} current mode is missing, fallback to Unknown with guard mode {self.guard_mode}")
+            #_LOGGER.debug(f"{self.product.name} current mode is missing, fallback to Unknown with guard mode {self.guard_mode}")
             state = CurrentModeToStateValue.NONE.value
         return state

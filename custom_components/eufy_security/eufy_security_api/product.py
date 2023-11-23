@@ -27,6 +27,7 @@ class Product:
         self.metadata: dict = None
         self.metadata_org = metadata
         self.commands = commands
+        self.connected = True
 
         self.state_update_listener: Callable = None
 
@@ -95,6 +96,7 @@ class Product:
             handler_func = getattr(self, f"_handle_{handler.name}", None)
         except ValueError:
             # event is not acted on, skip it
+            _LOGGER.debug(f"event not handled -{self.serial_no} - {event}")
             return
 
         if handler_func is not None:
@@ -109,6 +111,15 @@ class Product:
 
     async def _handle_pin_verified(self, event: Event):
         self.pin_verified_future.set_result(event)
+
+    async def _handle_connected(self, event: Event):
+        self.properties[MessageField.CONNECTED.value] = True
+
+    async def _handle_disconnected(self, event: Event):
+        self.properties[MessageField.CONNECTED.value] = False
+
+    async def _handle_connection_error(self, event: Event):
+        self.properties[MessageField.CONNECTED.value] = False
 
     @property
     def is_camera(self):

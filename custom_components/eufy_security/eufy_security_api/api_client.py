@@ -122,6 +122,8 @@ class ApiClient:
                 else:
                     product = Device(self, serial_no, properties, metadata, commands)
             else:
+                properties[MessageField.CONNECTED.value] = await self._get_is_connected(product_type, serial_no)
+                metadata[MessageField.CONNECTED.value] = {'key': MessageField.CONNECTED.value,'name': MessageField.CONNECTED.value,'label': 'Connected','readable': True,'writeable': False,'type': 'boolean'}
                 product = Station(self, serial_no, properties, metadata, commands)
 
             response[serial_no] = product
@@ -213,6 +215,10 @@ class ApiClient:
         result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.is_rtsp_livestreaming, serial_no=serial_no))
         return result[MessageField.LIVE_STREAMING.value]
 
+    async def _get_is_connected(self, product_type: ProductType, serial_no: str) -> bool:
+        result = await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.is_connected, serial_no=serial_no))
+        return result[MessageField.CONNECTED.value]
+
     async def start_livestream(self, product_type: ProductType, serial_no: str) -> None:
         """Process start p2p livestream call"""
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_livestream, serial_no=serial_no))
@@ -256,7 +262,7 @@ class ApiClient:
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.reboot, serial_no=serial_no))
 
     async def _on_message(self, message: dict) -> None:
-        message_str = str(message)[0:5000]
+        message_str = str(message)[0:15000]
         if "livestream video data" not in message_str and "livestream audio data" not in message_str:
             _LOGGER.debug(f"_on_message - {message_str}")
         else:

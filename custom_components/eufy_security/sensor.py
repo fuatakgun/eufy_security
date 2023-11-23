@@ -22,7 +22,6 @@ class CameraSensor(Enum):
     stream_provider = "Stream Provider"
     stream_url = "Stream URL"
     stream_status = "Stream Status"
-    codec = "Video Codec"
     video_queue_size = "Video Queue Size"
 
 

@@ -88,6 +88,7 @@ class OutgoingMessageType(Enum):
     # station level commands
     chime = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.station, MessageField.RINGTONE: None}
     reboot = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.station}
+    is_connected = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.station}
 
 
 class OutgoingMessage:

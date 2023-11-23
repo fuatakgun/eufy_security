@@ -12,6 +12,8 @@ UNSUPPORTED = "Unsupported"
 
 STREAM_TIMEOUT_SECONDS = 15
 STREAM_SLEEP_SECONDS = 0.25
+GO2RTC_RTSP_PORT = 8554
+GO2RTC_API_PORT = 1984
 
 
 class MessageField(Enum):
@@ -103,6 +105,9 @@ class EventNameToHandler(Enum):
     livestream_video_data_received = "livestream video data"
     livestream_audio_data_received = "livestream audio data"
     pin_verified = "pin verified"
+    connected = "connected"
+    disconnected = "disconnected"
+    connection_error = "connection error"
 
 
 class ProductType(Enum):

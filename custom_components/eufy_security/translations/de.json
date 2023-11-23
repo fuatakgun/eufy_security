@@ -31,10 +31,7 @@
         "title": "Eufy Security: Einrichtung",
         "data": {
           "sync_interval": "Cloud-Scan-Intervall in Sekunden [1 bis 9999]",
-          "rtsp_server_address": "Host-IP-Adresse für RTSP-Erweiterung (P2P)",
-          "rtsp_server_port": "TCP-Port für RTSP-Erweiterung (P2P)",
-          "ffmpeg_analyze_duration": "Dauer der Videoanalyse in Sekunden [1 bis 5] (P2P)",
-          "generate_ffmpeg_logs": "Generieren Sie FFMPEG-Protokolle",
+          "rtsp_server_address": "Host-IP-Adresse für GO2RTC-Erweiterung (P2P)",
           "no_stream_in_hass": "Do not use STREAM module inside Home Assistant (if you do not watch the video inside Home Assistant native streaming or you are using WebRTC, enable this to decrease CPU usage",
           "name_for_custom1": "Überschreibungsname für benutzerdefinierten Schutzmodus (1)",
           "name_for_custom2": "Überschreibungsname für benutzerdefinierten Schutzmodus (2)",

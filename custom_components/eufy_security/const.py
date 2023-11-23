@@ -74,11 +74,13 @@ class PropertyToEntityDescription(Enum):
     snoozeStartTime = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     snooze = EntityDescription(id=auto(), icon="mdi:alarm-snooze")
     snoozeTime = EntityDescription(id=auto(), icon="mdi:alarm-snooze")
+    doorSensor1BatteryLevel = EntityDescription(id=auto(), state_class=SensorStateClass.MEASUREMENT, category=EntityCategory.DIAGNOSTIC)
+    doorSensor2BatteryLevel = EntityDescription(id=auto(), state_class=SensorStateClass.MEASUREMENT, category=EntityCategory.DIAGNOSTIC)
+
 
     stream_provider = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     stream_url = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     stream_status = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
-    codec = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     video_queue_size = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
 
     # device binary sensor
@@ -112,6 +114,9 @@ class PropertyToEntityDescription(Enum):
     snoozeHomebase = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     snoozeMotion = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     snoozeChime = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    doorSensor1LowBattery = EntityDescription(id=auto(), device_class=BinarySensorDeviceClass.BATTERY, category=EntityCategory.DIAGNOSTIC)
+    doorSensor2LowBattery = EntityDescription(id=auto(), device_class=BinarySensorDeviceClass.BATTERY, category=EntityCategory.DIAGNOSTIC)
+    connected = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
 
     # device switch
     enabled = EntityDescription(id=auto())
@@ -135,6 +140,8 @@ class PropertyToEntityDescription(Enum):
     motionDetectionTypeHuman = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
     motionDetectionTypeHumanRecognition = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
     motionDetectionTypeAllOtherMotions = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+    door1Open = EntityDescription(id=auto())
+    door2Open = EntityDescription(id=auto())
 
     # device select
     powerSource = EntityDescription(id=auto(), icon="mdi:power-plug", category=EntityCategory.DIAGNOSTIC)
@@ -153,8 +160,8 @@ class PropertyToEntityDescription(Enum):
     lightSettingsScheduleDynamicLighting = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
 
     # station sensor
-    currentMode = EntityDescription(id=auto(), icon="mdi:security", category=EntityCategory.DIAGNOSTIC)
-    guardMode = EntityDescription(id=auto(), icon="mdi:security", category=EntityCategory.DIAGNOSTIC)
+    currentMode = EntityDescription(id=auto(), icon="mdi:security")
+    guardMode = EntityDescription(id=auto(), icon="mdi:security")
 
     # station select
     promptVolume = EntityDescription(id=auto(), icon="mdi:volume-medium", category=EntityCategory.CONFIG)

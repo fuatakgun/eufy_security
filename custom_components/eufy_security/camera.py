@@ -81,11 +81,8 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
         # ffmpeg entities
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]
-        self.product.set_ffmpeg(CameraMjpeg(self.ffmpeg.binary), ImageFrame(self.ffmpeg.binary))
 
     async def stream_source(self) -> str:
-        #for line in traceback.format_stack():
-        #    _LOGGER.debug(f"stream_source - {line.strip()}")
         if self.is_streaming is False:
             return None
         return self.product.stream_url

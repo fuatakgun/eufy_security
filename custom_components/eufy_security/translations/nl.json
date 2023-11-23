@@ -31,10 +31,7 @@
         "title": "Eufy Security: Configuratie",
         "data": {
           "sync_interval": "Cloudscan-interval in seconden [1 tot 9999]",
-          "rtsp_server_address": "Host IP-adres voor RTSP-add-on (P2P)",
-          "rtsp_server_port": "TCP Poort voor de RTSP-extensie (P2P)",
-          "ffmpeg_analyze_duration": "Video-analyseduur in seconden [1 tot 5] (P2P)",
-          "generate_ffmpeg_logs": "Genereer FFMPEG logboeken",
+          "rtsp_server_address": "Host IP-adres voor GO2RTC-add-on (P2P)",
           "no_stream_in_hass": "Gebruik geen STREAM module binnen Home Assistant (als je de video niet met Home Assistant native streaming bekijkt of je gebruikt WebRTC, zet dit aan om CPU gebruik te verminderen",
           "name_for_custom1": "Naam negeren voor Custom1 Beveiligings-modus",
           "name_for_custom2": "Naam negeren voor Custom2 Beveiligings-modus",

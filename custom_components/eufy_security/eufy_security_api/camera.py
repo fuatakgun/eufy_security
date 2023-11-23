@@ -7,7 +7,7 @@ from base64 import b64decode
 import datetime
 import traceback
 
-from .const import MessageField, STREAM_TIMEOUT_SECONDS, STREAM_SLEEP_SECONDS
+from .const import MessageField, STREAM_TIMEOUT_SECONDS, STREAM_SLEEP_SECONDS, GO2RTC_RTSP_PORT
 from .event import Event
 from .exceptions import CameraRTSPStreamNotEnabled, CameraRTSPStreamNotSupported
 from .p2p_streamer import P2PStreamer
@@ -51,13 +51,10 @@ class Camera(Device):
         self.stream_status: StreamStatus = StreamStatus.IDLE
         self.stream_provider: StreamProvider = None
         self.stream_url: str = None
-        self.codec: str = None
 
         self.video_queue = asyncio.Queue()
         self.config = config
         self.voices = voices
-        self.ffmpeg = None
-        self.imagempeg = None
         self.image_last_updated = None
 
         self.p2p_streamer = P2PStreamer(self)
@@ -76,11 +73,6 @@ class Camera(Device):
     def is_streaming(self) -> bool:
         """Is Camera in Streaming Status"""
         return self.stream_status == StreamStatus.STREAMING
-
-    def set_ffmpeg(self, ffmpeg, imagempeg):
-        """set ffmpeg binary"""
-        self.ffmpeg = ffmpeg
-        self.imagempeg = imagempeg
 
     async def _handle_livestream_started(self, event: Event):
         # automatically find this function for respective event
@@ -105,37 +97,7 @@ class Camera(Device):
 
     async def _handle_livestream_video_data_received(self, event: Event):
         # automatically find this function for respective event
-        if self.codec is None:
-            self.codec = event.data["metadata"]["videoCodec"].lower()
-
         await self.video_queue.put(event.data["buffer"]["data"])
-
-    async def _start_p2p_streamer(self):
-        self.stream_debug = "info - wait for codec value"
-        await wait_for_value(self.__dict__, "codec", None)
-        await self.p2p_streamer.start()
-
-    async def _is_stream_url_ready(self) -> bool:
-        _LOGGER.debug("_is_stream_url_ready - 1")
-        with contextlib.suppress(Exception):
-            while True:
-                if await self.imagempeg.get_image(self.stream_url, timeout=1) is not None:
-                    return True
-        return False
-
-    async def _check_stream_url(self) -> bool:
-        try:
-            self.stream_debug = "info - check if stream url is a valid stream"
-            _LOGGER.debug(f"_check_stream_url - {self.stream_debug}")
-            await asyncio.wait_for(self._is_stream_url_ready(), STREAM_TIMEOUT_SECONDS)
-            self.stream_status = StreamStatus.STREAMING
-            self.stream_debug = "info - streaming"
-            _LOGGER.debug(f"_check_stream_url - {self.stream_debug}")
-            return True
-        except asyncio.TimeoutError:
-            self.stream_debug = "error - rtsp url was not a valid stream"
-            _LOGGER.debug(f"_check_stream_url - {self.stream_debug}")
-            return False
 
     async def _initiate_start_stream(self, stream_type) -> bool:
         self.set_stream_prodiver(stream_type)
@@ -169,11 +131,9 @@ class Camera(Device):
         if await self._initiate_start_stream(StreamProvider.P2P) is False:
             return False
 
-        self.stream_debug = "info - start ffmpeg"
-        _LOGGER.debug(f"start_livestream - {self.stream_debug}")
-        await self._start_p2p_streamer()
-
-        return await self._check_stream_url()
+        await self.p2p_streamer.start()
+        self.stream_status = StreamStatus.STREAMING
+        return True
 
     async def check_and_stop_livestream(self):
         if self.stream_status != StreamStatus.IDLE:
@@ -188,7 +148,9 @@ class Camera(Device):
         if await self._initiate_start_stream(StreamProvider.RTSP) is False:
             return False
 
-        return await self._check_stream_url()
+        self.stream_status = StreamStatus.STREAMING
+        return True
+
 
     async def stop_rtsp_livestream(self):
         """Process stop rtsp livestream call"""
@@ -267,7 +229,7 @@ class Camera(Device):
         elif self.stream_provider == StreamProvider.P2P:
             url = url.replace("{serial_no}", str(self.serial_no))
             url = url.replace("{server_address}", str(self.config.rtsp_server_address))
-            url = url.replace("{server_port}", str(self.config.rtsp_server_port))
+            url = url.replace("{server_port}", str(GO2RTC_RTSP_PORT))
             self.stream_url = url
         _LOGGER.debug(f"url - {self.stream_provider} - {self.stream_url}")
 
