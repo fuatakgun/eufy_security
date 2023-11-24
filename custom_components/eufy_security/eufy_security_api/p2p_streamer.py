@@ -23,7 +23,7 @@ class P2PStreamer:
         while True:
             try:
                 item = await asyncio.wait_for(queue.get(), timeout=2.5)
-                #_LOGGER.debug(f"chunk_generator yield data - {len(item)}")
+                _LOGGER.debug(f"chunk_generator yield data - {len(item)}")
                 yield bytearray(item)
             except TimeoutError as te:
                 _LOGGER.debug(f"chunk_generator timeout Exception %s - traceback: %s", te, traceback.format_exc())
@@ -68,7 +68,7 @@ class P2PStreamer:
         # send API command to go2rtc to create a new stream
         await self.create_stream_on_go2rtc()
         asyncio.get_event_loop().create_task(self.write_bytes(self.camera.video_queue))
-        asyncio.get_event_loop().create_task(self.write_bytes(self.camera.audio_queue))
+        # asyncio.get_event_loop().create_task(self.write_bytes(self.camera.audio_queue))
 
 
     async def stop(self):
