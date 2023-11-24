@@ -23,7 +23,7 @@ class P2PStreamer:
         while True:
             try:
                 item = await asyncio.wait_for(queue.get(), timeout=2.5)
-                _LOGGER.debug(f"chunk_generator yield data - {len(item)}")
+                #_LOGGER.debug(f"chunk_generator yield data - {len(item)}")
                 yield bytearray(item)
             except TimeoutError as te:
                 _LOGGER.debug(f"chunk_generator timeout Exception %s - traceback: %s", te, traceback.format_exc())

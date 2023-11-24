@@ -82,6 +82,8 @@ class PropertyToEntityDescription(Enum):
     stream_url = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     stream_status = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
     video_queue_size = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+    audio_queue_size = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
+
 
     # device binary sensor
     motionDetected = EntityDescription(id=auto(), device_class=BinarySensorDeviceClass.MOTION)

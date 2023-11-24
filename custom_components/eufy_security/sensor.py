@@ -23,6 +23,8 @@ class CameraSensor(Enum):
     stream_url = "Stream URL"
     stream_status = "Stream Status"
     video_queue_size = "Video Queue Size"
+    audio_queue_size = "Audio Queue Size"
+
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -51,9 +53,11 @@ class EufySecuritySensor(SensorEntity, EufySecurityEntity):
     def native_value(self):
         """Return the value reported by the sensor."""
         if self.metadata.name in CameraSensor.__members__:
-            if self.metadata.name == "video_queue_size":
+            if self.metadata.name == CameraSensor.video_queue_size.name:
                 return self.product.video_queue.qsize()
-            if self.metadata.name == "stream_provider":
+            if self.metadata.name == CameraSensor.audio_queue_size.name:
+                return self.product.audio_queue.qsize()
+            if self.metadata.name == CameraSensor.stream_provider.name:
                 return self.product.stream_provider.name
             return get_child_value(self.product.__dict__, self.metadata.name)
 
