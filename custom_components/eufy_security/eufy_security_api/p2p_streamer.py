@@ -26,8 +26,8 @@ class P2PStreamer:
         while retry < max_retry:
             try:
                 item = queue.get_nowait()
+                _LOGGER.debug(f"chunk_generator yield data {retry} - {len(item)}")
                 retry = 0
-                _LOGGER.debug(f"chunk_generator yield data - {len(item)}")
                 yield bytearray(item)
             except TimeoutError as te:
                 _LOGGER.debug(f"chunk_generator timeout Exception %s - traceback: %s", te, traceback.format_exc())
