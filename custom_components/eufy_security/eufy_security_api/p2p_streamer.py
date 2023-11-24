@@ -28,7 +28,7 @@ class P2PStreamer:
                 item = queue.get_nowait()
                 _LOGGER.debug(f"chunk_generator yield data {retry} - {len(item)}")
                 retry = 0
-                yield bytearray(item)
+                yield item
             except TimeoutError as te:
                 _LOGGER.debug(f"chunk_generator timeout Exception %s - traceback: %s", te, traceback.format_exc())
                 raise te
@@ -45,6 +45,8 @@ class P2PStreamer:
             async with aiohttp.ClientSession() as session:
                 resp = await session.post(url, data = self.chunk_generator(queue), timeout=aiohttp.ClientTimeout(total=None, connect=5))
                 _LOGGER.debug(f"write_bytes - post response - {resp.status} - {await resp.text()}")
+            _LOGGER.debug("write_bytes - post ended - retry")
+            retry = True
 
         except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError) as ex:
             # live stream probabaly stopped, handle peacefully
@@ -58,7 +60,6 @@ class P2PStreamer:
             _LOGGER.debug(f"write_bytes general exception %s - traceback: %s", ex, traceback.format_exc())
 
         _LOGGER.debug("write_bytes - ended")
-
         await self.stop(retry)
 
     async def create_stream_on_go2rtc(self):

@@ -98,11 +98,11 @@ class Camera(Device):
         self.stream_status = StreamStatus.IDLE
 
     async def _handle_livestream_video_data_received(self, event: Event):
-        await self.video_queue.put(event.data["buffer"]["data"])
+        await self.video_queue.put(bytearray(event.data["buffer"]["data"]))
 
     async def _handle_livestream_audio_data_received(self, event: Event):
         pass
-        #await self.audio_queue.put(event.data["buffer"]["data"])
+        #await self.audio_queue.put(bytearray(event.data["buffer"]["data"]))
 
     async def _initiate_start_stream(self, stream_type) -> bool:
         self.set_stream_prodiver(stream_type)
