@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import socket
+import threading
 import json
 from time import sleep
 import traceback
@@ -20,14 +21,20 @@ class P2PStreamer:
         self.camera = camera
 
     async def chunk_generator(self, queue):
-        while True:
+        retry = 0
+        max_retry = 10
+        while retry < max_retry:
             try:
-                item = await asyncio.wait_for(queue.get(), timeout=2.5)
+                item = queue.get_nowait()
+                retry = 0
                 _LOGGER.debug(f"chunk_generator yield data - {len(item)}")
                 yield bytearray(item)
             except TimeoutError as te:
                 _LOGGER.debug(f"chunk_generator timeout Exception %s - traceback: %s", te, traceback.format_exc())
                 raise te
+            except asyncio.QueueEmpty as qe:
+                retry = retry + 1
+                await asyncio.sleep(0.1)
 
     async def write_bytes(self, queue):
         url = GO2RTC_API_URL.format(self.camera.config.rtsp_server_address, GO2RTC_API_PORT)
@@ -63,12 +70,19 @@ class P2PStreamer:
                 result = response.status, await response.text()
                 _LOGGER.debug(f"create_stream_on_go2rtc - put stream response {result}")
 
+    def p2p_worker(self):
+        new_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(new_loop)
+        new_loop.run_until_complete(self.write_bytes(self.camera.video_queue))
+        return
+
     async def start(self):
         """start streaming thread"""
         # send API command to go2rtc to create a new stream
         await self.create_stream_on_go2rtc()
-        asyncio.get_event_loop().create_task(self.write_bytes(self.camera.video_queue))
-        # asyncio.get_event_loop().create_task(self.write_bytes(self.camera.audio_queue))
+        p2p_thread = threading.Thread(target=self.p2p_worker, daemon=True)
+        p2p_thread.start()
+        #asyncio.new_event_loop().create_task(self.write_bytes(self.camera.audio_queue))
 
 
     async def stop(self):
@@ -79,3 +93,4 @@ class P2PStreamer:
         await asyncio.sleep(5)
         if retry is True:
             await self.camera.start_livestream()
+
