@@ -85,13 +85,7 @@ class P2PStreamer:
         p2p_thread.start()
         #asyncio.new_event_loop().create_task(self.write_bytes(self.camera.audio_queue))
 
-
-    async def stop(self):
-        await self.camera.check_and_stop_livestream()
-
-    async def stop(self, retry: boolean):
-        await self.camera.check_and_stop_livestream()
-        await asyncio.sleep(5)
-        if retry is True:
-            await self.camera.start_livestream()
+    async def stop(self, retry):
+        _LOGGER.debug(f"p2p - initiate stop - {retry}")
+        await self.camera.check_and_stop_livestream(retry)
 

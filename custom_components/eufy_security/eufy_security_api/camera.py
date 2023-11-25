@@ -140,9 +140,17 @@ class Camera(Device):
         self.stream_status = StreamStatus.STREAMING
         return True
 
-    async def check_and_stop_livestream(self):
+    async def check_and_stop_livestream(self, retry: bool):
+        _LOGGER.debug(f"check_and_stop_livestream - start - {retry}")
         if self.stream_status != StreamStatus.IDLE:
             await self.stop_livestream()
+        _LOGGER.debug(f"check_and_stop_livestream - cont - {retry}")
+        if retry is True:
+            _LOGGER.debug(f"check_and_stop_livestream - sleep 5 seconds - {retry}")
+            await asyncio.sleep(5)
+            _LOGGER.debug(f"check_and_stop_livestream - start live stream finish - {retry}")
+            await self.start_livestream()
+            _LOGGER.debug(f"check_and_stop_livestream - start live stream end - {retry}")
 
     async def stop_livestream(self):
         """Process stop p2p livestream call"""
