@@ -140,7 +140,7 @@ class Camera(Device):
         self.stream_status = StreamStatus.STREAMING
         return True
 
-    async def check_and_stop_livestream(self, retry: bool):
+    async def check_and_stop_livestream(self, retry):
         _LOGGER.debug(f"check_and_stop_livestream - start - {retry}")
         if self.stream_status != StreamStatus.IDLE:
             await self.stop_livestream()
