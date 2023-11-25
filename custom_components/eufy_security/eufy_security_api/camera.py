@@ -58,6 +58,8 @@ class Camera(Device):
         self.voices = voices
         self.image_last_updated = None
 
+        self.stream_future = None
+
         self.p2p_streamer = P2PStreamer(self)
 
         if self.is_rtsp_enabled is True:
@@ -136,9 +138,15 @@ class Camera(Device):
         if await self._initiate_start_stream(StreamProvider.P2P) is False:
             return False
 
+        self.stream_future = asyncio.get_running_loop().create_future()
+        self.stream_future.add_done_callback(self.sync_check_and_stop_livestream)
         await self.p2p_streamer.start()
         self.stream_status = StreamStatus.STREAMING
         return True
+
+    def sync_check_and_stop_livestream(self, future):
+        retry = future.result()
+        return asyncio.run_coroutine_threadsafe(self.check_and_stop_livestream(retry), asyncio.get_running_loop()).result()
 
     async def check_and_stop_livestream(self, retry):
         _LOGGER.debug(f"check_and_stop_livestream - start - {retry}")
