@@ -46,8 +46,7 @@ class P2PStreamer:
                 resp = await session.post(url, data = self.chunk_generator(queue), timeout=aiohttp.ClientTimeout(total=None, connect=5))
                 _LOGGER.debug(f"write_bytes - post response - {resp.status} - {await resp.text()}")
             _LOGGER.debug("write_bytes - post ended - retry")
-            #retry = True
-
+            retry = False
         except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError) as ex:
             # live stream probabaly stopped, handle peacefully
             _LOGGER.debug(f"write_bytes timeout/cancelled exception %s - traceback: %s", ex, traceback.format_exc())

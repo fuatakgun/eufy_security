@@ -71,6 +71,7 @@ class Camera(Device):
         self.rtsp_started_event = asyncio.Event()
 
         self.stream_debug = None
+        self._loop = asyncio.get_running_loop()
 
     @property
     def is_streaming(self) -> bool:
@@ -138,27 +139,27 @@ class Camera(Device):
         if await self._initiate_start_stream(StreamProvider.P2P) is False:
             return False
 
-        self.stream_future = asyncio.get_running_loop().create_future()
-        self.stream_future.add_done_callback(self.sync_check_and_stop_livestream)
+        self.stream_future = self._loop.create_future()
+        self.stream_future.add_done_callback(self.restart_livestream)
         await self.p2p_streamer.start()
         self.stream_status = StreamStatus.STREAMING
         return True
 
-    def sync_check_and_stop_livestream(self, future):
+    def restart_livestream(self, future):
         retry = future.result()
-        return asyncio.run_coroutine_threadsafe(self.check_and_stop_livestream(retry), asyncio.get_running_loop()).result()
+        self._loop.call_later(1,  asyncio.create_task, self.async_restart_livestream(retry))
 
-    async def check_and_stop_livestream(self, retry):
-        _LOGGER.debug(f"check_and_stop_livestream - start - {retry}")
+    async def async_restart_livestream(self, retry):
+        _LOGGER.debug(f"async_restart_livestream - start - {retry}")
         if self.stream_status != StreamStatus.IDLE:
             await self.stop_livestream()
-        _LOGGER.debug(f"check_and_stop_livestream - cont - {retry}")
+        _LOGGER.debug(f"async_restart_livestream - cont - {retry}")
         if retry is True:
-            _LOGGER.debug(f"check_and_stop_livestream - sleep 5 seconds - {retry}")
-            await asyncio.sleep(5)
-            _LOGGER.debug(f"check_and_stop_livestream - start live stream finish - {retry}")
+            _LOGGER.debug(f"async_restart_livestream - sleep 5 seconds - {retry}")
+            await asyncio.sleep(1)
+            _LOGGER.debug(f"async_restart_livestream - start live stream finish - {retry}")
             await self.start_livestream()
-            _LOGGER.debug(f"check_and_stop_livestream - start live stream end - {retry}")
+            _LOGGER.debug(f"async_restart_livestream - start live stream end - {retry}")
 
     async def stop_livestream(self):
         """Process stop p2p livestream call"""
