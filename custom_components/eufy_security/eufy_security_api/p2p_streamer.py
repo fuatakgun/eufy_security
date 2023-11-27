@@ -19,6 +19,7 @@ class P2PStreamer:
 
     def __init__(self, camera) -> None:
         self.camera = camera
+        self.retry = None
 
     async def chunk_generator(self, queue):
         retry = 0
@@ -36,32 +37,31 @@ class P2PStreamer:
                 retry = retry + 1
                 await asyncio.sleep(0.1)
 
-    async def write_bytes(self, queue, future):
+    async def write_bytes(self, queue):
         url = GO2RTC_API_URL.format(self.camera.config.rtsp_server_address, GO2RTC_API_PORT)
         url = f"{url}?dst={str(self.camera.serial_no)}"
 
-        retry = False
+        self.retry = False
         try:
             async with aiohttp.ClientSession() as session:
                 resp = await session.post(url, data = self.chunk_generator(queue), timeout=aiohttp.ClientTimeout(total=None, connect=5))
                 _LOGGER.debug(f"write_bytes - post response - {resp.status} - {await resp.text()}")
             _LOGGER.debug("write_bytes - post ended - retry")
-            retry = False
+            self.retry = False
         except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError) as ex:
             # live stream probabaly stopped, handle peacefully
             _LOGGER.debug(f"write_bytes timeout/cancelled exception %s - traceback: %s", ex, traceback.format_exc())
-            retry = False
+            self.retry = False
         except aiohttp.client_exceptions.ServerDisconnectedError as ex:
             # connection to go2rtc server is broken, try again
             _LOGGER.debug(f"write_bytes server_disconnected exception %s - traceback: %s", ex, traceback.format_exc())
-            retry = True
+            self.retry = True
         except Exception as ex:  # pylint: disable=broad-except
             # other exceptions, log the error
             _LOGGER.debug(f"write_bytes general exception %s - traceback: %s", ex, traceback.format_exc())
-            retry = False
+            self.retry = False
 
         _LOGGER.debug("write_bytes - ended")
-        future.get_loop().call_soon_threadsafe(future.set_result, retry)
 
     async def create_stream_on_go2rtc(self):
         parameters = {"name": str(self.camera.serial_no), "src": str(self.camera.serial_no)}
@@ -72,14 +72,8 @@ class P2PStreamer:
                 result = response.status, await response.text()
                 _LOGGER.debug(f"create_stream_on_go2rtc - put stream response {result}")
 
-    def p2p_worker(self):
-        new_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(new_loop)
-        new_loop.run_until_complete(self.write_bytes(self.camera.video_queue, self.camera.stream_future))
-
     async def start(self):
         """start streaming thread"""
         # send API command to go2rtc to create a new stream
         await self.create_stream_on_go2rtc()
-        p2p_thread = threading.Thread(target=self.p2p_worker, daemon=True)
-        p2p_thread.start()
+        await self.write_bytes(self.camera.video_queue)

@@ -71,7 +71,6 @@ class Camera(Device):
         self.rtsp_started_event = asyncio.Event()
 
         self.stream_debug = None
-        self._loop = asyncio.get_running_loop()
 
     @property
     def is_streaming(self) -> bool:
@@ -134,20 +133,20 @@ class Camera(Device):
             _LOGGER.debug(f"_initiate_start_stream - {self.stream_debug}")
             return False
 
+    async def check_live_stream(self):
+        if self.p2p_streamer.retry is not None:
+            await self.async_restart_livestream(self.p2p_streamer.retry)
+
     async def start_livestream(self) -> bool:
         """Process start p2p livestream call"""
         if await self._initiate_start_stream(StreamProvider.P2P) is False:
             return False
 
-        self.stream_future = self._loop.create_future()
-        self.stream_future.add_done_callback(self.restart_livestream)
-        await self.p2p_streamer.start()
+        self.stream_future = asyncio.create_task(self.p2p_streamer.start())
+        self.stream_checker = asyncio.create_task(self.check_live_stream())
+
         self.stream_status = StreamStatus.STREAMING
         return True
-
-    def restart_livestream(self, future):
-        retry = future.result()
-        self._loop.call_later(1,  asyncio.create_task, self.async_restart_livestream(retry))
 
     async def async_restart_livestream(self, retry):
         _LOGGER.debug(f"async_restart_livestream - start - {retry}")
