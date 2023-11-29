@@ -54,9 +54,9 @@ class EufySecuritySensor(SensorEntity, EufySecurityEntity):
         """Return the value reported by the sensor."""
         if self.metadata.name in CameraSensor.__members__:
             if self.metadata.name == CameraSensor.video_queue_size.name:
-                return self.product.video_queue.qsize()
+                return len(self.product.video_queue)
             if self.metadata.name == CameraSensor.audio_queue_size.name:
-                return self.product.audio_queue.qsize()
+                return len(self.product.audio_queue)
             if self.metadata.name == CameraSensor.stream_provider.name:
                 return self.product.stream_provider.name
             return get_child_value(self.product.__dict__, self.metadata.name)

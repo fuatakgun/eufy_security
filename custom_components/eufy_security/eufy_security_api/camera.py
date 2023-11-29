@@ -4,6 +4,7 @@ from enum import Enum
 import logging
 import threading
 from base64 import b64decode
+from collections import deque
 import datetime
 import traceback
 
@@ -52,8 +53,8 @@ class Camera(Device):
         self.stream_provider: StreamProvider = None
         self.stream_url: str = None
 
-        self.video_queue = asyncio.Queue()
-        self.audio_queue = asyncio.Queue()
+        self.video_queue = deque()
+        self.audio_queue = deque()
         self.config = config
         self.voices = voices
         self.image_last_updated = None
@@ -86,8 +87,8 @@ class Camera(Device):
         # automatically find this function for respective event
         _LOGGER.debug(f"_handle_livestream_stopped - {event}")
         self.stream_status = StreamStatus.IDLE
-        self.video_queue = asyncio.Queue()
-        self.audio_queue = asyncio.Queue()
+        self.video_queue = deque()
+        self.audio_queue = deque()
 
     async def _handle_rtsp_livestream_started(self, event: Event):
         # automatically find this function for respective event
@@ -100,11 +101,12 @@ class Camera(Device):
         self.stream_status = StreamStatus.IDLE
 
     async def _handle_livestream_video_data_received(self, event: Event):
-        await self.video_queue.put(bytearray(event.data["buffer"]["data"]))
+        #_LOGGER.debug(f"_handle_rtsp_livestream_stopped - {event}")
+        self.video_queue.append(bytearray(event.data["buffer"]["data"]))
 
     async def _handle_livestream_audio_data_received(self, event: Event):
-        pass
-        #await self.audio_queue.put(bytearray(event.data["buffer"]["data"]))
+        #pass
+        self.audio_queue.append(bytearray(event.data["buffer"]["data"]))
 
     async def _initiate_start_stream(self, stream_type) -> bool:
         self.set_stream_prodiver(stream_type)
@@ -135,30 +137,24 @@ class Camera(Device):
 
     async def check_live_stream(self):
         if self.p2p_streamer.retry is not None:
-            await self.async_restart_livestream(self.p2p_streamer.retry)
+            _LOGGER.debug(f"async_restart_livestream - start - {self.p2p_streamer.retry}")
+            if self.stream_status != StreamStatus.IDLE:
+                await self.stop_livestream()
+            if self.p2p_streamer.retry is True:
+                _LOGGER.debug(f"async_restart_livestream - sleep - {self.p2p_streamer.retry}")
+                await asyncio.sleep(1)
+                _LOGGER.debug(f"async_restart_livestream - start live stream finish - {self.p2p_streamer.retry}")
+                await self.start_livestream()
+                _LOGGER.debug(f"async_restart_livestream - start live stream end - {self.p2p_streamer.retry}")
 
     async def start_livestream(self) -> bool:
         """Process start p2p livestream call"""
+        self.stream_future = asyncio.create_task(self.p2p_streamer.start())
         if await self._initiate_start_stream(StreamProvider.P2P) is False:
             return False
-
-        self.stream_future = asyncio.create_task(self.p2p_streamer.start())
         self.stream_checker = asyncio.create_task(self.check_live_stream())
-
         self.stream_status = StreamStatus.STREAMING
         return True
-
-    async def async_restart_livestream(self, retry):
-        _LOGGER.debug(f"async_restart_livestream - start - {retry}")
-        if self.stream_status != StreamStatus.IDLE:
-            await self.stop_livestream()
-        _LOGGER.debug(f"async_restart_livestream - cont - {retry}")
-        if retry is True:
-            _LOGGER.debug(f"async_restart_livestream - sleep 5 seconds - {retry}")
-            await asyncio.sleep(1)
-            _LOGGER.debug(f"async_restart_livestream - start live stream finish - {retry}")
-            await self.start_livestream()
-            _LOGGER.debug(f"async_restart_livestream - start live stream end - {retry}")
 
     async def stop_livestream(self):
         """Process stop p2p livestream call"""
