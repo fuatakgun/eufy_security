@@ -136,16 +136,18 @@ class Camera(Device):
             return False
 
     async def check_live_stream(self):
-        if self.p2p_streamer.retry is not None:
-            _LOGGER.debug(f"async_restart_livestream - start - {self.p2p_streamer.retry}")
-            if self.stream_status != StreamStatus.IDLE:
-                await self.stop_livestream()
-            if self.p2p_streamer.retry is True:
-                _LOGGER.debug(f"async_restart_livestream - sleep - {self.p2p_streamer.retry}")
-                await asyncio.sleep(1)
-                _LOGGER.debug(f"async_restart_livestream - start live stream finish - {self.p2p_streamer.retry}")
-                await self.start_livestream()
-                _LOGGER.debug(f"async_restart_livestream - start live stream end - {self.p2p_streamer.retry}")
+        while self.p2p_streamer.retry is None:
+            await asyncio.sleep(1)
+
+        _LOGGER.debug(f"async_restart_livestream - start - {self.p2p_streamer.retry}")
+        if self.stream_status != StreamStatus.IDLE:
+            await self.stop_livestream()
+        if self.p2p_streamer.retry is True:
+            _LOGGER.debug(f"async_restart_livestream - sleep - {self.p2p_streamer.retry}")
+            await asyncio.sleep(1)
+            _LOGGER.debug(f"async_restart_livestream - start live stream finish - {self.p2p_streamer.retry}")
+            await self.start_livestream()
+            _LOGGER.debug(f"async_restart_livestream - start live stream end - {self.p2p_streamer.retry}")
 
     async def start_livestream(self) -> bool:
         """Process start p2p livestream call"""
