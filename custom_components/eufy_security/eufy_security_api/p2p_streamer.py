@@ -24,19 +24,13 @@ class P2PStreamer:
     async def chunk_generator(self, queue, queue_name):
         retry_count = 0
         max_retry_count = 10
-        try:
-            await asyncio.wait_for(self.camera.p2p_started_event.wait(), 5)
-        except asyncio.TimeoutError as te:
-            _LOGGER.debug(f"chunk_generator {queue_name} - event did not receive in timeout")
-            raise te
-
         while retry_count < max_retry_count:
             try:
                 item = queue.popleft()
-                _LOGGER.debug(f"chunk_generator {queue_name} yield data {retry_count} - {len(item)}")
+                #_LOGGER.debug(f"chunk_generator {queue_name} yield data {retry_count} - {len(item)}")
                 retry_count = 0
                 yield item
-            except IndexError as qe:
+            except IndexError:
                 retry_count = retry_count + 1
                 await asyncio.sleep(0.1)
 
@@ -64,7 +58,7 @@ class P2PStreamer:
             _LOGGER.debug(f"write_bytes {queue_name} general exception no retry {ex} - traceback: {traceback.format_exc()}")
             self.retry = False
 
-        _LOGGER.debug("write_bytes {queue_name} - ended")
+        _LOGGER.debug(f"write_bytes {queue_name} - ended")
 
     async def create_stream_on_go2rtc(self):
         parameters = {"name": str(self.camera.serial_no)}
@@ -83,11 +77,15 @@ class P2PStreamer:
                 result = response.status, await response.text()
                 _LOGGER.debug(f"create_stream_on_go2rtc - put stream response {result}")
 
+    def run(self, queue, name):
+        asyncio.run(self.write_bytes(queue, name))
+
     async def start(self):
         """start streaming thread"""
         # send API command to go2rtc to create a new stream
+        self.retry = None
         await self.create_stream_on_go2rtc()
         await asyncio.gather(
-            self.write_bytes(self.camera.audio_queue, "audio"),
-            self.write_bytes(self.camera.video_queue, "video")
+            asyncio.to_thread(self.run, self.camera.audio_queue, "audio"),
+            asyncio.to_thread(self.run, self.camera.video_queue, "video")
         )

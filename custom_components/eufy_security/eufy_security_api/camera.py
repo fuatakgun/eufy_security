@@ -149,9 +149,9 @@ class Camera(Device):
 
     async def start_livestream(self) -> bool:
         """Process start p2p livestream call"""
-        self.stream_future = asyncio.create_task(self.p2p_streamer.start())
         if await self._initiate_start_stream(StreamProvider.P2P) is False:
             return False
+        self.stream_future = asyncio.create_task(self.p2p_streamer.start())
         self.stream_checker = asyncio.create_task(self.check_live_stream())
         self.stream_status = StreamStatus.STREAMING
         return True
