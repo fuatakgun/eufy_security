@@ -63,7 +63,7 @@ Please follow the guideline from here: https://github.com/bropat/hassio-eufy-sec
 
 This is a must for P2P streaming and nice to have for RTSP streaming. P2P streaming will use go2rtc to generate stream with a specific RTSP address. RTSP streaming will use this for faster streaming.
 
-There are two ways of doing this, either installing add-on itself or installing Webrtc custom integration. I suggest you to install Webrtc custom integration, which includes go2rtc and respective front-end card for faster streaming. Installing go2rtc with or without webrtc can be done following this link: https://github.com/AlexxIT/go2rtc/#go2rtc-home-assistant-add-on
+There are two ways of doing this, either installing add-on itself or installing Webrtc custom integration. I suggest you to install Webrtc custom integration, which includes go2rtc and respective front-end card for faster streaming. Installing go2rtc with or without webrtc can be done following this link: https://github.com/fuatakgun/WebRTC . This WebRTC is a customized version to manage conditional card easily and further setup would rely on this one.
 
 ## 3. Installing Eufy Security Integration
 
@@ -108,38 +108,22 @@ Native Home Assistant streaming is fairly slow (maybe not?), so you are highly a
 Below code will show camera picture while camera is not streaming and webrtc card while camera is streaming (conditional cards). Please replace `camera.entrance` with your camera entity name.
 
 ```yaml
-square: false
-columns: 1
-type: grid
-cards:
-  - type: conditional
-    conditions:
-      - entity: camera.entrance
-        state: idle
-    card:
-      type: picture
-      image_entity: image.entrance_event_image
-  - type: conditional
-    conditions:
-      - entity: camera.entrance
-        state: streaming
-    card:
-      type: vertical-stack
-      cards:
-        - show_name: true
-          show_icon: false
-          type: button
-          tap_action:
-            action: call-service
-            service: camera.turn_off
-            data: {}
-            target:
-              entity_id: camera.entrance
-          entity: camera.entrance
-          name: Stop
-        - type: custom:webrtc-camera
-          entity: camera.entrance
-          poster: image.entrance_event_image
+type: custom:webrtc-camera
+entity: camera.entrance
+poster: image.entrance_event_image
+ui: true
+shortcuts:
+  - name: Play
+    icon: mdi:play
+    service: camera.turn_on
+    service_data:
+      entity_id: camera.entrance
+  - name: Stop
+    icon: mdi:stop
+    service: camera.turn_off
+    service_data:
+      entity_id: camera.entrance
+
 ```
 
 If your camera supports pan and tilt, you can add respective commands to webrtc interface.
