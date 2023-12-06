@@ -139,6 +139,7 @@ cards:
           name: Stop
         - type: custom:webrtc-camera
           entity: camera.entrance
+          poster: image.entrance_event_image
 ```
 
 If your camera supports pan and tilt, you can add respective commands to webrtc interface.
