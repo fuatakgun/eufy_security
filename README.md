@@ -6,7 +6,7 @@ Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congra
 - [Installation](#installation)
     - [Important: You must set Streaming Quality to LOW and Streaming Codec to LOW in all possible places, otherwise Home Assistant will not be able to handle video generation and/or playing.](#important-you-must-set-streaming-quality-to-low-and-streaming-codec-to-low-in-all-possible-places-otherwise-home-assistant-will-not-be-able-to-handle-video-generation-andor-playing)
   - [1. Installing Eufy Security Add-On](#1-installing-eufy-security-add-on)
-  - [2. Install RTSP Simple Server Add-on - Required for P2P Based Video Streaming - Not Required for RTSP Based Video Streaming](#2-install-rtsp-simple-server-add-on---required-for-p2p-based-video-streaming---not-required-for-rtsp-based-video-streaming)
+  - [2. Install go2rtc Add-on](#2-install-go2rtc-add-on)
   - [3. Installing Eufy Security Integration](#3-installing-eufy-security-integration)
   - [4. Setting up your dashboard for camera](#4-setting-up-your-dashboard-for-camera)
 - [Features](#features)
@@ -33,45 +33,13 @@ Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congra
 - Trusted device name is a required identifier for Eufy systems to record this add-on as mobile client, so you can differentiate the connection from this add-on in multi factor authentication (two factor authentication) page.
 - As we already called out earlier, add-on heavily relies on push notifications, so you must enable all kind of push notifications (motion detected, person detected, lock events, alarm events etc) in your mobile app. These notifications are not user based but device based so after enabling all these notifications, your main account will probably bloated with many push notifications. In android, there is a setting to disable specific notifications, please use it.
 
-RTSP Based Streaming - When your devices support RTSP
-
-```mermaid
-sequenceDiagram
-    Home Assistant ->> Eufy-Security-WS: Call Start RTSP Stream
-    Eufy-Security-WS ->> Device/Station: Call Start RTSP Stream
-    Device/Station ->> Eufy-Security-WS: Return RTSP Stream URL
-    Eufy-Security-WS ->> Home Assistant: Return RTSP Stream URL
-    Home Assistant ->> Device/Station: (Native) Watch Video
-    WebRTC (go2rtc) ->> Device/Station: Get RTSP Stream Bytes
-    WebRTC (go2rtc) ->> WebRTC (go2rtc): Generate WebRTC Video
-    Home Assistant ->> WebRTC (go2rtc): (WebRTC) Watch Video
-```
-
-P2P Based Streaming - When we have to generate the stream in hard way
-
-```mermaid
-sequenceDiagram
-    Home Assistant ->> Eufy-Security-WS: Call Start Live Stream
-    Eufy-Security-WS ->> Device/Station: Call Start Live Stream
-    Device/Station ->> Eufy-Security-WS: Return data bytes from stream
-    Eufy-Security-WS ->> Home Assistant: Return data bytes from stream
-    Home Assistant ->> Random TCP Port: Write data bytes from stream
-    Random TCP Port ->> FFMPEG Process : Write individiual bytes of stream
-    FFMPEG Process ->> RTSP Simple Server: Generate Video Stream via codec
-    RTSP Simple Server ->> RTSP Simple Server: Generate RTSP Stream (rtsp://127.0.0.1:9554/SERIALNO)
-    Home Assistant ->> RTSP Simple Server: (Native) Watch Video
-    WebRTC (go2rtc) ->> RTSP Simple Server: Get RTSP Stream Bytes
-    WebRTC (go2rtc) ->> WebRTC (go2rtc): Generate WebRTC Video
-    Home Assistant ->> WebRTC (go2rtc): (WebRTC) Watch Video
-```
-
 # Supported or Known Working devices
 
 Please check here: https://github.com/bropat/eufy-security-client#known-working-devices
 
 # Installation
 
-In upcoming steps, you are going to install at least one add-on and one integration.
+In upcoming steps, you are going to install at least one add-on and two integrations.
 
 In Home Assistant eco-system, if you are using Supervised or HASS OS based setup, you can use `Add-ons` page of Home Assistant to install these. If you are running Core or you don't have `Add-ons` option in your setup, you need to install the docker and run these containers yourself. You will see respective commands in respective steps. If you are interested in composing of your docker container, please check the end section
 
@@ -81,7 +49,7 @@ If you are intending to use this integration for video streaming purposes and if
 
 If you are intending to use this integration for video streaming purposes and if your camera supports RTSP, you will probably enjoy reliable stream because generating RTSP stream is responsibility of hardware and it is very much reliable than P2P based streaming. There is no need to convert incoming P2P bytes into RTSP stream. There are some modified version of Android apk of Eufy Security out there which could enable RTSP stream for unsupported devices but I have not tried it. Moreover, I do not own personally a P2P required device, that is because, many times, I cannot replicate your issues locally and we need to work together to debug these issues.
 
-Lastly, your camera would not start streaming magically by itself, you have to call `turn_on` or `turn_off` services of respective camera entities. So, when you first install everything, you would not have any video until you call these functions. Moreover, P2P streaming might stop randomly because of low level issues, you can restart it again with `turn_off` and `turn_on`. You can trigger your automation's on camera states (idle, preparing, streaming).
+Lastly, your camera would not start streaming magically by itself, you have to call `turn_on` or `turn_off` services of respective camera entities. So, when you first install everything, you would not have any video until you call these functions. Moreover, P2P streaming might stop randomly because of low level technical issues, you can restart it again with `turn_off` and `turn_on`. You can trigger your automation's on camera states (idle, preparing, streaming).
 
 ### Important: You must set Streaming Quality to LOW and Streaming Codec to LOW in all possible places, otherwise Home Assistant will not be able to handle video generation and/or playing. ###
 
@@ -91,42 +59,27 @@ So, let's start.
 
 Please follow the guideline from here: https://github.com/bropat/hassio-eufy-security-ws
 
-## 2. Install RTSP Simple Server Add-on - Required for P2P Based Video Streaming - Not Required for RTSP Based Video Streaming
+## 2. Install go2rtc Add-on
 
-If you use your own docker service, please run it like this `docker run -it RTSP_PROTOCOLS=tcp -p 8554:8554 -p 1935:1935 bluenviron/mediamtx:latest` and jump into Step 5 (Note that the source project was renamed to `MediaMTX`).
+This is a must for P2P streaming and nice to have for RTSP streaming. P2P streaming will use go2rtc to generate stream with a specific RTSP address. RTSP streaming will use this for faster streaming.
 
-1- Add `RTSP Simple Server Add-on` Repository to `Add-On Store`. Please follow steps located here (https://www.home-assistant.io/common-tasks/os#installing-third-party-add-ons) and use this repository URL (https://github.com/fuatakgun/rtsp_simple_server/)
-
-2- Search `RTSP Simple Server` on `Add-on Store` (https://your-instance.duckdns.org/hassio/store)
-
-3- Install `RTSP Simple Server`
-
-4- Hit `Start` and wait for it to be started.
-
-5- Check Logs, you have to see something like this;
-
-```
-2022/12/27 23:53:09 I [0/0] rtsp-simple-server v0.17.6
-2022/12/27 23:53:09 I [0/0] [RTSP] TCP listener opened on :8554
-2022/12/27 23:53:09 I [0/0] [RTMP] listener opened on :1935
-2022/12/27 23:53:09 I [0/0] [HLS] listener opened on :8888
-```
+There are two ways of doing this, either installing add-on itself or installing Webrtc custom integration. I suggest you to install Webrtc custom integration, which includes go2rtc and respective front-end card for faster streaming. Installing go2rtc with or without webrtc can be done following this link: https://github.com/AlexxIT/go2rtc/#go2rtc-home-assistant-add-on
 
 ## 3. Installing Eufy Security Integration
 
 1- If you have not already installed, install `HACS` following this guide: https://hacs.xyz/docs/setup/download
 
-2- When `HACS` is ready, search for `Eufy Security` inside `HACS` Integrations
+2- When `HACS` is ready, search for `Eufy Security` inside `HACS` Integrations. 
 
-3- Install `Eufy Security` integration, restart your Home Assistant instance.
+3- Install `Eufy Security` integration through HACS, restart your Home Assistant instance.
 
-4- Install `Eufy Security` service from the previous step by navigating to `Settings -> Devices & Services` page (https://your-instance.duckdns.org/config/integrations). Click on `Add Integration` and search for `Eufy Security`. If you do not see it, first validate that it is installed via HACS and you had restarted it, later try with another browser. Integrations list might be already cached in your browser.
+4- Navigate to `Settings -> Devices & Services` page of Home Assistant(https://your-instance.duckdns.org/config/integrations). Click on `Add Integration` and search for `Eufy Security` (not `Eufy`, it is `Eufy Security` exactly). If you do not see it, first validate that it is installed via HACS and you had restarted it, later try with another browser. Integrations list might be already cached in your browser.
 
 5- Put `Eufy Security Add-on IP Address` (127.0.0.1 for Supervised installation) and `configured port` (default 3000) and click Submit.
 
 6- You might receive Captcha or Multi Factor Authentications (MFA) warnings, please Reconfigure the integration. Captcha code will be visible on Reconfigure page and MFA Code will be emailed or texted to you. Please enter these values. After this, you might need to restart your Home Assistant instance.
 
-7- If you have installed `RTSP Simple Server Add-On`, please put its `IP Address` and `Port` into Integration Configuration page.
+7- If you have installed `RTSP Simple Server Add-On`, please put its `IP Address` into Integration Configuration page. You can put `127.0.0.1` for Supervised installation.
 
 8- You can also configure `Cloud Scan Interval`, Video Analyze Duration, `Custom Name 1`, `Custom Name 2` and `Custom Name 3`
 

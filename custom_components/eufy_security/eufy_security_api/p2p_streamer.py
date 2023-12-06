@@ -43,24 +43,28 @@ class P2PStreamer:
             async with aiohttp.ClientSession() as session:
                 resp = await session.post(url, data = self.chunk_generator(queue, queue_name), timeout=aiohttp.ClientTimeout(total=None, connect=5))
                 _LOGGER.debug(f"write_bytes {queue_name} - post response - {resp.status} - {await resp.text()}")
-            _LOGGER.debug("write_bytes - post ended - no retry")
-            self.retry = False
+                if resp is not None and resp.status is not None:
+                    if resp.status == 500:
+                        self.retry = self.retry or True
+                self.retry = self.retry or False
+
+            _LOGGER.debug("write_bytes - post ended - {self.retry}")
         except (asyncio.exceptions.TimeoutError, asyncio.exceptions.CancelledError) as ex:
             # live stream probabaly stopped, handle peacefully
-            _LOGGER.debug(f"write_bytes {queue_name} timeout/cancelled no retry exception {ex} - traceback: {traceback.format_exc()}")
-            self.retry = False
+            _LOGGER.debug(f"write_bytes {queue_name} timeout/cancelled NO RETRY exception {ex} - traceback: {traceback.format_exc()}")
+            self.retry = self.retry or False
         except aiohttp.client_exceptions.ServerDisconnectedError as ex:
             # connection to go2rtc server is broken, try again``
-            _LOGGER.debug(f"write_bytes {queue_name} server_disconnected retry exception {ex} - traceback: {traceback.format_exc()}")
-            self.retry = True
+            _LOGGER.debug(f"write_bytes {queue_name} server_disconnected RETRY exception {ex} - traceback: {traceback.format_exc()}")
+            self.retry = self.retry or True
         except Exception as ex:  # pylint: disable=broad-except
             # other exceptions, log the error
-            _LOGGER.debug(f"write_bytes {queue_name} general exception no retry {ex} - traceback: {traceback.format_exc()}")
-            self.retry = False
+            _LOGGER.debug(f"write_bytes {queue_name} general exception NO RETRY {ex} - traceback: {traceback.format_exc()}")
+            self.retry = self.retry or False
 
-        _LOGGER.debug(f"write_bytes {queue_name} - ended")
+        _LOGGER.debug(f"write_bytes {queue_name} - ended with {self.retry}")
 
-    async def create_stream_on_go2rtc(self):
+    async def _create_stream_on_go2rtc(self):
         parameters = {"name": str(self.camera.serial_no)}
         url = GO2RTC_API_URL.format(self.camera.config.rtsp_server_address, GO2RTC_API_PORT)
         url = f"{url}s"
@@ -77,15 +81,15 @@ class P2PStreamer:
                 result = response.status, await response.text()
                 _LOGGER.debug(f"create_stream_on_go2rtc - put stream response {result}")
 
-    def run(self, queue, name):
+    def _run(self, queue, name):
         asyncio.run(self.write_bytes(queue, name))
 
     async def start(self):
         """start streaming thread"""
         # send API command to go2rtc to create a new stream
         self.retry = None
-        await self.create_stream_on_go2rtc()
+        await self._create_stream_on_go2rtc()
         await asyncio.gather(
-            asyncio.to_thread(self.run, self.camera.audio_queue, "audio"),
-            asyncio.to_thread(self.run, self.camera.video_queue, "video")
+            #asyncio.to_thread(self._run, self.camera.audio_queue, "audio"),
+            asyncio.to_thread(self._run, self.camera.video_queue, "video")
         )

@@ -60,6 +60,7 @@ class Camera(Device):
         self.image_last_updated = None
 
         self.stream_future = None
+        self.stream_checker = None
 
         self.p2p_streamer = P2PStreamer(self)
 
@@ -105,8 +106,8 @@ class Camera(Device):
         self.video_queue.append(bytearray(event.data["buffer"]["data"]))
 
     async def _handle_livestream_audio_data_received(self, event: Event):
-        #pass
-        self.audio_queue.append(bytearray(event.data["buffer"]["data"]))
+        pass
+        #self.audio_queue.append(bytearray(event.data["buffer"]["data"]))
 
     async def _initiate_start_stream(self, stream_type) -> bool:
         self.set_stream_prodiver(stream_type)
@@ -135,17 +136,16 @@ class Camera(Device):
             _LOGGER.debug(f"_initiate_start_stream - {self.stream_debug}")
             return False
 
-    async def check_live_stream(self):
+    async def _check_live_stream(self):
         while self.p2p_streamer.retry is None:
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
 
         _LOGGER.debug(f"async_restart_livestream - start - {self.p2p_streamer.retry}")
         if self.stream_status != StreamStatus.IDLE:
-            await self.stop_livestream()
+            await self.stop_livestream(is_internal=True)
+
         if self.p2p_streamer.retry is True:
-            _LOGGER.debug(f"async_restart_livestream - sleep - {self.p2p_streamer.retry}")
-            await asyncio.sleep(1)
-            _LOGGER.debug(f"async_restart_livestream - start live stream finish - {self.p2p_streamer.retry}")
+            _LOGGER.debug(f"async_restart_livestream - start live stream start - {self.p2p_streamer.retry}")
             await self.start_livestream()
             _LOGGER.debug(f"async_restart_livestream - start live stream end - {self.p2p_streamer.retry}")
 
@@ -154,12 +154,17 @@ class Camera(Device):
         if await self._initiate_start_stream(StreamProvider.P2P) is False:
             return False
         self.stream_future = asyncio.create_task(self.p2p_streamer.start())
-        self.stream_checker = asyncio.create_task(self.check_live_stream())
+        self.stream_checker = asyncio.create_task(self._check_live_stream())
         self.stream_status = StreamStatus.STREAMING
         return True
 
-    async def stop_livestream(self):
+    async def stop_livestream(self, is_internal=False):
         """Process stop p2p livestream call"""
+        if is_internal is True:
+            # called from another function, so respect retry value
+            pass
+        else:
+            self.p2p_streamer.retry = False
         await self.api.stop_livestream(self.product_type, self.serial_no)
 
     async def start_rtsp_livestream(self) -> bool:
