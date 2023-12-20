@@ -99,7 +99,7 @@ These built-in alarm panel services do not correspond with any default Eufy guar
 
 ![image](https://user-images.githubusercontent.com/11085566/210082270-4de06bbe-0d10-4dde-9fd3-cb12d6758b67.png)
 
-9- Enable diagnostic entities that are disabled by default. After installation, some entities are disabled to avoid generating too large amounts of data. This is expected behavior. If you think any entity is important, just enable it. To do this select one of the device in eufy_security integrations. Then scroll down to Diagnostic section and select one of entity. In top go to settings and turn on `Enabled` and `Visible` parameters in settings. After around 30 secont this entity will be available.
+9- Enable diagnostic entities that are disabled by default. After installation, some entities are disabled to avoid generating too large amounts of data. This is expected behavior. If you think any entity is important, just enable it. To do this select one of the device in eufy_security integrations. Then scroll down to Diagnostic section and select one of entity. In top go to settings and turn on `Enabled` and `Visible` parameters in settings. After around 30 seconds this entity will be available.
 
 ## 4. Setting up your dashboard for camera
 
