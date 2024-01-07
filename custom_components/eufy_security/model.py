@@ -43,7 +43,7 @@ class Config:
     host: str = ConfigField.host.value
     port: int = ConfigField.port.value
     sync_interval: int = ConfigField.sync_interval.value
-    rtsp_server_address: str = ConfigField.host.value
+    rtsp_server_address: str = ConfigField.rtsp_server_address.value
     no_stream_in_hass: bool = ConfigField.no_stream_in_hass.value
     name_for_custom1: str = ConfigField.name_for_custom1.value
     name_for_custom2: str = ConfigField.name_for_custom2.value
