@@ -51,7 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     await coordinator.initialize()
     for platform in PLATFORMS:
         coordinator.platforms.append(platform.value)
-        hass.async_add_job(hass.config_entries.async_forward_entry_setup(config_entry, platform.value))
+        config_entry.async_create_task(hass, hass.config_entries.async_forward_entry_setup(config_entry, platform.value))
 
     async def update(event_time_utc):
         local_coordinator = hass.data[DOMAIN][COORDINATOR]
