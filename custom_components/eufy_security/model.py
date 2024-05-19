@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import auto, Enum, StrEnum
 
-from homeassistant.backports.enum import StrEnum
 from homeassistant.config_entries import ConfigEntry
 
 
