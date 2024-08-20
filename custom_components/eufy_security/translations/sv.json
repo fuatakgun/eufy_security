@@ -4,16 +4,16 @@
         "user": {
           "description": "Ange IP-adressen och porten för Eufy Security Web Socket-instansen.",
           "data": {
-            "host": "Värdens IP address (t.ex. 192.168.178.22)",
+            "host": "Värdens IP-address (t.ex. 192.168.178.22)",
             "port": "Port (t.ex 3000)"
           }
         }
       },
       "error": {
-        "auth": "Värd/Port är fel."
+        "auth": "IP-address/Port är fel."
       },
       "abort": {
-        "single_instance_allowed": "Bara en instans är tillåtet",
+        "single_instance_allowed": "Bara en instans är tillåten",
         "reauth_successful": "Koden är mottagen, laddar om integrationen i bakgrunden automatiskt!"
       }
     },
