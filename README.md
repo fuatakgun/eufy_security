@@ -69,7 +69,14 @@ There are two ways of doing this, either installing add-on itself or installing 
 
 1- If you have not already installed, install `HACS` following this guide: https://hacs.xyz/docs/setup/download
 
-2- When `HACS` is ready, search for `Eufy Security` inside `HACS` Integrations. 
+2- When `HACS` is installed, click this link to directly go to the repository in HACS and click "Download": [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=fuatakgun&repository=eufy_security&category=integration)
+
+Or: 
+- Open HACS
+- Go to "Frontend" section
+- Click button with "+" icon
+- Search for "formulaone-card"
+- Click "Download" button and install repository in HACS
 
 3- Install `Eufy Security` integration through HACS, restart your Home Assistant instance.
 
