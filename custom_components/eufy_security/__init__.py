@@ -66,7 +66,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     """unload active entities"""
     _LOGGER.debug(f"async_unload_entry 1")
     coordinator = hass.data[DOMAIN][COORDINATOR]
-    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unloaded = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
 
     if unloaded:
         await coordinator.disconnect()
