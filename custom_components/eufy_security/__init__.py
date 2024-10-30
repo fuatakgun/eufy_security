@@ -4,18 +4,19 @@ from datetime import timedelta
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Config, HomeAssistant
+from homeassistant.core import HomeAssistant
 from homeassistant.components.persistent_notification import create
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.typing import ConfigType
 from .const import COORDINATOR, DOMAIN, PLATFORMS
 from .coordinator import EufySecurityDataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup(hass: HomeAssistant, config: Config):
+async def async_setup(hass: HomeAssistant, config: ConfigType):
     """initialize the integration"""
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
@@ -41,12 +42,15 @@ async def async_setup(hass: HomeAssistant, config: Config):
 
     return True
 
+
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """setup config entry"""
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
 
-    coordinator = hass.data[DOMAIN][COORDINATOR] = hass.data[DOMAIN].get(COORDINATOR, EufySecurityDataUpdateCoordinator(hass, config_entry))
+    coordinator = hass.data[DOMAIN][COORDINATOR] = hass.data[DOMAIN].get(
+        COORDINATOR, EufySecurityDataUpdateCoordinator(hass, config_entry)
+    )
 
     await coordinator.initialize()
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
@@ -62,6 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     return True
 
+
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """unload active entities"""
     _LOGGER.debug(f"async_unload_entry 1")
@@ -75,6 +80,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     _LOGGER.debug(f"async_unload_entry 2")
     return unloaded
 
+
 async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
     """reload integration"""
     _LOGGER.debug(f"async_reload_entry 1")
@@ -83,14 +89,22 @@ async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     await async_setup_entry(hass, config_entry)
     _LOGGER.debug(f"async_reload_entry 3")
 
-async def async_remove_config_entry_device(hass: HomeAssistant, config_entry: ConfigEntry, device_entry: DeviceEntry) -> bool:
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: DeviceEntry
+) -> bool:
     """Remove a config entry from a device."""
     serial_no = next(iter(device_entry.identifiers))[1]
     _LOGGER.debug(f"async_remove_config_entry_device device_entry {serial_no}")
     coordinator = hass.data[DOMAIN][COORDINATOR]
     if serial_no in coordinator.devices or serial_no in coordinator.stations:
         _LOGGER.debug(f"async_remove_config_entry_device error exists {serial_no}")
-        create(hass, f"Device is still accessible on account, cannot be deleted!", title="Eufy Security - Error", notification_id="eufy_security_delete_device_error")
+        create(
+            hass,
+            f"Device is still accessible on account, cannot be deleted!",
+            title="Eufy Security - Error",
+            notification_id="eufy_security_delete_device_error",
+        )
         return False
     _LOGGER.debug(f"async_remove_config_entry_device deleted {serial_no}")
     return True
