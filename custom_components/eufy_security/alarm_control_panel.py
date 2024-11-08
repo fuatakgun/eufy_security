@@ -9,10 +9,11 @@ from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelState,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_OFF
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.const import STATE_OFF
+
 from .const import COORDINATOR, DOMAIN, Schema
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
