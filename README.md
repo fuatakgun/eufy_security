@@ -45,7 +45,7 @@ In Home Assistant eco-system, if you are using Supervised or HASS OS based setup
 
 This integration is not part of Home Assistant Core so you have to install this as a custom integration. There are two ways of doing this, either manually downloading and copying files or using HACS (Home Assistant Community Store). I will be using HACS method here.
 
-If you are intending to use this integration for video streaming purposes and if your camera does not support RTSP (Real Time Streaming Protocol) based streaming (no option of continuous or NAS recording in your camera settings), you also need to install RTSP Simple Server Add-on. This add-on will enable us to convert peer to peer (P2P) bytes into a RTSP stream so you can play it nicely inside Home Assistant (with or without RTC) or with VLC Player.
+If you are intending to use this integration for video streaming purposes and if your camera does not support RTSP (Real Time Streaming Protocol) based streaming (no option of continuous or NAS recording in your camera settings), you also need to install webrtc custom integration which would include go2rtc binary (go2rtc also exists as standalone add-on). This add-on will enable us to convert peer to peer (P2P) bytes into a RTSP stream so you can play it nicely inside Home Assistant (with or without RTC) or with VLC Player.
 
 If you are intending to use this integration for video streaming purposes and if your camera supports RTSP, you will probably enjoy reliable stream because generating RTSP stream is responsibility of hardware and it is very much reliable than P2P based streaming. There is no need to convert incoming P2P bytes into RTSP stream. There are some modified version of Android apk of Eufy Security out there which could enable RTSP stream for unsupported devices but I have not tried it. Moreover, I do not own personally a P2P required device, that is because, many times, I cannot replicate your issues locally and we need to work together to debug these issues.
 
@@ -79,7 +79,7 @@ There are two ways of doing this, either installing add-on itself or installing 
 
 6- You might receive Captcha or Multi Factor Authentications (MFA) warnings, please Reconfigure the integration. Captcha code will be visible on Reconfigure page and MFA Code will be emailed or texted to you. Please enter these values. After this, you might need to restart your Home Assistant instance.
 
-7- If you have installed `RTSP Simple Server Add-On`, please put its `IP Address` into Integration Configuration page. You can put `127.0.0.1` for Supervised installation.
+7- If you have installed `webrtc custom integration with go2rtc or standalone go2rtc Add-On`, please put its `IP Address` into Integration Configuration page. You can put `127.0.0.1` for Supervised installation.
 
 8- You can also configure `Cloud Scan Interval`, Video Analyze Duration, `Custom Name 1`, `Custom Name 2` and `Custom Name 3`
 
