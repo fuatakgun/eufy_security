@@ -6,9 +6,10 @@ import logging
 from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntity,
     AlarmControlPanelEntityFeature,
+    AlarmControlPanelState,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_ALARM_ARMED_AWAY, STATE_ALARM_ARMED_HOME, STATE_ALARM_DISARMED, STATE_ALARM_TRIGGERED, STATE_OFF
+from homeassistant.const import STATE_OFF
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -43,14 +44,14 @@ class CurrentModeToStateValue(Enum):
     """Alarm Entity Mode to State Value"""
 
     NONE = "Unknown"
-    AWAY = STATE_ALARM_ARMED_AWAY
-    HOME = STATE_ALARM_ARMED_HOME
+    AWAY = AlarmControlPanelState.ARMED_AWAY
+    HOME = AlarmControlPanelState.ARMED_HOME
     CUSTOM_BYPASS = auto()
     NIGHT = auto()
     VACATION = auto()
-    DISARMED = STATE_ALARM_DISARMED
+    DISARMED = AlarmControlPanelState.DISARMED
     OFF = STATE_OFF
-    TRIGGERED = STATE_ALARM_TRIGGERED
+    TRIGGERED = AlarmControlPanelState.TRIGGERED
     ALARM_DELAYED = "Alarm delayed"
 
 
