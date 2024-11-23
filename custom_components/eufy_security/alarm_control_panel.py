@@ -166,7 +166,7 @@ class EufySecurityAlarmControlPanel(AlarmControlPanelEntity, EufySecurityEntity)
         await self.product.reboot()
 
     @property
-    def state(self):
+    def alarm_state(self):
         alarm_delayed = get_child_value(self.product.properties, "alarmDelay", 0)
         if alarm_delayed > 0:
             return CurrentModeToStateValue.ALARM_DELAYED.value
