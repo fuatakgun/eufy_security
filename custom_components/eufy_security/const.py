@@ -133,6 +133,8 @@ class PropertyToEntityDescription(Enum):
     motionTracking = EntityDescription(id=auto(), icon="mdi:radar", category=EntityCategory.CONFIG)
     rtspStream = EntityDescription(id=auto(), icon="mdi:movie", category=EntityCategory.CONFIG)
     light = EntityDescription(id=auto(), icon="mdi:car-light-high", category=EntityCategory.CONFIG)
+    lightSettingsEnable = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
+
     microphone = EntityDescription(id=auto(), icon="mdi:microphone", category=EntityCategory.CONFIG)
     speaker = EntityDescription(id=auto(), icon="mdi:volume-high", category=EntityCategory.CONFIG)
     audioRecording = EntityDescription(id=auto(), icon="mdi:record-circle", category=EntityCategory.CONFIG)
