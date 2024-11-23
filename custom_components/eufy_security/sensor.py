@@ -13,6 +13,16 @@ from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.util import get_child_value
 from .util import get_product_properties_by_filter
 
+PERSON_NAME = "personName"
+EMPTY = ""
+UNKNOWN = "Unknown"
+PERSON_NAME_STATE_EMPTY = "No Person"
+PERSON_NAME_STATE_UNKNOWN = "Unknown Person"
+PERSON_NAME_VALUE_TO_STATE = {
+    EMPTY: PERSON_NAME_STATE_EMPTY,
+    UNKNOWN: PERSON_NAME_STATE_UNKNOWN,
+}
+
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
@@ -62,6 +72,10 @@ class EufySecuritySensor(SensorEntity, EufySecurityEntity):
             return get_child_value(self.product.__dict__, self.metadata.name)
 
         value = get_child_value(self.product.properties, self.metadata.name)
+
+        if self.metadata.name == PERSON_NAME:
+            return PERSON_NAME_VALUE_TO_STATE.get(value, value)
+
         if self.metadata.states is not None:
             try:
                 return self.metadata.states[str(value)]
