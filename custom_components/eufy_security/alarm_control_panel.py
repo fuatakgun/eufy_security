@@ -46,9 +46,9 @@ class CurrentModeToStateValue(Enum):
     NONE = "Unknown"
     AWAY = AlarmControlPanelState.ARMED_AWAY
     HOME = AlarmControlPanelState.ARMED_HOME
-    CUSTOM_BYPASS = auto()
-    NIGHT = auto()
-    VACATION = auto()
+    CUSTOM_BYPASS = 3
+    NIGHT = 4
+    VACATION = 5
     DISARMED = AlarmControlPanelState.DISARMED
     OFF = STATE_OFF
     TRIGGERED = AlarmControlPanelState.TRIGGERED
