@@ -63,7 +63,9 @@ Please follow the guideline from here: https://github.com/bropat/hassio-eufy-sec
 
 This is a must for P2P streaming and nice to have for RTSP streaming. P2P streaming will use go2rtc to generate stream with a specific RTSP address. RTSP streaming will use this for faster streaming.
 
-There are two ways of doing this, either installing add-on itself or installing Webrtc custom integration. I suggest you to install Webrtc custom integration, which includes go2rtc and respective front-end card for faster streaming. Installing go2rtc with or without webrtc can be done following this link: https://github.com/fuatakgun/WebRTC . This WebRTC is a customized version to manage conditional card easily and further setup would rely on this one.
+There are two ways of doing this, either installing add-on itself or installing Webrtc custom integration. I suggest you to install Webrtc custom integration, which includes go2rtc and respective front-end card for faster streaming. 
+
+Installing go2rtc with or without webrtc can be done following this link: [https://github.com/fuatakgun/WebRTC](https://github.com/AlexxIT/WebRTC) . If you prefer to have a dedicadated go2rtc setup (not bundled with webrtc integration), you need to first install over here: https://github.com/AlexxIT/go2rtc
 
 ## 3. Installing Eufy Security Integration
 
