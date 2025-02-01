@@ -69,7 +69,7 @@ Installing go2rtc with or without webrtc can be done following this link: [https
 
 ## 3. Installing Eufy Security Integration
 
-1- If you have not already installed, install `HACS` following this guide: https://hacs.xyz/docs/setup/download
+1- If you have not already installed, install `HACS` following this guide: [https://hacs.xyz/docs/use/download/download/](https://hacs.xyz/docs/use/download/download/)
 
 2- When `HACS` is ready, search for `Eufy Security` inside `HACS` Integrations. 
 
