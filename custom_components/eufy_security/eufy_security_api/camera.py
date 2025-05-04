@@ -204,6 +204,18 @@ class Camera(Device):
         """Look around 360 degrees"""
         await self.api.pan_and_tilt(self.product_type, self.serial_no, PTZCommand.ROTATE360.value)
 
+    async def preset_position(self, position: int) -> None:
+        """Set preset position"""
+        await self.api.preset_position(self.product_type, self.serial_no, position)
+
+    async def save_preset_position(self, position: int) -> None:
+        """Save new preset position"""
+        await self.api.save_preset_position(self.product_type, self.serial_no, position)
+
+    async def delete_preset_position(self, position: int) -> None:
+        """Delete existing preset position"""
+        await self.api.delete_preset_position(self.product_type, self.serial_no, position)
+
     async def calibrate(self) -> None:
         """Calibrate camera"""
         await self.api.calibrate(self.product_type, self.serial_no)

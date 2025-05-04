@@ -199,6 +199,18 @@ class ApiClient:
         """Process start pan tilt rotate zoom"""
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.pan_and_tilt, serial_no=serial_no, direction=direction))
 
+    async def preset_position(self, product_type: ProductType, serial_no: str, position: int) -> None:
+        """Process preset position call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.preset_position, serial_no=serial_no, position=position))
+
+    async def save_preset_position(self, product_type: ProductType, serial_no: str, position: int) -> None:
+        """Process save preset position call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.save_preset_position, serial_no=serial_no, position=position))
+
+    async def delete_preset_position(self, product_type: ProductType, serial_no: str, position: int) -> None:
+        """Process delete preset position call"""
+        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.delete_preset_position, serial_no=serial_no, position=position))
+
     async def start_rtsp_livestream(self, product_type: ProductType, serial_no: str) -> None:
         """Process start rtsp livestream call"""
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.start_rtsp_livestream, serial_no=serial_no))
