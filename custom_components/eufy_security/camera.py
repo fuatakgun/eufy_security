@@ -227,6 +227,15 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def _async_ptz_360(self) -> None:
         await self.product.ptz_360()
 
+    async def _async_preset_position(self, position: int) -> None:
+        await self.product.preset_position(position)
+
+    async def _async_save_preset_position(self, position: int) -> None:
+        await self.product.save_preset_position(position)
+
+    async def _async_delete_preset_position(self, position: int) -> None:
+        await self.product.delete_preset_position(position)
+
     async def _async_calibrate(self) -> None:
         await self.product.calibrate()
 
