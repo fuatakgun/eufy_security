@@ -107,9 +107,12 @@ preset_position:
       required: true
       default: 0
       selector:
-        number:
-          min: 0
-          max: 3
+        select:
+          options:
+            - 0
+            - 1
+            - 2
+            - 3
 
 save_preset_position:
   name: Save preset position
@@ -125,9 +128,12 @@ save_preset_position:
       required: true
       default: 0
       selector:
-        number:
-          min: 0
-          max: 3
+        select:
+          options:
+            - 0
+            - 1
+            - 2
+            - 3
 
 delete_preset_position:
   name: Delete preset position
@@ -143,9 +149,12 @@ delete_preset_position:
       required: true
       default: 0
       selector:
-        number:
-          min: 0
-          max: 3
+        select:
+          options:
+            - 0
+            - 1
+            - 2
+            - 3
 
 calibrate:
   name: Calibrate camera
