@@ -105,13 +105,11 @@ preset_position:
       name: Position
       description: Position Option
       required: true
+      default: 0
       selector:
-        select:
-          options:
-            - 0
-            - 1
-            - 2
-            - 3
+        number:
+          min: 0
+          max: 3
 
 save_preset_position:
   name: Save preset position
@@ -125,13 +123,11 @@ save_preset_position:
       name: Position
       description: Position Option
       required: true
+      default: 0
       selector:
-        select:
-          options:
-            - 0
-            - 1
-            - 2
-            - 3
+        number:
+          min: 0
+          max: 3
 
 delete_preset_position:
   name: Delete preset position
@@ -145,13 +141,11 @@ delete_preset_position:
       name: Position
       description: Position Option
       required: true
+      default: 0
       selector:
-        select:
-          options:
-            - 0
-            - 1
-            - 2
-            - 3
+        number:
+          min: 0
+          max: 3
 
 calibrate:
   name: Calibrate camera
