@@ -18,6 +18,7 @@ class OutgoingMessageToParameter(Enum):
     captchaId = "captcha_id"
     captcha = "captcha_input"
     direction = "direction"
+    position = "position"
     verifyCode = "verify_code"
     voiceId = "voice_id"
     snoozeTime = "snooze_time"
@@ -65,6 +66,9 @@ class OutgoingMessageType(Enum):
 
     # device level commands
     pan_and_tilt = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device, MessageField.DIRECTION: None}
+    preset_position = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device, MessageField.POSITION: None}
+    save_preset_position = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device, MessageField.POSITION: None}
+    delete_preset_position = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device, MessageField.POSITION: None}
     calibrate = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
     start_rtsp_livestream = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}
     stop_rtsp_livestream = {MessageField.DUMMY: auto(), MessageField.DOMAIN: EventSourceType.device}

@@ -93,6 +93,60 @@ ptz_left:
       domain: camera
       integration: eufy_security
 
+preset_position:
+  name: Preset position
+  description: Set a preset position for supported cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+  fields:
+    position:
+      name: Position
+      description: Position Option
+      required: true
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3
+
+save_preset_position:
+  name: Save preset position
+  description: Save a new preset position for supported cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+  fields:
+    position:
+      name: Position
+      description: Position Option
+      required: true
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3
+
+delete_preset_position:
+  name: Delete preset position
+  description: Delete an existing preset position for supported cameras
+  target:
+    entity:
+      domain: camera
+      integration: eufy_security
+  fields:
+    position:
+      name: Position
+      description: Position Option
+      required: true
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 3
+
 calibrate:
   name: Calibrate camera
   description: Calibrate supported cameras

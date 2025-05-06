@@ -6,7 +6,7 @@ from .command_description import CommandDescription
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-SCHEMA_VERSION = 19
+SCHEMA_VERSION = 21
 
 UNSUPPORTED = "Unsupported"
 
@@ -76,6 +76,7 @@ class MessageField(Enum):
     PICTURE_URL = "pictureUrl"
     PICTURE = "picture"
     DIRECTION = "direction"
+    POSITION = "position"
     LIVE_STREAMING = "livestreaming"
     VOICES = "voices"
     VOICE_ID = "voiceId"

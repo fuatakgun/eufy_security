@@ -56,6 +56,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("ptz_left", {}, "_async_ptz_left")
     platform.async_register_entity_service("ptz_right", {}, "_async_ptz_right")
     platform.async_register_entity_service("ptz_360", {}, "_async_ptz_360")
+    platform.async_register_entity_service("preset_position", Schema.PRESET_POSITION_SERVICE_SCHEMA.value, "_async_preset_position")
+    platform.async_register_entity_service("save_preset_position", Schema.PRESET_POSITION_SERVICE_SCHEMA.value, "_async_save_preset_position")
+    platform.async_register_entity_service("delete_preset_position", Schema.PRESET_POSITION_SERVICE_SCHEMA.value, "_async_delete_preset_position")
     platform.async_register_entity_service("calibrate", {}, "_async_calibrate")
 
     platform.async_register_entity_service("trigger_camera_alarm_with_duration", Schema.TRIGGER_ALARM_SERVICE_SCHEMA.value, "_async_alarm_trigger")
@@ -223,6 +226,15 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def _async_ptz_360(self) -> None:
         await self.product.ptz_360()
+
+    async def _async_preset_position(self, position: int) -> None:
+        await self.product.preset_position(position)
+
+    async def _async_save_preset_position(self, position: int) -> None:
+        await self.product.save_preset_position(position)
+
+    async def _async_delete_preset_position(self, position: int) -> None:
+        await self.product.delete_preset_position(position)
 
     async def _async_calibrate(self) -> None:
         await self.product.calibrate()
