@@ -24,7 +24,6 @@ class EufySecurityOptionFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: ConfigEntry) -> None:
         """Initialize option flow handler"""
         self.config = Config.parse(config_entry)
-        self.config_entry = config_entry
         _LOGGER.debug(f"{DOMAIN} EufySecurityOptionFlowHandler - {config_entry.options}")
         self.schema = vol.Schema(
             {
