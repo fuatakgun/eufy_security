@@ -80,7 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     platform.async_register_entity_service("geofence", {}, "geofence")
     platform.async_register_entity_service("schedule", {}, "schedule")
     platform.async_register_entity_service("chime", Schema.CHIME_SERVICE_SCHEMA.value, "chime")
-    platform.async_register_entity_service("reboot", {}, "async_reboot")
+    platform.async_register_entity_service("reboot", {}, "reboot")
     platform.async_register_entity_service("alarm_off", {}, "async_alarm_off")
 
 
