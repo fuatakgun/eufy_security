@@ -65,7 +65,7 @@ This is a must for P2P streaming and nice to have for RTSP streaming. P2P stream
 
 There are two ways of doing this, either installing add-on itself or installing Webrtc custom integration. I suggest you to install Webrtc custom integration, which includes go2rtc and respective front-end card for faster streaming. 
 
-Installing go2rtc with or without webrtc can be done following this link: [https://github.com/fuatakgun/WebRTC](https://github.com/AlexxIT/WebRTC) . If you prefer to have a dedicadated go2rtc setup (not bundled with webrtc integration), you need to first install over here: https://github.com/AlexxIT/go2rtc
+Installing go2rtc with or without webrtc can be done following this link: [https://github.com/AlexxIT/WebRTC](https://github.com/AlexxIT/WebRTC) . If you prefer to have a dedicadated go2rtc setup (not bundled with webrtc integration), you need to first install over here: https://github.com/AlexxIT/go2rtc
 
 ## 3. Installing Eufy Security Integration
 
