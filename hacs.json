@@ -1,5 +1,6 @@
 {
   "name": "Eufy Security",
   "render_readme": true,
+  "homeassistant": "2025.1",
   "content_in_root": false
 }
