@@ -65,9 +65,9 @@ class Camera(Device):
         self.p2p_streamer = P2PStreamer(self)
 
         if self.is_rtsp_enabled is True:
-            self.set_stream_prodiver(StreamProvider.RTSP)
+            self.set_stream_provider(StreamProvider.RTSP)
         else:
-            self.set_stream_prodiver(StreamProvider.P2P)
+            self.set_stream_provider(StreamProvider.P2P)
 
         self.p2p_started_event = asyncio.Event()
         self.rtsp_started_event = asyncio.Event()
@@ -110,7 +110,7 @@ class Camera(Device):
         #self.audio_queue.append(bytearray(event.data["buffer"]["data"]))
 
     async def _initiate_start_stream(self, stream_type) -> bool:
-        self.set_stream_prodiver(stream_type)
+        self.set_stream_provider(stream_type)
         self.stream_status = StreamStatus.PREPARING
         self.stream_debug = "info - send command to add-on"
         _LOGGER.debug(f"_initiate_start_stream - {self.stream_debug} - {stream_type}")
@@ -249,7 +249,7 @@ class Camera(Device):
         """Returns picture bytes in base64 format"""
         return bytearray(self.picture_base64["data"]["data"])
 
-    def set_stream_prodiver(self, stream_provider: StreamProvider) -> None:
+    def set_stream_provider(self, stream_provider: StreamProvider) -> None:
         """Set stream provider for camera instance"""
         self.stream_provider = stream_provider
         url = self.stream_provider.value

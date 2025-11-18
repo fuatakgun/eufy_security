@@ -9,5 +9,5 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/fuatakgun/eufy_security/issues",
   "requirements": ["websocket-client==1.8.0", "aiortsp==1.4.0"],
-  "version": "8.2.1"
+  "version": "8.2.2"
 }
