@@ -6,7 +6,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
-    COORDINATOR,
     DOMAIN,
     Platform,
     PlatformToPropertyType,
@@ -23,7 +22,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Setup switch entities."""
 
-    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
+    coordinator: EufySecurityDataUpdateCoordinator = config_entry.runtime_data
     product_properties = get_product_properties_by_filter(
         [coordinator.devices.values(), coordinator.stations.values()], PlatformToPropertyType[Platform.NUMBER.name].value
     )

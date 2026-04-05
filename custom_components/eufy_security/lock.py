@@ -9,7 +9,7 @@ from homeassistant.const import ATTR_CODE
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import COORDINATOR, DOMAIN
+from .const import DOMAIN
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
 from .eufy_security_api.const import MessageField
@@ -21,7 +21,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Setup lock entities."""
-    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
+    coordinator: EufySecurityDataUpdateCoordinator = config_entry.runtime_data
     properties = []
     for product in coordinator.devices.values():
         if product.has(MessageField.LOCKED.value) is True:

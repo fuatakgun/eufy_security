@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import COORDINATOR, DOMAIN, Platform, PlatformToPropertyType
+from .const import DOMAIN, Platform, PlatformToPropertyType
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
 from .eufy_security_api.metadata import Metadata
@@ -39,7 +39,7 @@ class CameraSensor(Enum):
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Setup sensor entities."""
-    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
+    coordinator: EufySecurityDataUpdateCoordinator = config_entry.runtime_data
     product_properties = get_product_properties_by_filter(
         [coordinator.devices.values(), coordinator.stations.values()], PlatformToPropertyType[Platform.SENSOR.name].value
     )
