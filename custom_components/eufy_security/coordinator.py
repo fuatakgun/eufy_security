@@ -3,7 +3,6 @@ import asyncio
 from datetime import timedelta
 import logging
 import json
-import asyncio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.components.persistent_notification import create
@@ -29,7 +28,14 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
         self.config: Config = Config.parse(config_entry)
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_method=self._update_local, update_interval=timedelta(seconds=self.config.sync_interval))
+        super().__init__(
+            hass,
+            _LOGGER,
+            config_entry=config_entry,
+            name=DOMAIN,
+            update_method=self._update_local,
+            update_interval=timedelta(seconds=self.config.sync_interval),
+        )
         self._platforms = []
         self.data = {}
         self._api = ApiClient(self.config, aiohttp_client.async_get_clientsession(self.hass), self._on_error)

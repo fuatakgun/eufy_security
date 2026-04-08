@@ -6,7 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import COORDINATOR, DOMAIN, Platform, PlatformToPropertyType
+from .const import DOMAIN, Platform, PlatformToPropertyType
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
 from .eufy_security_api.metadata import Metadata
@@ -19,7 +19,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Setup binary sensor entities."""
-    coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
+    coordinator: EufySecurityDataUpdateCoordinator = config_entry.runtime_data
     product_properties = get_product_properties_by_filter(
         [coordinator.devices.values(), coordinator.stations.values()],
         PlatformToPropertyType[Platform.BINARY_SENSOR.name].value,

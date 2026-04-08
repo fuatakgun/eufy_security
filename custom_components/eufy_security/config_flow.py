@@ -10,7 +10,7 @@ from homeassistant.helpers import aiohttp_client
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_call_later
 
-from .const import COORDINATOR, DOMAIN
+from .const import DOMAIN
 from .eufy_security_api.api_client import ApiClient
 from .eufy_security_api.exceptions import WebSocketConnectionException
 from .model import Config, ConfigField
@@ -65,7 +65,11 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._errors = {}
 
         if self.source == SOURCE_REAUTH:
-            coordinator = self.hass.data[DOMAIN][COORDINATOR]
+            config_entry_id = None
+            for entry in self._async_current_entries():
+                config_entry_id = entry.entry_id
+
+            coordinator = self.hass.config_entries.async_get_entry(config_entry_id).runtime_data
             if coordinator.config.mfa_required is True:
                 mfa_input = user_input[ConfigField.mfa_input.name]
                 await coordinator.set_mfa_and_connect(mfa_input)
@@ -76,14 +80,9 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 coordinator.config.captcha_img = None
                 await coordinator.set_captcha_and_connect(captcha_id, captcha_input)
 
-            config_entry_id = None
-            for entry in self._async_current_entries():
-                config_entry_id = entry.entry_id
-
             async def try_reloading(_now):
                 _LOGGER.debug(f"{DOMAIN} try_reloading start after captcha/mfa")
                 await coordinator.disconnect()
-                self.hass.data[DOMAIN] = {}
                 await self.hass.config_entries.async_reload(config_entry_id)
                 _LOGGER.debug(f"{DOMAIN} try_reloading finish after captcha/mfa")
 
@@ -133,7 +132,10 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth_confirm(self, user_input=None):
         """Re-authenticate via captcha or mfa code"""
-        coordinator = self.hass.data[DOMAIN][COORDINATOR]
+        entry_id = None
+        for entry in self._async_current_entries():
+            entry_id = entry.entry_id
+        coordinator = self.hass.config_entries.async_get_entry(entry_id).runtime_data
         _LOGGER.debug(f"{DOMAIN} async_step_reauth_confirm - {coordinator.config}")
         if user_input is None:
             if coordinator.config.mfa_required is True:
