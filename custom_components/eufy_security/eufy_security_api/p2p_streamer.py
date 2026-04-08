@@ -10,7 +10,7 @@ from time import sleep
 import traceback
 import aiohttp
 import os
-from .const import GO2RTC_API_PORT, GO2RTC_API_URL
+from .const import GO2RTC_API_PORT, GO2RTC_API_URL, STREAM_TIMEOUT_SECONDS
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -23,7 +23,7 @@ class P2PStreamer:
 
     async def chunk_generator(self, queue, queue_name):
         retry_count = 0
-        max_retry_count = 10
+        max_retry_count = int(STREAM_TIMEOUT_SECONDS / 0.1)
         while retry_count < max_retry_count:
             try:
                 item = queue.popleft()

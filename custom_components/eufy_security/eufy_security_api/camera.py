@@ -127,7 +127,7 @@ class Camera(Device):
                 return False
 
         try:
-            await asyncio.wait_for(event.wait(), 5)
+            await asyncio.wait_for(event.wait(), STREAM_TIMEOUT_SECONDS)
             self.stream_debug = "info - command was done"
             _LOGGER.debug(f"_initiate_start_stream - {self.stream_debug}")
             return True
