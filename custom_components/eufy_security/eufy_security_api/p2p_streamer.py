@@ -73,7 +73,7 @@ class P2PStreamer:
                 result = response.status, await response.text()
                 _LOGGER.debug(f"create_stream_on_go2rtc - delete stream response {result}")
 
-        parameters = {"name": str(self.camera.serial_no), "src": str(self.camera.serial_no)}
+        parameters = {"name": str(self.camera.serial_no), "src": "tcp://127.0.0.1:65535"}
         url = GO2RTC_API_URL.format(self.camera.config.rtsp_server_address, GO2RTC_API_PORT)
         url = f"{url}s"
         async with aiohttp.ClientSession() as session:
