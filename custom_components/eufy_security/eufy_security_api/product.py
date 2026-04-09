@@ -131,6 +131,16 @@ class Product:
         """checks if Product is safe lock"""
         return True if ProductCommand.verify_pin.value.command in self.commands else False
 
+    @property
+    def is_t85_lock(self):
+        """checks if Product is a T85* lock device"""
+        return self.serial_no.startswith("T85")
+
+    @property
+    def is_lock(self):
+        """checks if Product is any type of lock (safe lock or T85* lock)"""
+        return self.is_safe_lock or self.is_t85_lock
+
     def has(self, property_name: str) -> bool:
         """Checks if product has required property"""
         return False if self.properties.get(property_name, None) is None else True
