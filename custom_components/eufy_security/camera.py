@@ -141,10 +141,10 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def _get_image_from_stream_url(self, width, height):
         while True:
             result = await ffmpeg.async_get_image(self.hass, await self.stream_source(), width=width, height=height)
-            if result is not None:
+            if result:
                 _LOGGER.debug(f"_get_image_from_stream_url - received {len(result)}")
                 return result
-            _LOGGER.debug(f"_get_image_from_stream_url - is_empty {result is None}")
+            _LOGGER.debug(f"_get_image_from_stream_url - is_empty {result!r}")
             await asyncio.sleep(STREAM_SLEEP_SECONDS)
 
     async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
