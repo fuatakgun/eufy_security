@@ -61,13 +61,28 @@ class WebSocketClient:
 
     async def _process_messages(self):
         async for msg in self.socket:
+            if msg.type != aiohttp.WSMsgType.TEXT:
+                # ERROR frames carry an Exception in .data (e.g. ServerTimeoutError).
+                # Exit cleanly so _on_close can reconnect instead of calling .json().
+                if msg.type in (
+                    aiohttp.WSMsgType.ERROR,
+                    aiohttp.WSMsgType.CLOSE,
+                    aiohttp.WSMsgType.CLOSING,
+                ):
+                    _LOGGER.warning(
+                        "websocket closed/errored type=%s data=%s",
+                        msg.type,
+                        msg.data,
+                    )
+                    break
+                continue
             await self._on_message(msg)
 
     async def _on_message(self, message):
         try:
             if self.message_callback is not None:
                 await self.message_callback(message.json())
-        except:
+        except Exception:
             traceback.print_exc()
 
     async def _on_error(self, error: Text = "Unspecified") -> None:
