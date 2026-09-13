@@ -1,3 +1,12 @@
+# Notice
+
+Please check the new implementation, this repository will not be updated any further.
+
+https://github.com/mega-yfue/ha-eufy-sdk-addon
+
+https://github.com/mega-yfue/ha-eufy-sdk
+
+
 Welcome to Alpha release of Eufy Security Integration for Home Assistant. Congratulations on being a brave heart and trying this version.  
 
 - [Gratitude](#gratitude)
