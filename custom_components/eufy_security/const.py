@@ -23,9 +23,11 @@ DOMAIN = "eufy_security"
 VERSION = "1.0.0"
 COORDINATOR = "coordinator"
 DISCONNECTED = "eufy-security-ws-disconnected"
+LIGHT_PROPERTY = "light"
 
 PLATFORMS: list[str] = [
     Platform.BINARY_SENSOR,
+    Platform.LIGHT,
     Platform.SELECT,
     Platform.SENSOR,
     Platform.SWITCH,
@@ -133,7 +135,7 @@ class PropertyToEntityDescription(Enum):
     chimeIndoor = EntityDescription(id=auto(), icon="mdi:bell-ring", category=EntityCategory.CONFIG)
     motionTracking = EntityDescription(id=auto(), icon="mdi:radar", category=EntityCategory.CONFIG)
     rtspStream = EntityDescription(id=auto(), icon="mdi:movie", category=EntityCategory.CONFIG)
-    light = EntityDescription(id=auto(), icon="mdi:car-light-high", category=EntityCategory.CONFIG)
+    light = EntityDescription(id=auto())
     lightSettingsEnable = EntityDescription(id=auto(), category=EntityCategory.CONFIG)
 
     microphone = EntityDescription(id=auto(), icon="mdi:microphone", category=EntityCategory.CONFIG)
