@@ -113,6 +113,21 @@ class ApiClient:
             metadata = await self._get_metadata(product_type, serial_no)
             commands = await self._get_commands(product_type, serial_no)
 
+            # Ensure T85* devices have the locked property
+            if serial_no.startswith("T85") and MessageField.LOCKED.value not in properties:
+                properties[MessageField.LOCKED.value] = True
+            
+            # Ensure T85* devices have the locked property in metadata if it doesn't exist
+            if serial_no.startswith("T85") and MessageField.LOCKED.value not in metadata:
+                metadata[MessageField.LOCKED.value] = {
+                    'key': MessageField.LOCKED.value,
+                    'name': MessageField.LOCKED.value,
+                    'label': 'Locked',
+                    'readable': True,
+                    'writeable': True,
+                    'type': 'boolean'
+                }
+
             if product_type == ProductType.device:
                 if ProductCommand.start_livestream.name in commands:
                     is_rtsp_streaming = await self._get_is_rtsp_streaming(product_type, serial_no)
