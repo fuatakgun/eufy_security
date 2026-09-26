@@ -72,9 +72,9 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 captcha_id = coordinator.config.captcha_id
                 captcha_input = user_input[ConfigField.captcha_input.name]
+                await coordinator.set_captcha_and_connect(captcha_id, captcha_input)
                 coordinator.config.captcha_id = None
                 coordinator.config.captcha_img = None
-                await coordinator.set_captcha_and_connect(captcha_id, captcha_input)
 
             config_entry_id = None
             for entry in self._async_current_entries():
@@ -147,6 +147,7 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     description_placeholders={"captcha_img": 'Enter Multi Factor Authentication Code'},
                 )
             else:
+                captcha_img = coordinator.config.captcha_img or ""
                 return self.async_show_form(
                     step_id="reauth_confirm",
                     data_schema=vol.Schema(
@@ -154,6 +155,6 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                             vol.Required(ConfigField.captcha_input.name): str,
                         }
                     ),
-                    description_placeholders={"captcha_img": '<img id="eufy_security_captcha" src="' + coordinator.config.captcha_img + '"/>'},
+                    description_placeholders={"captcha_img": '<img id="eufy_security_captcha" src="' + captcha_img + '"/>' if captcha_img else ""},
                 )
         return await self.async_step_user(user_input)

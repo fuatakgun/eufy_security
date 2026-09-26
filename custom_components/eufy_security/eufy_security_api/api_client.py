@@ -318,20 +318,25 @@ class ApiClient:
     async def _process_driver_event(self, event: Event):
         """Process driver level events"""
         if event.type == EventNameToHandler.captcha_request.value:
-            self._captcha_future.set_result(event)
+            if not self._captcha_future.done():
+                self._captcha_future.set_result(event)
         if event.type == EventNameToHandler.verify_code.value:
-            self._mfa_future.set_result(event)
+            if not self._mfa_future.done():
+                self._mfa_future.set_result(event)
 
     async def _on_open(self) -> None:
         _LOGGER.debug("on_open - executed")
 
-    def _on_close(self, future="") -> None:
-        _LOGGER.debug(f"on_close - executed - {future} = {future.exception()}")
+    def _on_close(self, future=None) -> None:
+        exception = None
+        if isinstance(future, asyncio.Future) and future.done() and not future.cancelled():
+            exception = future.exception()
+        _LOGGER.debug(f"on_close - executed - {future} = {exception}")
         if self._on_error_callback is not None:
             self._on_error_callback(future)
-        if future.exception() is not None:
-            _LOGGER.debug(f"on_close - executed - {future.exception()}")
-            raise future.exception()
+        if exception is not None:
+            _LOGGER.debug(f"on_close - executed - {exception}")
+            raise exception
 
     async def _on_error(self, error: str) -> None:
         _LOGGER.error(f"on_error - {error}")
