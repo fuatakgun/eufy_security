@@ -90,6 +90,6 @@ class P2PStreamer:
         self.retry = None
         await self._create_stream_on_go2rtc()
         await asyncio.gather(
-            #asyncio.to_thread(self._run, self.camera.audio_queue, "audio"),
+            asyncio.to_thread(self._run, self.camera.audio_queue, "audio"),
             asyncio.to_thread(self._run, self.camera.video_queue, "video")
         )
