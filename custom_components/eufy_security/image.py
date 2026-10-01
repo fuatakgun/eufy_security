@@ -17,6 +17,7 @@ from .const import COORDINATOR, DOMAIN, Schema
 from .coordinator import EufySecurityDataUpdateCoordinator
 from .entity import EufySecurityEntity
 from .eufy_security_api.metadata import Metadata
+from .v2_image_fix import fix_image
 
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -53,5 +54,5 @@ class EufySecurityImage(ImageEntity, EufySecurityEntity):
     async def async_image(self) -> bytes | None:
         """Return bytes of image."""
         if self.product.picture_base64 is not None:
-            self._last_image = self.product.picture_bytes
+            self._last_image = await self.hass.async_add_executor_job(fix_image, self.product.picture_bytes)
         return self._last_image
