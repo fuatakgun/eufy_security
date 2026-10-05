@@ -149,11 +149,22 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
         _LOGGER.debug(f"image 1 - {self.is_streaming} - {self.stream}")
+        if self.is_streaming is False and self.stream is not None:
+            # The livestream ended without going through _stop_livestream (it timed
+            # out on the device, or the add-on stopped it), so HA's stream worker is
+            # still retrying a URL that no longer answers. Stop it.
+            await self._stop_hass_streaming()
         if self.is_streaming is True:
             with contextlib.suppress(asyncio.TimeoutError):
                 self._last_image = await asyncio.wait_for(self._get_image_from_stream_url(width, height), STREAM_TIMEOUT_SECONDS)
             _LOGGER.debug(f"image 2 - is_empty {self._last_image is None}")
 
+        if not self._last_image and self.product.picture_base64 is not None:
+            # _last_image is only seeded from the cloud thumbnail in __init__. Once it
+            # has been emptied (for instance by a failed grab during a livestream), the
+            # camera would show nothing until a restart, so fall back to the
+            # thumbnail again.
+            self._last_image = self.product.picture_bytes
         _LOGGER.debug(f"async_camera_image 5 - is_empty {self._last_image is None}")
         if self._last_image is not None:
             _LOGGER.debug(f"async_camera_image 6 - {len(self._last_image)}")
