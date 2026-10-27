@@ -326,12 +326,16 @@ class ApiClient:
         _LOGGER.debug("on_open - executed")
 
     def _on_close(self, future="") -> None:
-        _LOGGER.debug(f"on_close - executed - {future} = {future.exception()}")
+        exception = None if future.cancelled() else future.exception()
+        _LOGGER.debug(f"on_close - executed - {future} = {exception}")
+        for result_future in list(self._result_futures.values()):
+            if not result_future.done():
+                result_future.set_exception(WebSocketConnectionException("Connection to add-on was closed while waiting for a response"))
         if self._on_error_callback is not None:
             self._on_error_callback(future)
-        if future.exception() is not None:
-            _LOGGER.debug(f"on_close - executed - {future.exception()}")
-            raise future.exception()
+        if exception is not None:
+            _LOGGER.debug(f"on_close - executed - {exception}")
+            raise exception
 
     async def _on_error(self, error: str) -> None:
         _LOGGER.error(f"on_error - {error}")

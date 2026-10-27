@@ -11,7 +11,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, DISCONNECTED
+from .const import COORDINATOR, DOMAIN, DISCONNECTED
 from .eufy_security_api.api_client import ApiClient
 from .eufy_security_api.exceptions import (
     CaptchaRequiredException,
@@ -22,6 +22,8 @@ from .eufy_security_api.exceptions import (
 from .model import Config
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
+SETUP_TIMEOUT = 120  # seconds
 
 
 class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
@@ -37,7 +39,8 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
     async def initialize(self):
         """Initialize the integration"""
         try:
-            await self._api.connect()
+            async with asyncio.timeout(SETUP_TIMEOUT):
+                await self._api.connect()
         except CaptchaRequiredException as exc:
             self.config.captcha_id = exc.captcha_id
             self.config.captcha_img = exc.captcha_img
@@ -46,9 +49,23 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             self.config.mfa_required = True
             raise ConfigEntryAuthFailed() from exc
         except DriverNotConnectedException as exc:
+            await self._abort_setup()
             raise ConfigEntryNotReady() from exc
         except WebSocketConnectionException as exc:
+            await self._abort_setup()
             raise ConfigEntryNotReady() from exc
+        except TimeoutError as exc:
+            _LOGGER.warning("eufy-security-ws did not answer within %s seconds during setup, retrying", SETUP_TIMEOUT)
+            await self._abort_setup()
+            raise ConfigEntryNotReady("eufy-security-ws did not answer during setup") from exc
+
+    async def _abort_setup(self):
+        """close the half-open connection and drop this coordinator so the next setup starts clean"""
+        try:
+            await self._api.disconnect()
+        except Exception:  # pylint: disable=broad-except
+            pass
+        self.hass.data.get(DOMAIN, {}).pop(COORDINATOR, None)
 
     @property
     def platforms(self):
