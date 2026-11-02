@@ -9,6 +9,7 @@ import datetime
 import traceback
 
 from .const import MessageField, STREAM_TIMEOUT_SECONDS, STREAM_SLEEP_SECONDS, GO2RTC_RTSP_PORT
+from .const import SWITCH_STOP_TIMEOUT_SECONDS, COMMAND_TIMEOUT_SECONDS
 from .event import Event
 from .exceptions import CameraRTSPStreamNotEnabled, CameraRTSPStreamNotSupported
 from .p2p_streamer import P2PStreamer
@@ -16,6 +17,9 @@ from .product import Device
 from .util import wait_for_value
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
+# user starts on a station, one at a time: the add-on keeps one P2P stream per station
+_station_start_locks = {}
 
 
 class StreamStatus(Enum):
@@ -63,6 +67,7 @@ class Camera(Device):
         self.stream_checker = None
         self.stop_requested = False
         self.late_stop = None
+        self.stopped_by_switch = False
 
         self.p2p_streamer = P2PStreamer(self)
 
@@ -72,6 +77,7 @@ class Camera(Device):
             self.set_stream_provider(StreamProvider.P2P)
 
         self.p2p_started_event = asyncio.Event()
+        self.p2p_stopped_event = asyncio.Event()
         self.rtsp_started_event = asyncio.Event()
 
         self.stream_debug = None
@@ -103,6 +109,7 @@ class Camera(Device):
         # automatically find this function for respective event
         _LOGGER.debug(f"_handle_livestream_stopped - {event}")
         self.stream_status = StreamStatus.IDLE
+        self.p2p_stopped_event.set()
         self.video_queue = deque()
         self.audio_queue = deque()
 
@@ -133,7 +140,8 @@ class Camera(Device):
         if stream_type == StreamProvider.P2P:
             event = self.p2p_started_event
             event.clear()
-            if await self.api.start_livestream(self.product_type, self.serial_no) is False:
+            # bounded: a result future is never failed when the socket closes, and a user start holds the station lock
+            if await asyncio.wait_for(self.api.start_livestream(self.product_type, self.serial_no), COMMAND_TIMEOUT_SECONDS) is False:
                 return False
         else:
             event = self.rtsp_started_event
@@ -167,8 +175,25 @@ class Camera(Device):
 
     async def start_livestream(self, is_internal=False) -> bool:
         """Process start p2p livestream call"""
-        if is_internal is False:
-            self.stop_requested = False
+        if is_internal is True:
+            return await self._start_p2p_livestream()
+        self.stop_requested = False
+        station = self.properties.get("stationSerialNumber")
+        lock = asyncio.Lock() if station is None else _station_start_locks.setdefault(station, asyncio.Lock())
+        async with lock:
+            if self.stopped_by_switch is True:
+                # another camera's switch stopped this one while this start waited; the newer start wins
+                self.stop_requested = False
+            if self.stream_status == StreamStatus.STREAMING and self.stream_provider == StreamProvider.P2P:
+                # an earlier start of this camera already streams it; a second start command would fail
+                return True
+            await self._stop_other_station_streams()
+            if self.stop_requested is True:
+                # stop was called while waiting for the other camera
+                return False
+            return await self._start_p2p_livestream()
+
+    async def _start_p2p_livestream(self) -> bool:
         if await self._initiate_start_stream(StreamProvider.P2P) is False:
             return False
         if self.stop_requested is True:
@@ -180,13 +205,52 @@ class Camera(Device):
         self.stream_status = StreamStatus.STREAMING
         return True
 
-    async def stop_livestream(self, is_internal=False):
+    async def _is_streaming(self) -> bool:
+        """Ask the add-on; None when the answer is unknown"""
+        try:
+            return await asyncio.wait_for(self.api._get_is_p2p_streaming(self.product_type, self.serial_no), COMMAND_TIMEOUT_SECONDS)
+        except Exception as ex:  # pylint: disable=broad-except
+            _LOGGER.debug(f"_is_streaming - {self.serial_no} is_livestreaming failed {ex}")
+            return None
+
+    async def _stop_other_station_streams(self):
+        """Stop another camera's P2P stream on this station before a user start: the add-on keeps one P2P stream
+        per station, and a stream that took over another one has ignored its later stop"""
+        station = self.properties.get("stationSerialNumber")
+        if station is None:
+            return
+        for device in list(self.api.devices.values()):
+            if device is self or isinstance(device, Camera) is False:
+                continue
+            if device.properties.get("stationSerialNumber") != station:
+                continue
+            # unknown counts as streaming: a needless stop only fails with livestream_not_running
+            streaming = await device._is_streaming()
+            if self.stop_requested is True:
+                return
+            if streaming is False:
+                continue
+            _LOGGER.debug(f"start_livestream - {self.serial_no} stops {device.serial_no} first")
+            device.p2p_stopped_event.clear()
+            try:
+                # one bound for the stop command and its event
+                await asyncio.wait_for(device._stop_and_wait(), SWITCH_STOP_TIMEOUT_SECONDS)
+            except Exception as ex:  # pylint: disable=broad-except
+                _LOGGER.debug(f"start_livestream - stop of {device.serial_no} not confirmed {ex}")
+
+    async def _stop_and_wait(self):
+        await self.stop_livestream(by_switch=True)
+        await self.p2p_stopped_event.wait()
+
+    async def stop_livestream(self, is_internal=False, by_switch=False):
         """Process stop p2p livestream call"""
         if is_internal is True:
             # called from another function, so respect retry value
             pass
         else:
             self.p2p_streamer.retry = False
+            # a switch stop never replaces a user stop that is still pending
+            self.stopped_by_switch = by_switch is True and not (self.stop_requested is True and self.stopped_by_switch is False)
             self.stop_requested = True
             # an older checker must not stop or restart anything after a user stop
             if self.stream_checker is not None:
