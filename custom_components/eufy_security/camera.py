@@ -12,7 +12,7 @@ from homeassistant.components import ffmpeg
 from homeassistant.components.camera import Camera, CameraEntityFeature
 from homeassistant.components.ffmpeg import DATA_FFMPEG
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.aiohttp_client import async_aiohttp_proxy_stream
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -121,9 +121,25 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         await self.async_camera_image()
 
     async def _stop_hass_streaming(self):
-        if self.stream is not None:
-            await self.stream.stop()
-            self.stream = None
+        stream, self.stream = self.stream, None
+        if stream is not None:
+            await stream.stop()
+
+    def _p2p_stream_ended(self) -> bool:
+        # stopped with no restart coming (a user stop, another camera's start on the station, a failed auto-restart);
+        # an auto-restart also passes through IDLE and keeps the HA stream, which picks the restarted push up
+        return self.stream is not None and self.product.stream_status == StreamStatus.IDLE and self.product.stop_requested is True
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        if self._p2p_stream_ended() is True:
+            # a stop below this entity (another camera's start) leaves the HA stream retrying the go2rtc source
+            self.hass.async_create_task(self._stop_ended_hass_stream())
+        super()._handle_coordinator_update()
+
+    async def _stop_ended_hass_stream(self):
+        if self._p2p_stream_ended() is True:
+            await self._stop_hass_streaming()
 
     @property
     def is_streaming(self) -> bool:
