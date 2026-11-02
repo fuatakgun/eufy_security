@@ -10,7 +10,7 @@ from time import sleep
 import traceback
 import aiohttp
 import os
-from .const import GO2RTC_API_PORT, GO2RTC_API_URL, STREAM_TIMEOUT_SECONDS
+from .const import GO2RTC_API_PORT, GO2RTC_API_URL, STREAM_SLEEP_SECONDS, STREAM_TIMEOUT_SECONDS
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -20,6 +20,40 @@ class P2PStreamer:
     def __init__(self, camera) -> None:
         self.camera = camera
         self.retry = None
+        self.stream_created = asyncio.Event()
+        self.stream_ready = False
+        self.generation = 0
+
+    def new_stream(self):
+        """A start is about to create the go2rtc stream again; called before the camera reports streaming"""
+        self.generation += 1
+        self.stream_created.clear()
+        self.stream_ready = False
+
+    async def wait_until_ready(self):
+        """Wait until go2rtc has this start's push with media; its RTSP server answers 404 before that"""
+        if self.stream_ready is True:
+            return
+        url = GO2RTC_API_URL.format(self.camera.config.rtsp_server_address, GO2RTC_API_PORT)
+        url = f"{url}s"
+        parameters = {"src": str(self.camera.serial_no)}
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=STREAM_SLEEP_SECONDS * 4)) as session:
+            while self.stream_ready is False:
+                # a reply only counts for the start it was asked for: a new start replaces the stream
+                generation = self.generation
+                # the PUT replaces the stream, so a producer seen after it belongs to this start
+                await self.stream_created.wait()
+                try:
+                    async with session.get(url, params=parameters) as response:
+                        stream = await response.json(content_type=None) if response.status == 200 else None
+                    # the tcp placeholder source has no medias; the push has them once go2rtc has read its first bytes
+                    if generation == self.generation and any(producer.get("medias") for producer in stream["producers"]):
+                        self.stream_ready = True
+                        return
+                except Exception as ex:  # pylint: disable=broad-except
+                    # go2rtc unreachable, or a reply without a producer list
+                    _LOGGER.debug(f"wait_until_ready - {ex}")
+                await asyncio.sleep(STREAM_SLEEP_SECONDS)
 
     async def chunk_generator(self, queue, queue_name):
         retry_count = 0
@@ -87,8 +121,12 @@ class P2PStreamer:
     async def start(self):
         """start streaming thread"""
         # send API command to go2rtc to create a new stream
+        generation = self.generation
         self.retry = None
         await self._create_stream_on_go2rtc()
+        # an older start's PUT finishing late does not count for a newer start
+        if generation == self.generation:
+            self.stream_created.set()
         await asyncio.gather(
             #asyncio.to_thread(self._run, self.camera.audio_queue, "audio"),
             asyncio.to_thread(self._run, self.camera.video_queue, "video")
