@@ -141,7 +141,13 @@ class Camera(Device):
             event = self.p2p_started_event
             event.clear()
             # bounded: a result future is never failed when the socket closes, and a user start holds the station lock
-            if await asyncio.wait_for(self.api.start_livestream(self.product_type, self.serial_no), COMMAND_TIMEOUT_SECONDS) is False:
+            try:
+                if await asyncio.wait_for(self.api.start_livestream(self.product_type, self.serial_no), COMMAND_TIMEOUT_SECONDS) is False:
+                    return False
+            except asyncio.TimeoutError:
+                # a failed start: the HA entity then stops, and a late "livestream started" is stopped
+                self.stream_debug = "error - start command result timed out"
+                _LOGGER.debug(f"_initiate_start_stream - {self.stream_debug}")
                 return False
         else:
             event = self.rtsp_started_event
@@ -175,11 +181,16 @@ class Camera(Device):
 
     async def start_livestream(self, is_internal=False) -> bool:
         """Process start p2p livestream call"""
-        if is_internal is True:
-            return await self._start_p2p_livestream()
-        self.stop_requested = False
         station = self.properties.get("stationSerialNumber")
         lock = asyncio.Lock() if station is None else _station_start_locks.setdefault(station, asyncio.Lock())
+        if is_internal is True:
+            async with lock:
+                if await self._other_station_streaming() is True:
+                    # an auto-restart must not take over another camera's stream
+                    _LOGGER.debug(f"start_livestream - {self.serial_no} not restarted, another camera on the station streams")
+                    return False
+                return await self._start_p2p_livestream()
+        self.stop_requested = False
         async with lock:
             if self.stopped_by_switch is True:
                 # another camera's switch stopped this one while this start waited; the newer start wins
@@ -212,6 +223,18 @@ class Camera(Device):
         except Exception as ex:  # pylint: disable=broad-except
             _LOGGER.debug(f"_is_streaming - {self.serial_no} is_livestreaming failed {ex}")
             return None
+
+    async def _other_station_streaming(self) -> bool:
+        """Another camera on this station streams, or the add-on cannot tell"""
+        station = self.properties.get("stationSerialNumber")
+        if station is None:
+            return False
+        for device in list(self.api.devices.values()):
+            if device is self or isinstance(device, Camera) is False:
+                continue
+            if device.properties.get("stationSerialNumber") == station and await device._is_streaming() is not False:
+                return True
+        return False
 
     async def _stop_other_station_streams(self):
         """Stop another camera's P2P stream on this station before a user start: the add-on keeps one P2P stream
