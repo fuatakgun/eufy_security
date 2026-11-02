@@ -68,6 +68,7 @@ class Camera(Device):
         self.stop_requested = False
         self.late_stop = None
         self.stopped_by_switch = False
+        self.user_starts = 0
 
         self.p2p_streamer = P2PStreamer(self)
 
@@ -170,11 +171,13 @@ class Camera(Device):
             await asyncio.sleep(0.5)
 
         _LOGGER.debug(f"async_restart_livestream - start - {self.p2p_streamer.retry}")
+        # a user start (P2P or RTSP) from here on wins over this restart
+        user_starts = self.user_starts
         if self.stream_status != StreamStatus.IDLE:
             await self.stop_livestream(is_internal=True)
 
         # a user stop wins over a retry raised by the go2rtc push
-        if self.p2p_streamer.retry is True and self.stop_requested is False:
+        if self.p2p_streamer.retry is True and self.stop_requested is False and self.user_starts == user_starts:
             _LOGGER.debug(f"async_restart_livestream - start live stream start - {self.p2p_streamer.retry}")
             await self.start_livestream(is_internal=True)
             _LOGGER.debug(f"async_restart_livestream - start live stream end - {self.p2p_streamer.retry}")
@@ -184,17 +187,33 @@ class Camera(Device):
         station = self.properties.get("stationSerialNumber")
         lock = asyncio.Lock() if station is None else _station_start_locks.setdefault(station, asyncio.Lock())
         if is_internal is True:
+            # a user start (P2P or RTSP) while this restart runs wins over its failure
+            user_starts = self.user_starts
             async with lock:
+                if self.user_starts != user_starts:
+                    # the user started this camera while the restart waited for the station
+                    return False
+                started = False
                 if await self._other_station_streaming() is True:
                     # an auto-restart must not take over another camera's stream
                     _LOGGER.debug(f"start_livestream - {self.serial_no} not restarted, another camera on the station streams")
-                    return False
-                if await self._start_p2p_livestream() is False:
-                    # no stream wanted after a failed auto-restart: a late "livestream started" is stopped; a user start clears it
+                else:
+                    try:
+                        started = await self._start_p2p_livestream()
+                    except Exception as ex:  # pylint: disable=broad-except
+                        _LOGGER.debug(f"start_livestream - {self.serial_no} restart failed {ex}")
+                if started is True:
+                    return True
+                # no stream wanted after a skipped or failed auto-restart, unless the user started this camera meanwhile:
+                # a late "livestream started" is stopped, and the HA entity ends its stream
+                if self.user_starts == user_starts:
                     self.stop_requested = True
-                    return False
-                return True
+                    self.stream_status = StreamStatus.IDLE
+                    if self.state_update_listener is not None:
+                        self.state_update_listener()
+                return False
         self.stop_requested = False
+        self.user_starts += 1
         async with lock:
             if self.stopped_by_switch is True:
                 # another camera's switch stopped this one while this start waited; the newer start wins
@@ -218,6 +237,7 @@ class Camera(Device):
             # stop was called while this start was in progress; _handle_livestream_started stops the device stream
             _LOGGER.debug("start_livestream - stop requested during start")
             return False
+        self.p2p_streamer.new_stream()
         self.stream_future = asyncio.create_task(self.p2p_streamer.start())
         self.stream_checker = asyncio.create_task(self._check_live_stream())
         self.stream_status = StreamStatus.STREAMING
@@ -254,6 +274,8 @@ class Camera(Device):
                 continue
             if device.properties.get("stationSerialNumber") != station:
                 continue
+            # cleared before the query: a stopped event during the query counts
+            device.p2p_stopped_event.clear()
             # unknown counts as streaming: a needless stop only fails with livestream_not_running
             streaming = await device._is_streaming()
             if self.stop_requested is True:
@@ -261,7 +283,6 @@ class Camera(Device):
             if streaming is False:
                 continue
             _LOGGER.debug(f"start_livestream - {self.serial_no} stops {device.serial_no} first")
-            device.p2p_stopped_event.clear()
             try:
                 # one bound for the stop command and its event
                 await asyncio.wait_for(device._stop_and_wait(), SWITCH_STOP_TIMEOUT_SECONDS)
@@ -291,6 +312,8 @@ class Camera(Device):
         """Process start rtsp livestream call"""
         if await self._initiate_start_stream(StreamProvider.RTSP) is False:
             return False
+        # only a started RTSP stream wins over a P2P auto-restart
+        self.user_starts += 1
 
         self.stream_status = StreamStatus.STREAMING
         return True

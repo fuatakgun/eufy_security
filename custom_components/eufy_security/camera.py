@@ -88,6 +88,12 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def stream_source(self) -> str:
         if self.is_streaming is False:
             return None
+        if self.product.stream_provider == StreamProvider.P2P:
+            # go2rtc's RTSP server answers 404 until this start's push reaches it; past the bound the source is returned anyway
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(self.product.p2p_streamer.wait_until_ready(), STREAM_TIMEOUT_SECONDS)
+            if self.is_streaming is False or self.product.stop_requested is True:
+                return None
         return self.product.stream_url
 
     async def handle_async_mjpeg_stream(self, request):
