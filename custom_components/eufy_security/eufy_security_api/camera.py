@@ -189,12 +189,19 @@ class Camera(Device):
                     # an auto-restart must not take over another camera's stream
                     _LOGGER.debug(f"start_livestream - {self.serial_no} not restarted, another camera on the station streams")
                     return False
-                return await self._start_p2p_livestream()
+                if await self._start_p2p_livestream() is False:
+                    # no stream wanted after a failed auto-restart: a late "livestream started" is stopped; a user start clears it
+                    self.stop_requested = True
+                    return False
+                return True
         self.stop_requested = False
         async with lock:
             if self.stopped_by_switch is True:
                 # another camera's switch stopped this one while this start waited; the newer start wins
                 self.stop_requested = False
+            if self.stop_requested is True:
+                # stopped while waiting for the station
+                return False
             if self.stream_status == StreamStatus.STREAMING and self.stream_provider == StreamProvider.P2P:
                 # an earlier start of this camera already streams it; a second start command would fail
                 return True
