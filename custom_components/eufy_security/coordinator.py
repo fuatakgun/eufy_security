@@ -1,21 +1,22 @@
 """Module to initialize coordinator"""
 import asyncio
 from datetime import timedelta
-import logging
 import json
-import asyncio
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+import logging
+
 from homeassistant.components.persistent_notification import create
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, DISCONNECTED
+from .const import DISCONNECTED, DOMAIN
 from .eufy_security_api.api_client import ApiClient
 from .eufy_security_api.exceptions import (
     CaptchaRequiredException,
     DriverNotConnectedException,
+    FailedCommandException,
     MultiFactorCodeRequiredException,
     WebSocketConnectionException,
 )
@@ -32,6 +33,7 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         super().__init__(hass, _LOGGER, name=DOMAIN, update_method=self._update_local, update_interval=timedelta(seconds=self.config.sync_interval))
         self._platforms = []
         self.data = {}
+        self._reload_scheduled = False
         self._api = ApiClient(self.config, aiohttp_client.async_get_clientsession(self.hass), self._on_error)
 
     async def initialize(self):
@@ -45,9 +47,12 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
         except MultiFactorCodeRequiredException as exc:
             self.config.mfa_required = True
             raise ConfigEntryAuthFailed() from exc
-        except DriverNotConnectedException as exc:
-            raise ConfigEntryNotReady() from exc
-        except WebSocketConnectionException as exc:
+        except (
+            DriverNotConnectedException,
+            WebSocketConnectionException,
+            FailedCommandException,
+            asyncio.TimeoutError,
+        ) as exc:
             raise ConfigEntryNotReady() from exc
 
     @property
@@ -89,25 +94,47 @@ class EufySecurityDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug(f"coordinator - complete update_local")
             return self.data
         except WebSocketConnectionException as exc:
+            try:
+                await self._api.ensure_connected()
+                await self._api.sync_properties()
+                return self.data
+            except Exception as reconnect_exc:
+                raise UpdateFailed(f"Error communicating with Add-on: {exc}") from reconnect_exc
+        except (FailedCommandException, asyncio.TimeoutError) as exc:
             raise UpdateFailed(f"Error communicating with Add-on: {exc}") from exc
 
     async def disconnect(self):
         """disconnect from api"""
-        await self._api.disconnect()
-        self._api = None
+        if self._api is not None:
+            await self._api.disconnect()
+            self._api = None
         await self.async_shutdown()
 
     async def _async_reload(self, _):
-        await asyncio.sleep(5)
-        await self.hass.config_entries.async_reload(self.config.entry.entry_id)
+        try:
+            await asyncio.sleep(5)
+            if self._api is None:
+                return
+            try:
+                await self._api.ensure_connected()
+                await self._api.sync_properties()
+                return
+            except Exception as exc:
+                _LOGGER.warning(f"In-place Eufy WS reconnect failed ({exc}), scheduling reload")
+            if self.config.entry.state == ConfigEntryState.LOADED:
+                await self.hass.config_entries.async_reload(self.config.entry.entry_id)
+        finally:
+            self._reload_scheduled = False
 
     def _on_error(self, error):
-        """raise notification on frontend when exception happens"""
-        create(self.hass, f"Connection to Eufy Security add-on is broken, retrying in background!", title="Eufy Security - Error", notification_id="eufy_security_addon_connection_error")
+        """Schedule background reconnect/reload when websocket closes"""
+        if self._reload_scheduled:
+            return
+        self._reload_scheduled = True
         self.hass.bus.async_listen_once(DISCONNECTED, self._async_reload)
         self.hass.bus.async_fire(DISCONNECTED, None)
 
     @property
     def available(self) -> bool:
-        return self._api.available
+        return bool(self._api and self._api.available)
 

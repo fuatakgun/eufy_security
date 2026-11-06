@@ -5,6 +5,7 @@ from typing import Any
 
 from .const import EventNameToHandler, MessageField, ProductCommand, ProductType, UNSUPPORTED
 from .event import Event
+from .exceptions import FailedCommandException, WebSocketConnectionException
 from .metadata import Metadata
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -60,8 +61,33 @@ class Product:
         self.state_update_listener = listener
 
     async def set_property(self, metadata, value: Any):
-        """Process set property call"""
-        await self.api.set_property(self.product_type, self.serial_no, metadata.name, value)
+        """Process set property call with automatic reconnect, verification and retry"""
+        await self.api.ensure_connected()
+        try:
+            await self.api.set_property(self.product_type, self.serial_no, metadata.name, value)
+        except (WebSocketConnectionException, FailedCommandException):
+            await asyncio.sleep(2)
+            await self.api.ensure_connected()
+            await self.api.set_property(self.product_type, self.serial_no, metadata.name, value)
+
+        for _ in range(5):
+            if self.properties.get(metadata.name) == value:
+                return
+            await asyncio.sleep(0.5)
+
+        if self.properties.get(metadata.name) != value:
+            try:
+                await self.api.refresh_product_properties(self)
+            except (WebSocketConnectionException, FailedCommandException):
+                pass
+
+        if self.properties.get(metadata.name) != value:
+            await self.api.set_property(self.product_type, self.serial_no, metadata.name, value)
+            await asyncio.sleep(1.5)
+            try:
+                await self.api.refresh_product_properties(self)
+            except (WebSocketConnectionException, FailedCommandException):
+                pass
 
     async def trigger_alarm(self, duration: int = 10):
         """Process trigger alarm call"""
@@ -108,6 +134,13 @@ class Product:
 
     async def _handle_property_changed(self, event: Event):
         self.properties[event.data[MessageField.NAME.value]] = event.data[MessageField.VALUE.value]
+
+    async def _handle_command_result(self, event: Event):
+        if event.data.get("returnCode") == 0:
+            custom_data = event.data.get("customData") or {}
+            prop = custom_data.get("property")
+            if isinstance(prop, dict) and "name" in prop and "value" in prop:
+                self.properties[prop["name"]] = prop["value"]
 
     async def _handle_pin_verified(self, event: Event):
         self.pin_verified_future.set_result(event)
