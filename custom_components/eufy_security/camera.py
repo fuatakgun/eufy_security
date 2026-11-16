@@ -26,6 +26,7 @@ from .eufy_security_api.camera import (
     StreamProvider,
     StreamStatus,
 )
+from .eufy_security_api.exceptions import FailedCommandException
 from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.util import wait_for_value_to_equal
 
@@ -170,7 +171,12 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
     async def _stop_livestream(self) -> None:
         """stop byte based livestream on camera"""
         await self._stop_hass_streaming()
-        await self.product.stop_livestream()
+        try:
+            await self.product.stop_livestream()
+        except FailedCommandException as error:
+            # Stopping a stream that has already ended is the state we wanted.
+            if error.error_code != "device_livestream_not_running":
+                raise
         self.async_write_ha_state()
 
     async def _start_rtsp_livestream(self) -> None:
