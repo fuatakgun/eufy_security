@@ -61,6 +61,8 @@ class Camera(Device):
 
         self.stream_future = None
         self.stream_checker = None
+        self.stop_requested = False
+        self.late_stop = None
 
         self.p2p_streamer = P2PStreamer(self)
 
@@ -83,6 +85,19 @@ class Camera(Device):
         # automatically find this function for respective event
         _LOGGER.debug(f"_handle_livestream_started - {event}")
         self.p2p_started_event.set()
+        if self.stop_requested is True:
+            # a start landed after a user stop, stop it again; not awaited, the response arrives on this message loop
+            self.late_stop = asyncio.create_task(self._stop_late_start())
+
+    async def _stop_late_start(self):
+        if self.stop_requested is False:
+            # a user start came in before this task ran, keep its stream
+            return
+        _LOGGER.debug("_stop_late_start - livestream started after stop was requested")
+        try:
+            await self.api.stop_livestream(self.product_type, self.serial_no)
+        except Exception as ex:  # pylint: disable=broad-except
+            _LOGGER.debug(f"_stop_late_start - stop failed {ex}")
 
     async def _handle_livestream_stopped(self, event: Event):
         # automatically find this function for respective event
@@ -144,14 +159,21 @@ class Camera(Device):
         if self.stream_status != StreamStatus.IDLE:
             await self.stop_livestream(is_internal=True)
 
-        if self.p2p_streamer.retry is True:
+        # a user stop wins over a retry raised by the go2rtc push
+        if self.p2p_streamer.retry is True and self.stop_requested is False:
             _LOGGER.debug(f"async_restart_livestream - start live stream start - {self.p2p_streamer.retry}")
-            await self.start_livestream()
+            await self.start_livestream(is_internal=True)
             _LOGGER.debug(f"async_restart_livestream - start live stream end - {self.p2p_streamer.retry}")
 
-    async def start_livestream(self) -> bool:
+    async def start_livestream(self, is_internal=False) -> bool:
         """Process start p2p livestream call"""
+        if is_internal is False:
+            self.stop_requested = False
         if await self._initiate_start_stream(StreamProvider.P2P) is False:
+            return False
+        if self.stop_requested is True:
+            # stop was called while this start was in progress; _handle_livestream_started stops the device stream
+            _LOGGER.debug("start_livestream - stop requested during start")
             return False
         self.stream_future = asyncio.create_task(self.p2p_streamer.start())
         self.stream_checker = asyncio.create_task(self._check_live_stream())
@@ -165,6 +187,10 @@ class Camera(Device):
             pass
         else:
             self.p2p_streamer.retry = False
+            self.stop_requested = True
+            # an older checker must not stop or restart anything after a user stop
+            if self.stream_checker is not None:
+                self.stream_checker.cancel()
         await self.api.stop_livestream(self.product_type, self.serial_no)
 
     async def start_rtsp_livestream(self) -> bool:
