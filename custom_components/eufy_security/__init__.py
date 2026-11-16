@@ -48,11 +48,26 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
 
-    coordinator = hass.data[DOMAIN][COORDINATOR] = hass.data[DOMAIN].get(
-        COORDINATOR, EufySecurityDataUpdateCoordinator(hass, config_entry)
-    )
+    prev_coordinator = hass.data[DOMAIN].get(COORDINATOR)
+    if prev_coordinator is not None:
+        try:
+            await prev_coordinator.disconnect()
+        except Exception:
+            pass
 
-    await coordinator.initialize()
+    coordinator = EufySecurityDataUpdateCoordinator(hass, config_entry)
+    hass.data[DOMAIN][COORDINATOR] = coordinator
+
+    try:
+        await coordinator.initialize()
+    except Exception:
+        try:
+            await coordinator.disconnect()
+        except Exception:
+            pass
+        hass.data[DOMAIN].pop(COORDINATOR, None)
+        raise
+
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
     for platform in PLATFORMS:
         coordinator.platforms.append(platform.value)
@@ -70,11 +85,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """unload active entities"""
     _LOGGER.debug(f"async_unload_entry 1")
-    coordinator = hass.data[DOMAIN][COORDINATOR]
+    coordinator = hass.data.get(DOMAIN, {}).get(COORDINATOR)
     unloaded = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
 
     if unloaded:
-        await coordinator.disconnect()
+        if coordinator is not None:
+            await coordinator.disconnect()
         hass.data[DOMAIN] = {}
 
     _LOGGER.debug(f"async_unload_entry 2")

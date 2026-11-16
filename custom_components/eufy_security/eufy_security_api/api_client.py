@@ -38,6 +38,9 @@ from .product import Device, Product, Station
 from .web_socket_client import WebSocketClient
 
 
+COMMAND_TIMEOUT_SECONDS = 20
+
+
 class ApiClient:
     """Client to communicate with eufy-security-ws over websocket connection"""
 
@@ -46,6 +49,7 @@ class ApiClient:
         self._client: WebSocketClient = WebSocketClient(self._config.host, self._config.port, session, self._on_open, self._on_message, self._on_close, self._on_error)
         self._on_error_callback = on_error_callback
         self._result_futures: dict[str, asyncio.Future] = {}
+        self._reconnect_lock = asyncio.Lock()
         self._devices: dict = None
         self._stations: dict = None
         self._captcha_future: asyncio.Future[dict] = asyncio.get_event_loop().create_future()
@@ -70,6 +74,23 @@ class ApiClient:
         await self.ws_connect()
         await self._set_schema(SCHEMA_VERSION)
         await self._set_products()
+
+    async def ensure_connected(self) -> None:
+        """Ensure websocket connection is open and reconnect in-place if needed"""
+        if self.available:
+            return
+        async with self._reconnect_lock:
+            if self.available:
+                return
+            if self._client is None:
+                raise WebSocketConnectionException("Client is disconnected")
+            if self._devices is not None:
+                await self._client.disconnect()
+                await self.ws_connect()
+                await self._set_schema(SCHEMA_VERSION)
+                await self._start_listening()
+            else:
+                await self.connect()
 
     async def _check_interactive_mode(self):
         # driver is not connected, wait for captcha event
@@ -159,9 +180,32 @@ class ApiClient:
         """set log level of websocket server"""
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_log_level, log_level=log_level))
 
+    async def refresh_product_properties(self, product: Product) -> dict:
+        """Fetch latest local properties from eufy-security-ws for a single product"""
+        props = await self._get_properties(product.product_type, product.serial_no)
+        if product.product_type == ProductType.station:
+            props[MessageField.CONNECTED.value] = await self._get_is_connected(product.product_type, product.serial_no)
+        product.properties.update(props)
+        if product.state_update_listener is not None:
+            product.state_update_listener()
+        return props
+
+    async def sync_properties(self) -> None:
+        """Synchronize properties for all initialized devices and stations"""
+        for product in list((self._devices or {}).values()) + list((self._stations or {}).values()):
+            try:
+                await self.refresh_product_properties(product)
+            except FailedCommandException as exc:
+                _LOGGER.debug(f"sync_properties failed for {product.serial_no}: {exc}")
+
     async def poll_refresh(self) -> None:
-        """Poll cloud data for latest changes"""
-        await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.poll_refresh))
+        """Poll cloud data for latest changes and sync local properties"""
+        await self.ensure_connected()
+        try:
+            await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.poll_refresh))
+        except FailedCommandException as exc:
+            _LOGGER.debug(f"poll_refresh cloud call failed: {exc}")
+        await self.sync_properties()
 
     async def _set_captcha(self, captcha_id: str, captcha_input: str) -> None:
         await self._send_message_get_response(OutgoingMessage(OutgoingMessageType.set_captcha, captcha_id=captcha_id, captcha_input=captcha_input))
@@ -283,7 +327,7 @@ class ApiClient:
         if message[MessageField.TYPE.value] == IncomingMessageType.result.name:
             future = self._result_futures.get(message.get(MessageField.MESSAGE_ID.value, -1), None)
 
-            if future is None:
+            if future is None or future.done():
                 return
 
             if message[MessageField.SUCCESS.value]:
@@ -325,13 +369,23 @@ class ApiClient:
     async def _on_open(self) -> None:
         _LOGGER.debug("on_open - executed")
 
+    def _fail_pending_futures(self, reason: str) -> None:
+        """Fail all pending command futures so callers never hang forever on WS close"""
+        pending = list(self._result_futures.items())
+        self._result_futures.clear()
+        for _, future in pending:
+            if not future.done():
+                future.set_exception(WebSocketConnectionException(reason))
+                future.exception()
+
     def _on_close(self, future="") -> None:
-        _LOGGER.debug(f"on_close - executed - {future} = {future.exception()}")
+        exc = None
+        if future and not isinstance(future, str) and not future.cancelled():
+            exc = future.exception()
+        _LOGGER.debug(f"on_close - executed - {future} = {exc}")
+        self._fail_pending_futures("WebSocket connection closed")
         if self._on_error_callback is not None:
             self._on_error_callback(future)
-        if future.exception() is not None:
-            _LOGGER.debug(f"on_close - executed - {future.exception()}")
-            raise future.exception()
 
     async def _on_error(self, error: str) -> None:
         _LOGGER.error(f"on_error - {error}")
@@ -340,11 +394,13 @@ class ApiClient:
     async def _send_message_get_response(self, message: OutgoingMessage) -> dict:
         future: "asyncio.Future[dict]" = asyncio.get_event_loop().create_future()
         self._result_futures[message.id] = future
-        await self.send_message(message.content)
         try:
-            return await future
+            await self.send_message(message.content)
+            return await asyncio.wait_for(future, timeout=COMMAND_TIMEOUT_SECONDS)
+        except asyncio.TimeoutError as exc:
+            raise WebSocketConnectionException(f"Timeout waiting for response to {message.id}") from exc
         finally:
-            self._result_futures.pop(message.id)
+            self._result_futures.pop(message.id, None)
 
     async def send_message(self, message: dict) -> None:
         """send message to websocket api"""
@@ -354,12 +410,14 @@ class ApiClient:
     async def disconnect(self):
         """Disconnect the web socket and destroy it"""
         self._on_error_callback = None
-        await self._client.disconnect()
-        self._client = None
+        self._fail_pending_futures("Client disconnected")
+        if self._client is not None:
+            await self._client.disconnect()
+            self._client = None
 
     @property
     def available(self) -> bool:
-        return self._client.available
+        return bool(self._client and self._client.available)
 
 
 

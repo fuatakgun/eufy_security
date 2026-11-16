@@ -110,6 +110,7 @@ class EventNameToHandler(Enum):
     connected = "connected"
     disconnected = "disconnected"
     connection_error = "connection error"
+    command_result = "command result"
 
 
 class ProductType(Enum):
