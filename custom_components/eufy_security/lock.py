@@ -24,6 +24,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     coordinator: EufySecurityDataUpdateCoordinator = hass.data[DOMAIN][COORDINATOR]
     properties = []
     for product in coordinator.devices.values():
+        # Include devices that have the locked property (including T85* devices)
         if product.has(MessageField.LOCKED.value) is True:
             properties.append(product.metadata[MessageField.LOCKED.value])
 
