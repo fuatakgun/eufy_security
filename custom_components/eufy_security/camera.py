@@ -81,6 +81,7 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
         self._last_image = None
         if self.product.picture_base64 is not None:
             self._last_image = self.product.picture_bytes
+        self._last_picture_updated = self.product.image_last_updated
 
         # ffmpeg entities
         self.ffmpeg = self.coordinator.hass.data[DATA_FFMPEG]
@@ -153,6 +154,11 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
             with contextlib.suppress(asyncio.TimeoutError):
                 self._last_image = await asyncio.wait_for(self._get_image_from_stream_url(width, height), STREAM_TIMEOUT_SECONDS)
             _LOGGER.debug(f"image 2 - is_empty {self._last_image is None}")
+        elif self.product.picture_base64 is not None and self.product.image_last_updated != self._last_picture_updated:
+            # not streaming: pick up a newer event picture (mirrors image.py) instead of
+            # serving whatever picture existed when the entity was created
+            self._last_image = self.product.picture_bytes
+            self._last_picture_updated = self.product.image_last_updated
 
         _LOGGER.debug(f"async_camera_image 5 - is_empty {self._last_image is None}")
         if self._last_image is not None:
