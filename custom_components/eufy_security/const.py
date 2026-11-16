@@ -70,6 +70,7 @@ class PropertyToEntityDescription(Enum):
     wifiRssi = EntityDescription(id=auto(), device_class=SensorDeviceClass.SIGNAL_STRENGTH, category=EntityCategory.DIAGNOSTIC)
     wifiSignalLevel = EntityDescription(id=auto(), icon="mdi:signal", category=EntityCategory.DIAGNOSTIC)
     personName = EntityDescription(id=auto(), icon="mdi:account-question")
+    lockEventOrigin = EntityDescription(id=auto(), icon="mdi:lock-question")
     rtspStreamUrl = EntityDescription(id=auto(), icon="mdi:movie", category=EntityCategory.DIAGNOSTIC)
     chargingStatus = EntityDescription(id=auto(), icon="mdi:ev-station", category=EntityCategory.DIAGNOSTIC)
     snoozeStartTime = EntityDescription(id=auto(), category=EntityCategory.DIAGNOSTIC)
