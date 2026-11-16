@@ -26,6 +26,7 @@ from .eufy_security_api.camera import (
     StreamProvider,
     StreamStatus,
 )
+from .eufy_security_api.exceptions import FailedCommandException
 from .eufy_security_api.metadata import Metadata
 from .eufy_security_api.util import wait_for_value_to_equal
 
@@ -161,7 +162,19 @@ class EufySecurityCamera(Camera, EufySecurityEntity):
 
     async def _start_livestream(self) -> None:
         """start byte based livestream on camera"""
-        if await self.product.start_livestream() is False:
+        try:
+            result = await self.product.start_livestream()
+        except FailedCommandException as error:
+            # The driver can still hold a running stream while stream_status reads
+            # idle, and a fresh start then fails with "already running". The stream
+            # we asked for exists, so restart it to re-sync the status instead of
+            # failing the service call.
+            if error.error_code != "device_livestream_already_running":
+                raise
+            with contextlib.suppress(FailedCommandException):
+                await self.product.stop_livestream()
+            result = await self.product.start_livestream()
+        if result is False:
             await self._stop_livestream()
         else:
             await self._start_hass_streaming()
