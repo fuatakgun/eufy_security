@@ -49,7 +49,6 @@ class EufySecurityFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow handler for integration"""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_PUSH
 
     @staticmethod
     @callback
