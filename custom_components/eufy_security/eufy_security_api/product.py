@@ -9,6 +9,9 @@ from .metadata import Metadata
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
+# a smart safe drops its P2P link to save battery, so the PIN check may first have to reconnect
+PIN_VERIFY_TIMEOUT = 15
+
 
 class Product:
     """Product"""
@@ -79,9 +82,11 @@ class Product:
     async def unlock(self, code: str) -> bool:
         """Process unlock the safe"""
         self.pin_verified_future = asyncio.get_running_loop().create_future()
-        await self.api.verify_pin(self.product_type, self.serial_no, code)
-        await asyncio.wait_for(self.pin_verified_future, timeout=5)
-        event = self.pin_verified_future.result()
+        try:
+            await self.api.verify_pin(self.product_type, self.serial_no, code)
+            event = await asyncio.wait_for(self.pin_verified_future, timeout=PIN_VERIFY_TIMEOUT)
+        finally:
+            self.pin_verified_future = None
         if event.data[MessageField.SUCCESSFULL.value] is False:
             return False
         await self.api.unlock(self.product_type, self.serial_no)
@@ -110,7 +115,9 @@ class Product:
         self.properties[event.data[MessageField.NAME.value]] = event.data[MessageField.VALUE.value]
 
     async def _handle_pin_verified(self, event: Event):
-        self.pin_verified_future.set_result(event)
+        # the answer can come after unlock() gave up waiting, or from a check HA did not start
+        if self.pin_verified_future is not None and not self.pin_verified_future.done():
+            self.pin_verified_future.set_result(event)
 
     async def _handle_connected(self, event: Event):
         self.properties[MessageField.CONNECTED.value] = True

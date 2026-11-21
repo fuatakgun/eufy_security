@@ -18,6 +18,9 @@ from .eufy_security_api.util import get_child_value
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
+# eufy-security-client only accepts smart safe PINs of 4 to 8 digits, each 1 to 6
+SAFE_PIN_FORMAT = r"^[1-6]{4,8}$"
+
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Setup lock entities."""
@@ -37,6 +40,9 @@ class EufySecurityLock(LockEntity, EufySecurityEntity):
     def __init__(self, coordinator: EufySecurityDataUpdateCoordinator, metadata: Metadata) -> None:
         super().__init__(coordinator, metadata)
         self._attr_name = f"{self.product.name}"
+        if self.product.is_safe_lock is True:
+            # a safe only opens after its PIN is checked, so have Home Assistant ask for one
+            self._attr_code_format = SAFE_PIN_FORMAT
 
     @property
     def is_locked(self):
@@ -51,9 +57,15 @@ class EufySecurityLock(LockEntity, EufySecurityEntity):
     async def async_unlock(self, **kwargs: Any) -> None:
         """Initiate unlock call"""
         code = kwargs.get(ATTR_CODE, None)
-        if self.product.is_safe_lock is True and code is not None:
-            # handling safe unlocking with pin
-            if await self.product.unlock(code) is False:
+        if self.product.is_safe_lock is True:
+            # a safe's locked property is read-only; it opens only through PIN check + unlock
+            if not code:
+                raise HomeAssistantError(f"A PIN is required to unlock ({self.product.name})")
+            try:
+                verified = await self.product.unlock(code)
+            except TimeoutError as exc:
+                raise HomeAssistantError(f"No answer to the PIN check from ({self.product.name}); it may be out of reach") from exc
+            if verified is False:
                 raise HomeAssistantError(f"PIN verification failed for lock ({self.product.name})")
         else:
             await self.product.set_property(self.metadata, False)
