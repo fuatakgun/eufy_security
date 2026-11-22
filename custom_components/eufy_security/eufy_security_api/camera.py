@@ -106,8 +106,8 @@ class Camera(Device):
         self.video_queue.append(bytearray(event.data["buffer"]["data"]))
 
     async def _handle_livestream_audio_data_received(self, event: Event):
-        pass
-        #self.audio_queue.append(bytearray(event.data["buffer"]["data"]))
+        #pass
+        self.audio_queue.append(bytearray(event.data["buffer"]["data"]))
 
     async def _initiate_start_stream(self, stream_type) -> bool:
         self.set_stream_provider(stream_type)
