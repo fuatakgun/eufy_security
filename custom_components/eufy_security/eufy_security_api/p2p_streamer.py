@@ -22,8 +22,11 @@ class P2PStreamer:
         self.retry = None
 
     async def chunk_generator(self, queue, queue_name):
+        # go2rtc timestamps the raw H.264 it receives on arrival, so a long sleep
+        # here batches frames together and live playback (WebRTC/MSE) stutters.
+        poll_seconds = 0.005
         retry_count = 0
-        max_retry_count = int(STREAM_TIMEOUT_SECONDS / 0.1)
+        max_retry_count = int(STREAM_TIMEOUT_SECONDS / poll_seconds)
         while retry_count < max_retry_count:
             try:
                 item = queue.popleft()
@@ -32,7 +35,7 @@ class P2PStreamer:
                 yield item
             except IndexError:
                 retry_count = retry_count + 1
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(poll_seconds)
 
     async def write_bytes(self, queue, queue_name):
         url = GO2RTC_API_URL.format(self.camera.config.rtsp_server_address, GO2RTC_API_PORT)
